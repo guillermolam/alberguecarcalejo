@@ -16,6 +16,7 @@ import { IdPhotoCapture } from "./id-photo-capture";
 import { StayData } from "./stay-info-form";
 import { RegistrationStepper } from "./registration-stepper";
 import { GooglePlacesAutocomplete } from "./google-places-autocomplete";
+import { CountryPhoneInput } from "./country-phone-input";
 import { COUNTRIES, DOCUMENT_TYPES, PAYMENT_TYPES, GENDER_OPTIONS, PRICE_PER_NIGHT } from "@/lib/constants";
 import { useI18n } from "@/contexts/i18n-context";
 import { ComprehensiveOCRResult } from "@/lib/enhanced-ocr";
@@ -548,33 +549,14 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                         control={form.control}
                         name="phone"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('registration.phone')} *</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input 
-                                  {...field} 
-                                  type="tel"
-                                  placeholder={detectedCountryCode === 'ESP' ? '+34 XXX XXX XXX' : 
-                                             detectedCountryCode === 'FRA' ? '+33 X XX XX XX XX' :
-                                             detectedCountryCode === 'DEU' ? '+49 XXX XXXXXXX' :
-                                             '+XX XXX XXX XXX'}
-                                  maxLength={20}
-                                  className={`pl-12 ${
-                                    field.value && !validatePhoneForCountry(field.value, detectedCountryCode) 
-                                      ? 'border-red-500' : ''
-                                  }`}
-                                />
-                                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
-                                  {phoneFormat}
-                                </div>
-                              </div>
-                            </FormControl>
-                            <div className="text-xs text-gray-500 mt-1">
-                              {t('registration.phone_format', { country: detectedCountryCode })}
-                            </div>
-                            <FormMessage />
-                          </FormItem>
+                          <CountryPhoneInput
+                            countryName={form.watch('addressCountry')}
+                            localPhone={field.value || ''}
+                            onLocalPhoneChange={field.onChange}
+                            label={t('registration.phone')}
+                            required={true}
+                            placeholder={t('registration.phone_local_placeholder')}
+                          />
                         )}
                       />
 

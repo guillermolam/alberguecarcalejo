@@ -12,4 +12,10 @@ fi
 # Build the WASM module
 wasm-pack build --target web --out-dir ../client/src/lib/wasm
 
-echo "Validation BFF built successfully!"
+# Build country BFF
+echo "Building Country BFF..."
+cd country-bff
+wasm-pack build --target web --out-dir ../../client/src/lib/wasm/country-bff
+cd ..
+
+echo "All BFF modules built successfully!"

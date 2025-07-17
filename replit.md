@@ -13,8 +13,11 @@ Preferred communication style: Simple, everyday language.
 The application follows a modern full-stack architecture with enhanced security through a Rust-WASM Backend-for-Frontend (BFF) layer:
 
 - **Frontend**: React with TypeScript, using Vite for development and build
-- **BFF Layer**: Tiny Rust-WASM modules for registration and admin operations with rate limiting
-- **Backend**: Express.js with TypeScript
+- **BFF Layer**: 
+  - **Registration BFF**: Rust-WASM module with rate limiting
+  - **Admin BFF**: Rust-WASM module with authentication
+  - **Country BFF**: New Rust-WASM microservice for country information via RESTCountries API
+- **Backend**: Express.js with TypeScript, integrated with BFF for country data
 - **Database**: PostgreSQL with Drizzle ORM
 - **UI Framework**: Shadcn/ui with Tailwind CSS
 - **State Management**: TanStack React Query for server state
@@ -34,6 +37,7 @@ The application follows a modern full-stack architecture with enhanced security 
 - **BFF Security Layer**: 
   - **Registration BFF**: Rust-WASM module with rate limiting (10 document validations/5min, 3 registrations/hour, 5 OCR/10min)
   - **Admin BFF**: Rust-WASM module with authentication and stricter rate limits (5 auth attempts/hour, 50 operations/hour, 10 exports/hour)
+  - **Country BFF**: New Rust-WASM microservice for secure RESTCountries API integration with caching (1-hour cache, 10 requests/minute rate limit)
   - **Input Validation**: Spanish document validation (DNI/NIE/Passport), XSS prevention, buffer overflow protection
   - **Security Features**: Client fingerprinting, progressive lockouts, operation whitelisting, export restrictions
   - **Abuse Detection**: Pattern recognition for bot behavior, developer tools detection, timing analysis
@@ -123,9 +127,12 @@ The database schema supports:
 ### Key Features
 - **Automatic Bed Initialization**: Sets up bed inventory on first run
 - **Government Compliance**: Automated XML submission to Spanish authorities
-- **OCR Integration**: Document scanning for faster registration
-- **Multi-language Support**: Interface available in 10+ languages
+- **OCR Integration**: Document scanning for faster registration with gender parsing
+- **Multi-language Support**: Interface available in 10+ languages with localized date formats
 - **Real-time Availability**: Live bed availability checking
 - **Mobile Optimized**: Touch-friendly interface for tablet/phone use
+- **Enhanced Phone Input**: Country-aware phone validation with flag display and separated local/country code input
+- **Global Address Support**: Worldwide address autocomplete for international pilgrims
+- **Country Information Service**: Rust-WASM microservice providing real-time country flags, calling codes via RESTCountries API
 
 The application is designed as a self-contained kiosk system that can run on tablets or computers at the albergue entrance, allowing pilgrims to register themselves while ensuring compliance with Spanish hospitality regulations.

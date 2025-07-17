@@ -249,7 +249,10 @@ export const createRegistrationSchema = (documentType?: string, countryCode?: st
     addressCity: citySchema,
     addressPostalCode: postalCodeSchema,
     addressMunicipalityCode: z.string().max(10, 'Municipality code must be less than 10 characters').optional().or(z.literal('')),
-    phone: countryCode ? createPhoneSchema(countryCode) : z.string().min(1, 'Phone number is required'),
+    phone: z.string().min(1, 'Phone number is required').refine((phone) => {
+      // Local phone validation (without country code)
+      return phone.length >= 6 && phone.length <= 12 && /^\d+$/.test(phone);
+    }, "Invalid local phone number format"),
     email: emailSchema.optional().or(z.literal('')),
     paymentType: z.string().min(1, 'Payment type is required'),
     language: z.string().default('es'),

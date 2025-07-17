@@ -1,0 +1,121 @@
+import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { countryBFFClient, type CountryInfo } from '@/lib/country-bff-client';
+
+
+
+interface CountryPhoneInputProps {
+  countryName?: string;
+  localPhone: string;
+  onLocalPhoneChange: (phone: string) => void;
+  label?: string;
+  required?: boolean;
+  placeholder?: string;
+}
+
+export function CountryPhoneInput({
+  countryName,
+  localPhone,
+  onLocalPhoneChange,
+  label = "Phone Number",
+  required = false,
+  placeholder = "Local phone number"
+}: CountryPhoneInputProps) {
+  const [countryInfo, setCountryInfo] = useState<CountryInfo | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (countryName && countryName.trim().length > 0) {
+      fetchCountryInfo(countryName);
+    }
+  }, [countryName]);
+
+  const fetchCountryInfo = async (country: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await countryBFFClient.getCountryInfo(country);
+      setCountryInfo(data);
+    } catch (err) {
+      console.error('Error fetching country info:', err);
+      setError('Unable to load country information');
+      setCountryInfo(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <FormItem>
+      <FormLabel>
+        {label} {required && '*'}
+      </FormLabel>
+      <div className="flex gap-2">
+        {/* Country Flag and Code (readonly) */}
+        <div className="flex items-center border rounded-md px-3 py-2 bg-gray-50 min-w-[120px]">
+          {loading ? (
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-4 bg-gray-200 animate-pulse rounded"></div>
+              <span className="text-sm text-gray-500">...</span>
+            </div>
+          ) : countryInfo ? (
+            <div className="flex items-center gap-2">
+              <img 
+                src={countryInfo.flag_url} 
+                alt={`${countryInfo.country_name} flag`}
+                className="w-5 h-4 object-cover rounded-sm"
+                onError={(e) => {
+                  // Fallback to a simple colored rectangle if flag fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  fallback?.classList.remove('hidden');
+                }}
+              />
+              <div className="w-5 h-4 bg-gray-300 rounded-sm hidden flex items-center justify-center">
+                <span className="text-xs text-gray-600">{countryInfo.country_code}</span>
+              </div>
+              <span className="text-sm font-medium text-gray-700">
+                {countryInfo.calling_code}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-4 bg-gray-200 rounded-sm"></div>
+              <span className="text-sm text-gray-500">+--</span>
+            </div>
+          )}
+        </div>
+
+        {/* Local Phone Number Input */}
+        <div className="flex-1">
+          <FormControl>
+            <Input
+              type="tel"
+              value={localPhone}
+              onChange={(e) => onLocalPhoneChange(e.target.value)}
+              placeholder={placeholder}
+              maxLength={15}
+              className={error ? 'border-red-500' : ''}
+            />
+          </FormControl>
+        </div>
+      </div>
+      
+      {error && (
+        <div className="text-sm text-red-600 mt-1">{error}</div>
+      )}
+      
+      {countryInfo && (
+        <div className="text-xs text-gray-500 mt-1">
+          Format: {countryInfo.calling_code} + local number (without country code)
+        </div>
+      )}
+      
+      <FormMessage />
+    </FormItem>
+  );
+}
