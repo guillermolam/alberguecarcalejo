@@ -213,20 +213,17 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
         </div>
 
         {/* Pricing Summary */}
-        <div className="bg-gradient-to-r from-[hsl(75,25%,55%)] to-[hsl(75,35%,25%)] text-white p-4 rounded-lg mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-2xl font-bold">{PRICE_PER_NIGHT}€</div>
-              <div className="text-sm opacity-90">Per person/night</div>
+        <div className="flex items-center justify-between bg-gray-50 px-4 py-2 rounded-md mb-6 border-l-4 border-[hsl(75,25%,55%)]">
+          <div className="flex items-center space-x-6">
+            <div className="text-sm text-gray-600">
+              <span className="font-semibold text-gray-800">{PRICE_PER_NIGHT}€</span> {t('pricing.per_night')}
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">{nights * PRICE_PER_NIGHT}€</div>
-              <div className="text-sm opacity-90">Total ({nights} {nights === 1 ? 'night' : 'nights'})</div>
+            <div className="text-sm text-gray-600">
+              <span className="font-semibold text-[hsl(75,35%,25%)]">{nights * PRICE_PER_NIGHT}€</span> {t('pricing.total')}
             </div>
-            <Euro className="h-8 w-8 opacity-75" />
           </div>
-          <div className="mt-2 text-sm opacity-90">
-            Payment due at arrival
+          <div className="text-xs text-gray-500 italic">
+            {t('pricing.payment_due')}
           </div>
         </div>
         

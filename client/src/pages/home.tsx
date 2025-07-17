@@ -101,7 +101,7 @@ export default function Home() {
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 font-title">
               {t('hero.welcome')}
             </h2>
-            <p className="text-xl text-blue-100 mb-8">
+            <p className="text-xl text-green-100 mb-8">
               {t('hero.subtitle')}
             </p>
             
