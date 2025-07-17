@@ -220,7 +220,7 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
                 <span className="font-semibold text-gray-800">{PRICE_PER_NIGHT}€</span> × {nights} {nights === 1 ? t('pricing.night') : t('pricing.nights')}
               </div>
               <div className="text-sm text-gray-600">
-                <span className="font-semibold text-[hsl(75,50%,35%)]">{nights * PRICE_PER_NIGHT}€</span> {t('pricing.total')}
+                <span className="font-semibold text-[#45c655]">{nights * PRICE_PER_NIGHT}€</span> {t('pricing.total')}
               </div>
             </div>
             <div className="text-xs text-gray-500 italic">
@@ -232,16 +232,16 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
               {t('pricing.accepted_methods')}
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-4 bg-[hsl(75,50%,35%)] rounded-sm flex items-center justify-center">
+              <div className="w-6 h-4 bg-[#45c655] rounded-sm flex items-center justify-center">
                 <span className="text-white text-xs font-bold">€</span>
               </div>
-              <div className="w-6 h-4 bg-[hsl(75,60%,50%)] rounded-sm flex items-center justify-center">
+              <div className="w-6 h-4 bg-[#9CA65A] rounded-sm flex items-center justify-center">
                 <span className="text-white text-xs font-bold">V</span>
               </div>
-              <div className="w-6 h-4 bg-[hsl(75,50%,35%)] rounded-sm flex items-center justify-center">
+              <div className="w-6 h-4 bg-[#45c655] rounded-sm flex items-center justify-center">
                 <span className="text-white text-xs font-bold">MC</span>
               </div>
-              <div className="w-6 h-4 bg-[hsl(75,60%,50%)] rounded-sm flex items-center justify-center">
+              <div className="w-6 h-4 bg-[#9CA65A] rounded-sm flex items-center justify-center">
                 <span className="text-white text-xs font-bold">Bz</span>
               </div>
             </div>
@@ -294,7 +294,7 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
         <Button
           onClick={handleContinue}
           disabled={!availability?.available || isLoading}
-          className="w-full bg-[hsl(75,50%,35%)] hover:bg-[hsl(75,50%,30%)] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          className="w-full bg-[#45c655] hover:bg-[#3bb048] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
         >
           {t('stay.continue')}
           <span className="ml-2">→</span>
