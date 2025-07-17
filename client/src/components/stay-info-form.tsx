@@ -213,17 +213,38 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
         </div>
 
         {/* Pricing Summary */}
-        <div className="flex items-center justify-between bg-gray-50 px-4 py-2 rounded-md mb-6 border-l-4 border-[hsl(75,25%,55%)]">
-          <div className="flex items-center space-x-6">
-            <div className="text-sm text-gray-600">
-              <span className="font-semibold text-gray-800">{PRICE_PER_NIGHT}€</span> {t('pricing.per_night')}
+        <div className="bg-gray-50 px-4 py-3 rounded-md mb-6 border-l-4 border-[hsl(75,25%,55%)]">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-6">
+              <div className="text-sm text-gray-600">
+                <span className="font-semibold text-gray-800">{PRICE_PER_NIGHT}€</span> × {nights} {nights === 1 ? t('pricing.night') : t('pricing.nights')}
+              </div>
+              <div className="text-sm text-gray-600">
+                <span className="font-semibold text-[hsl(75,35%,25%)]">{nights * PRICE_PER_NIGHT}€</span> {t('pricing.total')}
+              </div>
             </div>
-            <div className="text-sm text-gray-600">
-              <span className="font-semibold text-[hsl(75,35%,25%)]">{nights * PRICE_PER_NIGHT}€</span> {t('pricing.total')}
+            <div className="text-xs text-gray-500 italic">
+              {t('pricing.payment_due')}
             </div>
           </div>
-          <div className="text-xs text-gray-500 italic">
-            {t('pricing.payment_due')}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+            <div className="text-xs text-gray-500">
+              {t('pricing.accepted_methods')}
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-4 bg-[hsl(75,35%,25%)] rounded-sm flex items-center justify-center">
+                <span className="text-white text-xs font-bold">€</span>
+              </div>
+              <div className="w-6 h-4 bg-[hsl(75,25%,55%)] rounded-sm flex items-center justify-center">
+                <span className="text-white text-xs font-bold">V</span>
+              </div>
+              <div className="w-6 h-4 bg-[hsl(75,35%,25%)] rounded-sm flex items-center justify-center">
+                <span className="text-white text-xs font-bold">MC</span>
+              </div>
+              <div className="w-6 h-4 bg-[hsl(75,25%,55%)] rounded-sm flex items-center justify-center">
+                <span className="text-white text-xs font-bold">Bz</span>
+              </div>
+            </div>
           </div>
         </div>
         
