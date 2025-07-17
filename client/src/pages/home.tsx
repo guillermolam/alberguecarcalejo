@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { LanguageSelector } from "@/components/language-selector";
 import { StayInfoForm, StayData } from "@/components/stay-info-form";
-import { RegistrationForm } from "@/components/registration-form";
+import { RegistrationForm } from "@/components/registration-form-improved";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { ShieldQuestion, CheckCircle } from "lucide-react";

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Camera, Upload, X, CheckCircle } from "lucide-react";
 import { ocrService, OCRResult } from "@/lib/ocr";
-import { i18n } from "@/lib/i18n";
+import { useI18n } from "@/contexts/i18n-context";
 
 interface IdPhotoCaptureProps {
   onPhotoProcessed: (ocrResult: OCRResult) => void;
@@ -15,6 +15,7 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
+  const { t } = useI18n();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);

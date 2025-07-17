@@ -1,0 +1,568 @@
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Shield, ArrowLeft, Check, Camera, MapPin } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { IdPhotoCapture } from "./id-photo-capture";
+import { StayData } from "./stay-info-form";
+import { RegistrationStepper } from "./registration-stepper";
+import { GooglePlacesAutocomplete } from "./google-places-autocomplete";
+import { COUNTRIES, DOCUMENT_TYPES, PAYMENT_TYPES, GENDER_OPTIONS, PRICE_PER_NIGHT } from "@/lib/constants";
+import { useI18n } from "@/contexts/i18n-context";
+import { OCRResult } from "@/lib/ocr";
+import { validateDocument, formatDocument } from "@/lib/dni-validation";
+
+const registrationSchema = z.object({
+  firstName: z.string().min(1, "First name is required").max(50),
+  lastName1: z.string().min(1, "Last name is required").max(50),
+  lastName2: z.string().max(50).optional(),
+  birthDate: z.string().min(1, "Birth date is required"),
+  documentType: z.string().min(1, "Document type is required"),
+  documentNumber: z.string().min(1, "Document number is required").max(20).refine((val, ctx) => {
+    const docType = ctx.parent?.documentType;
+    if (docType && val) {
+      return validateDocument(docType, val);
+    }
+    return true;
+  }, "Invalid document number"),
+  documentSupport: z.string().max(9).optional(),
+  gender: z.string().min(1, "Gender is required"),
+  nationality: z.string().max(3).optional(),
+  addressCountry: z.string().min(1, "Country is required"),
+  addressStreet: z.string().min(1, "Address is required").max(100),
+  addressStreet2: z.string().max(100).optional(),
+  addressCity: z.string().min(1, "City is required").max(50),
+  addressPostalCode: z.string().min(1, "Postal code is required").max(10),
+  addressMunicipalityCode: z.string().max(5).optional(),
+  phone: z.string().min(1, "Phone is required").max(15),
+  email: z.string().email("Invalid email").max(100).optional(),
+  paymentType: z.string().min(1, "Payment type is required"),
+  language: z.string().default("es"),
+});
+
+type RegistrationFormData = z.infer<typeof registrationSchema>;
+
+interface RegistrationFormProps {
+  stayData: StayData;
+  onBack: () => void;
+  onSuccess: () => void;
+}
+
+export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFormProps) {
+  const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
+  const [hasPhotoProcessed, setHasPhotoProcessed] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { t } = useI18n();
+
+  const form = useForm<RegistrationFormData>({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      language: 'es',
+      paymentType: "EFECT",
+    },
+  });
+
+  // Auto-fill form when OCR data is available
+  useEffect(() => {
+    if (ocrResult) {
+      const updates: Partial<RegistrationFormData> = {};
+      
+      if (ocrResult.firstName) updates.firstName = ocrResult.firstName;
+      if (ocrResult.lastName) updates.lastName1 = ocrResult.lastName;
+      if (ocrResult.documentNumber) updates.documentNumber = ocrResult.documentNumber;
+      if (ocrResult.documentType) updates.documentType = ocrResult.documentType;
+      if (ocrResult.birthDate) updates.birthDate = ocrResult.birthDate;
+      if (ocrResult.nationality) updates.nationality = ocrResult.nationality;
+      
+      Object.entries(updates).forEach(([key, value]) => {
+        form.setValue(key as keyof RegistrationFormData, value as any);
+      });
+      
+      setHasPhotoProcessed(true);
+    }
+  }, [ocrResult, form]);
+
+  const registrationMutation = useMutation({
+    mutationFn: async (data: RegistrationFormData) => {
+      const pilgrimData = {
+        firstName: data.firstName,
+        lastName1: data.lastName1,
+        lastName2: data.lastName2 || "",
+        birthDate: data.birthDate,
+        documentType: data.documentType,
+        documentNumber: data.documentNumber,
+        documentSupport: data.documentSupport || "",
+        gender: data.gender,
+        nationality: data.nationality || "",
+        phone: data.phone,
+        email: data.email || "",
+        addressCountry: data.addressCountry,
+        addressStreet: data.addressStreet,
+        addressStreet2: data.addressStreet2 || "",
+        addressCity: data.addressCity,
+        addressPostalCode: data.addressPostalCode,
+        addressMunicipalityCode: data.addressMunicipalityCode || "",
+        language: data.language,
+        idPhotoUrl: "",
+      };
+
+      const bookingData = {
+        referenceNumber: "",
+        checkInDate: stayData.checkInDate,
+        checkOutDate: stayData.checkOutDate,
+        numberOfNights: stayData.nights,
+        numberOfPersons: stayData.guests,
+        numberOfRooms: 1,
+        hasInternet: false,
+        status: "confirmed",
+      };
+
+      const paymentData = {
+        amount: (PRICE_PER_NIGHT * stayData.nights).toFixed(2),
+        paymentType: data.paymentType,
+        paymentStatus: "pending",
+        currency: "EUR",
+      };
+
+      const response = await apiRequest("POST", "/api/register", {
+        pilgrim: pilgrimData,
+        booking: bookingData,
+        payment: paymentData,
+      });
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: t('notifications.success'),
+        description: `Reference: ${data.referenceNumber}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard'] });
+      onSuccess();
+    },
+    onError: (error) => {
+      toast({
+        title: t('notifications.error'),
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePhotoProcessed = (result: OCRResult) => {
+    setOcrResult(result);
+  };
+
+  const handlePlaceSelected = (place: any) => {
+    if (place?.address_components) {
+      const components = place.address_components;
+      
+      const streetNumber = components.find((c: any) => c.types.includes('street_number'))?.long_name || '';
+      const route = components.find((c: any) => c.types.includes('route'))?.long_name || '';
+      const city = components.find((c: any) => c.types.includes('locality'))?.long_name || '';
+      const postalCode = components.find((c: any) => c.types.includes('postal_code'))?.long_name || '';
+      const country = components.find((c: any) => c.types.includes('country'))?.short_name || '';
+      
+      if (streetNumber && route) {
+        form.setValue('addressStreet', `${streetNumber} ${route}`);
+      } else if (route) {
+        form.setValue('addressStreet', route);
+      }
+      
+      if (city) form.setValue('addressCity', city);
+      if (postalCode) form.setValue('addressPostalCode', postalCode);
+      if (country) form.setValue('addressCountry', country);
+    }
+  };
+
+  const onSubmit = (data: RegistrationFormData) => {
+    registrationMutation.mutate(data);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#3D5300] via-[#4a6200] to-[#3D5300] p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center mb-6">
+          <Button
+            onClick={onBack}
+            variant="outline"
+            className="mr-4 bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t('registration.back')}
+          </Button>
+          <h1 className="text-2xl font-bold text-white">
+            {t('registration.title')}
+          </h1>
+        </div>
+
+        <RegistrationStepper currentStep={2} />
+
+        <Card className="w-full bg-white/95 backdrop-blur-sm">
+          <CardContent className="p-6">
+            {/* Booking Summary */}
+            <div className="bg-gray-50 p-4 rounded-lg mb-6 border-l-4 border-[#45c655]">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold">{stayData.guests}</span> {stayData.guests === 1 ? t('guest.singular') : t('guest.plural')} × 
+                  <span className="font-semibold"> {stayData.nights}</span> {stayData.nights === 1 ? t('night.singular') : t('night.plural')}
+                </div>
+                <div className="text-lg font-bold text-[#45c655]">
+                  {(PRICE_PER_NIGHT * stayData.nights).toFixed(0)}€
+                </div>
+              </div>
+              <div className="text-xs text-gray-500">
+                {new Date(stayData.checkInDate).toLocaleDateString()} - {new Date(stayData.checkOutDate).toLocaleDateString()}
+              </div>
+            </div>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                
+                {/* Photo Capture Section */}
+                <Card className="border-[#45c655] border-2">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center text-[#3D5300]">
+                      <Camera className="w-5 h-5 mr-2" />
+                      {t('registration.photo_capture')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <IdPhotoCapture onPhotoProcessed={handlePhotoProcessed} />
+                    {hasPhotoProcessed && (
+                      <Alert className="mt-3 border-[#45c655] bg-green-50">
+                        <Check className="h-4 w-4 text-[#45c655]" />
+                        <AlertDescription className="text-[#3D5300]">
+                          {t('registration.ocr_success')}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Personal Information */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-[#3D5300]">{t('registration.personal_info')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.first_name')} *</FormLabel>
+                            <FormControl>
+                              <Input {...field} maxLength={50} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="lastName1"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.last_name_1')} *</FormLabel>
+                            <FormControl>
+                              <Input {...field} maxLength={50} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="lastName2"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.last_name_2')}</FormLabel>
+                            <FormControl>
+                              <Input {...field} maxLength={50} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="birthDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.birth_date')} *</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="documentType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.document_type')} *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t('registration.document_type')} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {DOCUMENT_TYPES.map((type) => (
+                                  <SelectItem key={type.value} value={type.value}>
+                                    {t(`document.${type.value.toLowerCase()}`)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="documentNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.document_number')} *</FormLabel>
+                            <FormControl>
+                              <Input {...field} maxLength={20} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.gender')} *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t('registration.gender')} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {GENDER_OPTIONS.map((gender) => (
+                                  <SelectItem key={gender.value} value={gender.value}>
+                                    {t(`gender.${gender.value.toLowerCase()}`)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Address Information */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-[#3D5300] flex items-center">
+                      <MapPin className="w-5 h-5 mr-2" />
+                      {t('registration.address_info')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="addressStreet"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.address')} *</FormLabel>
+                            <FormControl>
+                              <GooglePlacesAutocomplete
+                                value={field.value}
+                                onChange={field.onChange}
+                                onPlaceSelected={handlePlaceSelected}
+                                placeholder={t('registration.address')}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="addressCity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.city')} *</FormLabel>
+                            <FormControl>
+                              <Input {...field} maxLength={50} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="addressPostalCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.postal_code')} *</FormLabel>
+                            <FormControl>
+                              <Input {...field} maxLength={10} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="addressCountry"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.country')} *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t('registration.country')} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {COUNTRIES.map((country) => (
+                                  <SelectItem key={country.code} value={country.code}>
+                                    {country.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Contact & Payment */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-[#3D5300]">{t('registration.contact_info')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.phone')} *</FormLabel>
+                            <FormControl>
+                              <Input {...field} maxLength={15} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.email')}</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" maxLength={100} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="paymentType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('registration.payment_type')} *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t('registration.payment_type')} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {PAYMENT_TYPES.map((payment) => (
+                                  <SelectItem key={payment.value} value={payment.value}>
+                                    {t(`payment.${payment.label.toLowerCase()}`)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Compliance Notice */}
+                <Alert className="border-[#3D5300] bg-green-50">
+                  <Shield className="h-4 w-4 text-[#3D5300]" />
+                  <AlertDescription className="text-[#3D5300]">
+                    <strong>{t('registration.compliance')}</strong><br />
+                    {t('registration.compliance_text')}
+                  </AlertDescription>
+                </Alert>
+
+                {/* Submit Button */}
+                <div className="flex items-center justify-between pt-4">
+                  <Button
+                    type="button"
+                    onClick={onBack}
+                    variant="outline"
+                    className="border-[#3D5300] text-[#3D5300] hover:bg-[#3D5300] hover:text-white"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    {t('registration.back')}
+                  </Button>
+                  
+                  <Button
+                    type="submit"
+                    disabled={registrationMutation.isPending}
+                    className="bg-[#45c655] hover:bg-[#3bb048] text-white px-8"
+                  >
+                    {registrationMutation.isPending ? t('loading.processing') : t('registration.submit')}
+                  </Button>
+                </div>
+
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
