@@ -6,8 +6,10 @@ const auth0Config = {
   authorizationParams: {
     redirect_uri: window.location.origin + '/admin',
     audience: 'https://albergue-api.com',
-    scope: 'openid profile email'
-  }
+    scope: 'openid profile email read:admin write:admin'
+  },
+  cacheLocation: 'localstorage',
+  useRefreshTokens: true
 };
 
 export const auth0 = new Auth0Client(auth0Config);
