@@ -7,9 +7,11 @@ import { StayInfoForm, StayData } from "@/components/stay-info-form";
 import { RegistrationForm } from "@/components/registration-form";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { ShieldQuestion, Mountain, CheckCircle } from "lucide-react";
-import { i18n } from "@/lib/i18n";
+import { ShieldQuestion, CheckCircle } from "lucide-react";
+import { useI18n } from "@/contexts/i18n-context";
 import { PRICE_PER_NIGHT } from "@/lib/constants";
+import { auth0 } from "@/lib/auth0-mock";
+import { useLocation } from "wouter";
 
 type Step = 'stay-info' | 'registration' | 'success';
 
@@ -17,6 +19,8 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState<Step>('stay-info');
   const [stayData, setStayData] = useState<StayData | null>(null);
   const [showAdmin, setShowAdmin] = useState(false);
+  const { t } = useI18n();
+  const [, navigate] = useLocation();
 
   const { data: dashboardStats } = useQuery({
     queryKey: ['/api/dashboard/stats'],
@@ -44,6 +48,15 @@ export default function Home() {
     setStayData(null);
   };
 
+  const handleAdminLogin = async () => {
+    try {
+      await auth0.loginWithRedirect();
+      // If successful, user will be redirected to /admin
+    } catch (error) {
+      console.error('Admin login failed:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Header */}
@@ -52,9 +65,16 @@ export default function Home() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <Mountain className="text-blue-600 text-2xl" />
-                <h1 className="text-xl font-semibold text-gray-900">
-                  {i18n.t('nav.title')}
+                <img 
+                  src="https://le-de.cdn-website.com/4e684d9f728943a6941686bc89abe581/dms3rep/multi/opt/logoalbergue__msi___jpeg-1920w.jpeg"
+                  alt="Albergue Del Carrascalejo"
+                  className="h-10 w-auto"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <h1 className="text-xl font-semibold text-gray-900 font-title">
+                  {t('nav.title')}
                 </h1>
               </div>
             </div>
@@ -62,12 +82,12 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <LanguageSelector />
               <Button
-                onClick={() => setShowAdmin(!showAdmin)}
+                onClick={handleAdminLogin}
                 variant="outline"
                 size="sm"
               >
                 <ShieldQuestion className="w-4 h-4 mr-2" />
-                {i18n.t('nav.admin')}
+                {t('nav.admin')}
               </Button>
             </div>
           </div>
@@ -78,11 +98,11 @@ export default function Home() {
       <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              {i18n.t('hero.welcome')}
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 font-title">
+              {t('hero.welcome')}
             </h2>
             <p className="text-xl text-blue-100 mb-8">
-              {i18n.t('hero.subtitle')}
+              {t('hero.subtitle')}
             </p>
             
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
@@ -92,7 +112,7 @@ export default function Home() {
                     {dashboardStats?.occupancy?.available || 0}
                   </div>
                   <div className="text-sm text-blue-100">
-                    {i18n.t('hero.beds_available')}
+                    {t('hero.beds_available')}
                   </div>
                 </div>
                 <div className="w-px h-12 bg-white/20"></div>
@@ -101,7 +121,7 @@ export default function Home() {
                     {PRICE_PER_NIGHT}€
                   </div>
                   <div className="text-sm text-blue-100">
-                    {i18n.t('hero.price_per_night')}
+                    {t('hero.price_per_night')}
                   </div>
                 </div>
               </div>
@@ -132,11 +152,11 @@ export default function Home() {
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle className="w-8 h-8 text-green-600" />
                   </div>
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-                    ¡Registro completado!
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-2 font-title">
+                    {t('notifications.success')}
                   </h3>
                   <p className="text-gray-600">
-                    Tu registro ha sido enviado exitosamente a las autoridades españolas.
+                    {t('loading.submitting')}
                   </p>
                 </div>
                 
@@ -150,7 +170,7 @@ export default function Home() {
                 </Alert>
                 
                 <Button onClick={handleStartOver} className="w-full">
-                  Realizar otro registro
+                  {t('stay.continue')}
                 </Button>
               </CardContent>
             </Card>

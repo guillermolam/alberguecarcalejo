@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,12 +14,74 @@ import {
   Shield,
   TrendingUp,
   Users,
-  Calendar
+  Calendar,
+  LogOut
 } from "lucide-react";
-import { i18n } from "@/lib/i18n";
+import { useI18n } from "@/contexts/i18n-context";
+import { auth0, Auth0User } from "@/lib/auth0-mock";
+import { useLocation } from "wouter";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [user, setUser] = useState<Auth0User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const authenticated = await auth0.isAuthenticatedAsync();
+        setIsAuthenticated(authenticated);
+        
+        if (authenticated) {
+          const userData = await auth0.getUser();
+          setUser(userData);
+        } else {
+          // Redirect to home if not authenticated
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        navigate('/');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await auth0.logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600">Authentication required</p>
+        </div>
+      </div>
+    );
+  }
 
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
@@ -57,7 +119,14 @@ export default function Admin() {
   );
 
   if (statsLoading) {
-    return <div className="min-h-screen bg-gray-50 p-6">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">{t('loading.processing')}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -66,7 +135,11 @@ export default function Admin() {
         {/* Sidebar */}
         <aside className="w-64 bg-gray-900 text-white min-h-screen">
           <div className="p-6">
-            <h2 className="text-xl font-semibold">{i18n.t('admin.title')}</h2>
+            <h2 className="text-xl font-semibold font-title">{t('admin.title')}</h2>
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <p className="text-sm text-gray-400">Welcome</p>
+              <p className="text-sm font-medium">{user?.name || user?.email}</p>
+            </div>
           </div>
           
           <nav className="mt-6">

@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle } from "lucide-react";
+import { CheckCircle, AlertCircle, Plus, Minus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { i18n } from "@/lib/i18n";
+import { useI18n } from "@/contexts/i18n-context";
+import { MAX_NIGHTS } from "@/lib/constants";
 
 interface StayInfoFormProps {
   onContinue: (stayData: StayData) => void;
@@ -22,10 +23,23 @@ export interface StayData {
 }
 
 export function StayInfoForm({ onContinue }: StayInfoFormProps) {
+  const { t, formatDate } = useI18n();
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
-  const [nights, setNights] = useState(1);
+  const [nights, setNights] = useState(2); // Default 2 nights
   const [guests] = useState(1); // Fixed to 1 for individual registration
+  
+  // Set today as default check-in date
+  useEffect(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    setCheckInDate(todayStr);
+    
+    // Calculate default checkout date (today + 2 nights)
+    const checkoutDate = new Date(today);
+    checkoutDate.setDate(checkoutDate.getDate() + 2);
+    setCheckOutDate(checkoutDate.toISOString().split('T')[0]);
+  }, []);
 
   const { data: availability, isLoading, error } = useQuery({
     queryKey: ['/api/availability', checkInDate, checkOutDate, guests],
@@ -63,12 +77,27 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
   };
 
   const handleNightsChange = (nightsValue: number) => {
-    setNights(nightsValue);
+    const validNights = Math.max(1, Math.min(MAX_NIGHTS, nightsValue));
+    setNights(validNights);
     if (checkInDate) {
       const startDate = new Date(checkInDate);
       const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + nightsValue);
+      endDate.setDate(endDate.getDate() + validNights);
       setCheckOutDate(endDate.toISOString().split('T')[0]);
+    }
+  };
+
+  const adjustNights = (delta: number) => {
+    handleNightsChange(nights + delta);
+  };
+
+  const handleNightsInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, ''); // Only allow numbers
+    if (value === '') {
+      setNights(1);
+    } else {
+      const numValue = parseInt(value);
+      handleNightsChange(numValue);
     }
   };
 
@@ -88,14 +117,14 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardContent className="p-6">
-        <h3 className="text-2xl font-semibold text-gray-900 mb-6">
-          {i18n.t('stay.title')}
+        <h3 className="text-2xl font-semibold text-gray-900 mb-6 font-title">
+          {t('stay.title')}
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="md:col-span-2">
             <Label className="text-sm font-medium text-gray-700 mb-2">
-              {i18n.t('stay.dates')}
+              {t('stay.dates')}
             </Label>
             <div className="flex space-x-2">
               <Input
@@ -117,32 +146,56 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
           
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-2">
-              {i18n.t('stay.nights')}
+              {t('stay.nights')}
             </Label>
-            <Input
-              type="number"
-              value={nights}
-              onChange={(e) => handleNightsChange(parseInt(e.target.value))}
-              min="1"
-              max="14"
-              className="w-full"
-            />
+            <div className="flex items-center space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => adjustNights(-1)}
+                disabled={nights <= 1}
+                className="px-2"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                type="text"
+                value={nights}
+                onChange={handleNightsInputChange}
+                className="flex-1 text-center"
+                placeholder="2"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => adjustNights(1)}
+                disabled={nights >= MAX_NIGHTS}
+                className="px-2"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Max {MAX_NIGHTS} nights
+            </p>
           </div>
           
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-2">
-              {i18n.t('stay.guests')}
+              {t('stay.guests')}
             </Label>
             <Select value="1" disabled>
               <SelectTrigger className="w-full">
-                <SelectValue>1 {i18n.t('stay.guest_single')}</SelectValue>
+                <SelectValue>1 {t('stay.guest_single')}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1 {i18n.t('stay.guest_single')}</SelectItem>
+                <SelectItem value="1">1 {t('stay.guest_single')}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-gray-500 mt-1">
-              {i18n.t('stay.individual_only')}
+              {t('stay.individual_only')}
             </p>
           </div>
         </div>
@@ -151,7 +204,7 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Checking availability...
+              {t('loading.processing')}
             </AlertDescription>
           </Alert>
         )}
@@ -160,7 +213,7 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Error checking availability. Please try again.
+              {t('notifications.error')}
             </AlertDescription>
           </Alert>
         )}
@@ -171,17 +224,17 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
               <Alert className="bg-green-50 border-green-200">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <AlertDescription className="text-green-800">
-                  {i18n.t('stay.available', { count: availability.availableBeds })}
+                  {t('stay.available', { count: availability.availableBeds })}
                 </AlertDescription>
               </Alert>
             ) : (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {i18n.t('stay.not_available')}
+                  {t('stay.not_available')}
                   {availability.nextAvailableDate && (
                     <div className="mt-2">
-                      {i18n.t('stay.next_available', { date: availability.nextAvailableDate })}
+                      {t('stay.next_available', { date: formatDate(availability.nextAvailableDate) })}
                     </div>
                   )}
                 </AlertDescription>
@@ -195,7 +248,7 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
           disabled={!availability?.available || isLoading}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
         >
-          {i18n.t('stay.continue')}
+          {t('stay.continue')}
           <span className="ml-2">→</span>
         </Button>
       </CardContent>

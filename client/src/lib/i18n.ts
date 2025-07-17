@@ -80,6 +80,10 @@ export const translations: Record<string, Translations> = {
     'errors.invalid_email': 'Email inválido',
     'errors.invalid_document': 'Formato de documento inválido',
     'errors.invalid_phone': 'Formato de teléfono inválido',
+    'auth.welcome': 'Bienvenido',
+    'auth.logout': 'Cerrar sesión',
+    'auth.login_required': 'Autenticación requerida',
+    'auth.loading': 'Cargando panel de administración...',
   },
   en: {
     'nav.title': 'Albergue Del Carrascalejo',
@@ -156,6 +160,10 @@ export const translations: Record<string, Translations> = {
     'errors.invalid_email': 'Invalid email',
     'errors.invalid_document': 'Invalid document format',
     'errors.invalid_phone': 'Invalid phone format',
+    'auth.welcome': 'Welcome',
+    'auth.logout': 'Logout',
+    'auth.login_required': 'Authentication required',
+    'auth.loading': 'Loading admin panel...',
   },
   // Additional languages would be added here...
 };

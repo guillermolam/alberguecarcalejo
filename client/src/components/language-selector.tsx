@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { 
   Select, 
   SelectContent, 
@@ -8,26 +6,30 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { LANGUAGES } from "@/lib/constants";
-import { i18n } from "@/lib/i18n";
+import { useI18n } from "@/contexts/i18n-context";
 
 export function LanguageSelector() {
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.getLanguage());
+  const { language, setLanguage } = useI18n();
 
-  const handleLanguageChange = (language: string) => {
-    setCurrentLanguage(language);
-    i18n.setLanguage(language);
-    // Force re-render of the entire app
-    window.location.reload();
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
   };
 
-  const currentLang = LANGUAGES.find(lang => lang.code === currentLanguage);
+  const currentLang = LANGUAGES.find(lang => lang.code === language);
 
   return (
-    <Select value={currentLanguage} onValueChange={handleLanguageChange}>
+    <Select value={language} onValueChange={handleLanguageChange}>
       <SelectTrigger className="w-40">
         <SelectValue>
           <div className="flex items-center space-x-2">
-            <span>{currentLang?.flag}</span>
+            <img 
+              src={currentLang?.flag} 
+              alt={currentLang?.flagAlt} 
+              className="w-4 h-3"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
             <span className="text-sm">{currentLang?.name}</span>
           </div>
         </SelectValue>
@@ -36,7 +38,14 @@ export function LanguageSelector() {
         {LANGUAGES.map((language) => (
           <SelectItem key={language.code} value={language.code}>
             <div className="flex items-center space-x-2">
-              <span>{language.flag}</span>
+              <img 
+                src={language.flag} 
+                alt={language.flagAlt} 
+                className="w-4 h-3"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
               <span>{language.name}</span>
             </div>
           </SelectItem>
