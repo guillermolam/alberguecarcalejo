@@ -1,0 +1,198 @@
+import { z } from 'zod';
+
+// Backend validation API calls
+async function validateDocumentAPI(documentType: string, documentNumber: string): Promise<{
+  isValid: boolean;
+  errorMessage?: string;
+  normalizedNumber?: string;
+}> {
+  try {
+    const response = await fetch('/api/validate/document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ documentType, documentNumber })
+    });
+    
+    if (!response.ok) {
+      if (response.status === 429) {
+        return { isValid: false, errorMessage: 'Too many validation attempts. Please try again later.' };
+      }
+      throw new Error('Validation service error');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Document validation error:', error);
+    return { isValid: false, errorMessage: 'Validation service temporarily unavailable' };
+  }
+}
+
+async function validateEmailAPI(email: string): Promise<{
+  isValid: boolean;
+  normalizedEmail?: string;
+}> {
+  try {
+    const response = await fetch('/api/validate/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    
+    if (!response.ok) throw new Error('Email validation error');
+    return await response.json();
+  } catch (error) {
+    console.error('Email validation error:', error);
+    return { isValid: false };
+  }
+}
+
+async function validatePhoneAPI(phone: string, countryCode: string): Promise<{
+  isValid: boolean;
+  normalizedPhone?: string;
+}> {
+  try {
+    const response = await fetch('/api/validate/phone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, countryCode })
+    });
+    
+    if (!response.ok) throw new Error('Phone validation error');
+    return await response.json();
+  } catch (error) {
+    console.error('Phone validation error:', error);
+    return { isValid: false };
+  }
+}
+
+// Country-specific phone validation patterns
+const PHONE_PATTERNS = {
+  'ESP': /^(\+34|0034|34)?[6789]\d{8}$/,
+  'FRA': /^(\+33|0033|33)?[67]\d{8}$/,
+  'DEU': /^(\+49|0049|49)?1[5-7]\d{8,9}$/,
+  'ITA': /^(\+39|0039|39)?3\d{8,9}$/,
+  'PRT': /^(\+351|00351|351)?9[1236]\d{7}$/,
+  'USA': /^(\+1|001|1)?[2-9]\d{2}[2-9]\d{2}\d{4}$/,
+  'GBR': /^(\+44|0044|44)?7\d{9}$/,
+  'DEFAULT': /^(\+\d{1,4})?[\s\-]?\d{7,15}$/
+};
+
+// Enhanced email validation using backend API
+const emailSchema = z.string()
+  .max(100, 'Email must be less than 100 characters')
+  .optional()
+  .or(z.literal(''))
+  .refine(async (email) => {
+    if (!email) return true; // Optional field
+    const result = await validateEmailAPI(email);
+    return result.isValid;
+  }, 'Please enter a valid email address');
+
+// Phone validation with country code using backend API
+export const createPhoneSchema = (countryCode?: string) => {
+  return z.string()
+    .min(1, 'Phone number is required')
+    .max(20, 'Phone number must be less than 20 characters')
+    .refine(async (phone) => {
+      if (!phone || !countryCode) return true;
+      const result = await validatePhoneAPI(phone, countryCode);
+      return result.isValid;
+    }, `Please enter a valid phone number${countryCode ? ` for ${countryCode}` : ''}`);
+};
+
+// Document validation using backend API
+export const createDocumentSchema = (documentType: string) => {
+  return z.string()
+    .min(1, 'Document number is required')
+    .max(20, 'Document number must be less than 20 characters')
+    .refine(async (docNumber) => {
+      if (!docNumber || !documentType) return true; // Skip validation if empty
+      const result = await validateDocumentAPI(documentType, docNumber);
+      return result.isValid;
+    }, `Please enter a valid ${documentType} number`);
+};
+
+// Birth date validation (1-150 years old)
+export const birthDateSchema = z.string()
+  .min(1, 'Birth date is required')
+  .refine((date) => {
+    const birthDate = new Date(date);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      return age >= 1 && age <= 150;
+    }
+    
+    return age >= 1 && age <= 150;
+  }, 'Age must be between 1 and 150 years');
+
+// Text field validations
+export const nameSchema = z.string()
+  .min(1, 'This field is required')
+  .max(50, 'Name must be less than 50 characters')
+  .regex(/^[a-zA-ZÀ-ÿĀ-žА-я\s\-'\.]+$/, 'Only letters, spaces, hyphens, apostrophes and dots allowed');
+
+export const addressSchema = z.string()
+  .min(1, 'Address is required')
+  .max(100, 'Address must be less than 100 characters')
+  .regex(/^[a-zA-Z0-9À-ÿĀ-žА-я\s\-,\.#\/]+$/, 'Invalid address format');
+
+export const citySchema = z.string()
+  .min(1, 'City is required')
+  .max(50, 'City must be less than 50 characters')
+  .regex(/^[a-zA-ZÀ-ÿĀ-žА-я\s\-'\.]+$/, 'Only letters, spaces, hyphens, apostrophes and dots allowed');
+
+export const postalCodeSchema = z.string()
+  .min(1, 'Postal code is required')
+  .max(10, 'Postal code must be less than 10 characters')
+  .regex(/^[a-zA-Z0-9\s\-]+$/, 'Invalid postal code format');
+
+// Extract country code from country selection
+export const getCountryCode = (countryName: string): string => {
+  const countryMap: Record<string, string> = {
+    'España': 'ESP',
+    'Spain': 'ESP',
+    'Francia': 'FRA',
+    'France': 'FRA',
+    'Alemania': 'DEU',
+    'Germany': 'DEU',
+    'Italia': 'ITA',
+    'Italy': 'ITA',
+    'Portugal': 'PRT',
+    'Estados Unidos': 'USA',
+    'United States': 'USA',
+    'Reino Unido': 'GBR',
+    'United Kingdom': 'GBR'
+  };
+  
+  return countryMap[countryName] || 'DEFAULT';
+};
+
+// Registration form schema factory
+export const createRegistrationSchema = (documentType?: string, countryCode?: string) => {
+  return z.object({
+    firstName: nameSchema,
+    lastName1: nameSchema,
+    lastName2: nameSchema.optional().or(z.literal('')),
+    birthDate: birthDateSchema,
+    documentType: z.string().min(1, 'Document type is required'),
+    documentNumber: documentType ? createDocumentSchema(documentType) : z.string().min(1, 'Document number is required'),
+    gender: z.string().min(1, 'Gender is required'),
+    nationality: z.string().length(3).optional().or(z.literal('')),
+    addressCountry: z.string().min(1, 'Country is required'),
+    addressStreet: addressSchema,
+    addressStreet2: z.string().max(100, 'Additional address must be less than 100 characters').optional().or(z.literal('')),
+    addressCity: citySchema,
+    addressPostalCode: postalCodeSchema,
+    addressMunicipalityCode: z.string().max(10, 'Municipality code must be less than 10 characters').optional().or(z.literal('')),
+    phone: countryCode ? createPhoneSchema(countryCode) : z.string().min(1, 'Phone number is required'),
+    email: emailSchema.optional().or(z.literal('')),
+    paymentType: z.string().min(1, 'Payment type is required'),
+    language: z.string().default('es'),
+    documentSupport: z.string().max(9).optional().or(z.literal(''))
+  });
+};
+
+export type RegistrationFormData = z.infer<ReturnType<typeof createRegistrationSchema>>;

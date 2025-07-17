@@ -28,6 +28,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize beds on startup
   await storage.initializeBeds();
 
+  // Document validation endpoint
+  app.post("/api/validate/document", async (req, res) => {
+    try {
+      const clientId = getClientFingerprint(req);
+      const rateLimit = checkRateLimit(clientId, 'DOCUMENT_VALIDATION');
+      
+      if (!rateLimit.allowed) {
+        return res.status(429).json({ 
+          error: "Rate limit exceeded", 
+          resetTime: rateLimit.resetTime 
+        });
+      }
+
+      const { documentType, documentNumber } = req.body;
+      const result = validateDocumentNumber(documentType, documentNumber, clientId);
+      
+      res.json(result);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  // Email validation endpoint
+  app.post("/api/validate/email", async (req, res) => {
+    try {
+      const clientId = getClientFingerprint(req);
+      const rateLimit = checkRateLimit(clientId, 'DOCUMENT_VALIDATION');
+      
+      if (!rateLimit.allowed) {
+        return res.status(429).json({ error: "Rate limit exceeded" });
+      }
+
+      const { email } = req.body;
+      const isValid = validateEmailFormat(sanitizeInput(email, 100));
+      
+      res.json({ isValid, normalizedEmail: isValid ? email.trim() : undefined });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
+  // Phone validation endpoint
+  app.post("/api/validate/phone", async (req, res) => {
+    try {
+      const clientId = getClientFingerprint(req);
+      const rateLimit = checkRateLimit(clientId, 'DOCUMENT_VALIDATION');
+      
+      if (!rateLimit.allowed) {
+        return res.status(429).json({ error: "Rate limit exceeded" });
+      }
+
+      const { phone, countryCode } = req.body;
+      const isValid = validatePhoneNumber(sanitizeInput(phone, 20), countryCode);
+      
+      res.json({ isValid, normalizedPhone: isValid ? phone.trim() : undefined });
+    } catch (error) {
+      res.status(400).json({ error: "Invalid request" });
+    }
+  });
+
   // Check availability endpoint
   app.post("/api/availability", async (req, res) => {
     try {

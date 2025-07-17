@@ -19,37 +19,7 @@ import { GooglePlacesAutocomplete } from "./google-places-autocomplete";
 import { COUNTRIES, DOCUMENT_TYPES, PAYMENT_TYPES, GENDER_OPTIONS, PRICE_PER_NIGHT } from "@/lib/constants";
 import { useI18n } from "@/contexts/i18n-context";
 import { OCRResult } from "@/lib/ocr";
-import { validateDocument, formatDocument } from "@/lib/dni-validation";
-
-const registrationSchema = z.object({
-  firstName: z.string().min(1, "First name is required").max(50),
-  lastName1: z.string().min(1, "Last name is required").max(50),
-  lastName2: z.string().max(50).optional(),
-  birthDate: z.string().min(1, "Birth date is required"),
-  documentType: z.string().min(1, "Document type is required"),
-  documentNumber: z.string().min(1, "Document number is required").max(20).refine((val, ctx) => {
-    const docType = ctx.parent?.documentType;
-    if (docType && val) {
-      return validateDocument(docType, val);
-    }
-    return true;
-  }, "Invalid document number"),
-  documentSupport: z.string().max(9).optional(),
-  gender: z.string().min(1, "Gender is required"),
-  nationality: z.string().max(3).optional(),
-  addressCountry: z.string().min(1, "Country is required"),
-  addressStreet: z.string().min(1, "Address is required").max(100),
-  addressStreet2: z.string().max(100).optional(),
-  addressCity: z.string().min(1, "City is required").max(50),
-  addressPostalCode: z.string().min(1, "Postal code is required").max(10),
-  addressMunicipalityCode: z.string().max(5).optional(),
-  phone: z.string().min(1, "Phone is required").max(15),
-  email: z.string().email("Invalid email").max(100).optional(),
-  paymentType: z.string().min(1, "Payment type is required"),
-  language: z.string().default("es"),
-});
-
-type RegistrationFormData = z.infer<typeof registrationSchema>;
+import { createRegistrationSchema, getCountryCode, type RegistrationFormData } from "@/lib/validation";
 
 interface RegistrationFormProps {
   stayData: StayData;
@@ -60,17 +30,38 @@ interface RegistrationFormProps {
 export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFormProps) {
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
   const [hasPhotoProcessed, setHasPhotoProcessed] = useState(false);
+  const [selectedDocumentType, setSelectedDocumentType] = useState("");
+  const [detectedCountryCode, setDetectedCountryCode] = useState("ESP");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useI18n();
 
   const form = useForm<RegistrationFormData>({
-    resolver: zodResolver(registrationSchema),
+    resolver: zodResolver(createRegistrationSchema(selectedDocumentType, detectedCountryCode)),
     defaultValues: {
       language: 'es',
-      paymentType: "EFECT",
+      paymentType: "cash",
+      addressCountry: '',
+      firstName: '',
+      lastName1: '',
+      lastName2: '',
+      documentType: '',
+      documentNumber: '',
+      documentSupport: '',
+      gender: '',
+      nationality: '',
+      birthDate: '',
+      addressStreet: '',
+      addressStreet2: '',
+      addressCity: '',
+      addressPostalCode: '',
+      addressMunicipalityCode: '',
+      phone: '',
+      email: ''
     },
   });
+
+  // Removed duplicate function - using the one below
 
   // Auto-fill form when OCR data is available
   useEffect(() => {
@@ -80,7 +71,10 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
       if (ocrResult.firstName) updates.firstName = ocrResult.firstName;
       if (ocrResult.lastName) updates.lastName1 = ocrResult.lastName;
       if (ocrResult.documentNumber) updates.documentNumber = ocrResult.documentNumber;
-      if (ocrResult.documentType) updates.documentType = ocrResult.documentType;
+      if (ocrResult.documentType) {
+        updates.documentType = ocrResult.documentType;
+        setSelectedDocumentType(ocrResult.documentType);
+      }
       if (ocrResult.birthDate) updates.birthDate = ocrResult.birthDate;
       if (ocrResult.nationality) updates.nationality = ocrResult.nationality;
       
@@ -163,6 +157,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
     setOcrResult(result);
   };
 
+  // Updated handlePlaceSelected with country code detection
   const handlePlaceSelected = (place: any) => {
     if (place?.address_components) {
       const components = place.address_components;
@@ -171,7 +166,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
       const route = components.find((c: any) => c.types.includes('route'))?.long_name || '';
       const city = components.find((c: any) => c.types.includes('locality'))?.long_name || '';
       const postalCode = components.find((c: any) => c.types.includes('postal_code'))?.long_name || '';
-      const country = components.find((c: any) => c.types.includes('country'))?.short_name || '';
+      const country = components.find((c: any) => c.types.includes('country'))?.long_name || '';
       
       if (streetNumber && route) {
         form.setValue('addressStreet', `${streetNumber} ${route}`);
@@ -181,7 +176,12 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
       
       if (city) form.setValue('addressCity', city);
       if (postalCode) form.setValue('addressPostalCode', postalCode);
-      if (country) form.setValue('addressCountry', country);
+      if (country) {
+        form.setValue('addressCountry', country);
+        // Detect country code for phone validation
+        const countryCode = getCountryCode(country);
+        setDetectedCountryCode(countryCode);
+      }
     }
   };
 
@@ -319,7 +319,10 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t('registration.document_type')} *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={(value) => {
+                              field.onChange(value);
+                              setSelectedDocumentType(value);
+                            }} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder={t('registration.document_type')} />
@@ -515,7 +518,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                               <SelectContent>
                                 {PAYMENT_TYPES.map((payment) => (
                                   <SelectItem key={payment.code} value={payment.code}>
-                                    {payment.name}
+                                    {t(`payment.${payment.code.toLowerCase()}`)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>

@@ -8,7 +8,7 @@ declare global {
 }
 
 interface GooglePlacesAutocompleteProps {
-  value: string;
+  value?: string;
   onChange: (value: string) => void;
   onPlaceSelected?: (place: any) => void;
   placeholder?: string;
@@ -16,7 +16,7 @@ interface GooglePlacesAutocompleteProps {
 }
 
 export function GooglePlacesAutocomplete({
-  value,
+  value = '',
   onChange,
   onPlaceSelected,
   placeholder = "Enter an address",

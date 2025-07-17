@@ -32,10 +32,11 @@ The application follows a modern full-stack architecture with enhanced security 
 
 ### Backend Architecture
 - **BFF Security Layer**: 
-  - **Registration BFF**: Rust-WASM module with rate limiting (10 availability checks/min, 3 registrations/hour)
-  - **Admin BFF**: Rust-WASM module with authentication and stricter rate limits (5 auth attempts/hour)
-  - **Input Validation**: Spanish document validation, XSS prevention, buffer overflow protection
-  - **Abuse Detection**: Pattern recognition for bot behavior and suspicious activity
+  - **Registration BFF**: Rust-WASM module with rate limiting (10 document validations/5min, 3 registrations/hour, 5 OCR/10min)
+  - **Admin BFF**: Rust-WASM module with authentication and stricter rate limits (5 auth attempts/hour, 50 operations/hour, 10 exports/hour)
+  - **Input Validation**: Spanish document validation (DNI/NIE/Passport), XSS prevention, buffer overflow protection
+  - **Security Features**: Client fingerprinting, progressive lockouts, operation whitelisting, export restrictions
+  - **Abuse Detection**: Pattern recognition for bot behavior, developer tools detection, timing analysis
 - **Express.js Server**: RESTful API with middleware for logging and error handling
 - **Service Layer**: Separated business logic into dedicated services
 - **Storage Layer**: Abstract storage interface with Drizzle ORM implementation
@@ -51,11 +52,18 @@ The database schema supports:
 
 ### Authentication & Security
 - **Multi-layered Security**: Rust-WASM BFF modules provide enhanced input validation and rate limiting
-- **Admin Authentication**: Session-based auth with SHA-256 hashing and progressive lockouts
-- **Rate Limiting**: Granular limits per operation type (availability, registration, admin functions)
+- **Admin Authentication**: Session-based auth with SHA-256 hashing and progressive lockouts (5min after 3 failures, 30min after 5+ failures)
+- **Rate Limiting**: Granular limits per operation type:
+  - Document validation: 10 per 5 minutes
+  - Registration: 3 per hour
+  - OCR processing: 5 per 10 minutes
+  - Admin auth: 5 per hour
+  - Admin operations: 50 per hour
+  - Admin exports: 10 per hour
 - **Input Sanitization**: XSS prevention, SQL injection protection, buffer overflow safeguards
-- **Document Validation**: Real-time Spanish DNI/NIE/Passport validation with checksums
-- **Client Fingerprinting**: Browser-based identification for abuse detection
+- **Document Validation**: Backend-verified Spanish DNI/NIE/Passport validation with checksums to prevent CSRF attacks
+- **Client Fingerprinting**: Enhanced browser-based identification for abuse detection
+- **Security Monitoring**: Automated behavior detection, developer tools detection, suspicious timing analysis
 - **Data Protection**: Compliance with Spanish regulations and GDPR
 - **Automatic Government Reporting**: Secure XML submissions with retry logic
 
