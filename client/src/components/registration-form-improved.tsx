@@ -327,8 +327,8 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                               </FormControl>
                               <SelectContent>
                                 {DOCUMENT_TYPES.map((type) => (
-                                  <SelectItem key={type.value} value={type.value}>
-                                    {t(`document.${type.value.toLowerCase()}`)}
+                                  <SelectItem key={type.code} value={type.code}>
+                                    {t(`document.${type.code.toLowerCase()}`)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -366,8 +366,8 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                               </FormControl>
                               <SelectContent>
                                 {GENDER_OPTIONS.map((gender) => (
-                                  <SelectItem key={gender.value} value={gender.value}>
-                                    {t(`gender.${gender.value.toLowerCase()}`)}
+                                  <SelectItem key={gender.code} value={gender.code}>
+                                    {t(`gender.${gender.code.toLowerCase()}`)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
