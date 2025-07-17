@@ -10,7 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ShieldQuestion, CheckCircle } from "lucide-react";
 import { useI18n } from "@/contexts/i18n-context";
 import { PRICE_PER_NIGHT } from "@/lib/constants";
-import { auth0 } from "@/lib/auth0-mock";
+import { auth0Service } from "@/lib/auth0";
 import { useLocation } from "wouter";
 
 type Step = 'stay-info' | 'registration' | 'success';
@@ -50,7 +50,7 @@ export default function Home() {
 
   const handleAdminLogin = async () => {
     try {
-      await auth0.loginWithRedirect();
+      await auth0Service.loginWithRedirect();
       // If successful, user will be redirected to /admin
     } catch (error) {
       console.error('Admin login failed:', error);
@@ -95,7 +95,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-[hsl(203,84%,25%)] to-[hsl(203,84%,20%)] text-white py-12">
+      <section className="bg-gradient-to-br from-[hsl(75,35%,25%)] to-[hsl(75,35%,20%)] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 font-title">
@@ -108,19 +108,19 @@ export default function Home() {
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
               <div className="flex items-center justify-center space-x-4 text-lg">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[hsl(142,76%,56%)]">
+                  <div className="text-2xl font-bold text-[hsl(75,25%,75%)]">
                     {dashboardStats?.occupancy?.available || 0}
                   </div>
-                  <div className="text-sm text-blue-100">
+                  <div className="text-sm text-green-100">
                     {t('hero.beds_available')}
                   </div>
                 </div>
                 <div className="w-px h-12 bg-white/20"></div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[hsl(43,74%,76%)]">
+                  <div className="text-2xl font-bold text-[hsl(240,100%,75%)]">
                     {PRICE_PER_NIGHT}€
                   </div>
-                  <div className="text-sm text-blue-100">
+                  <div className="text-sm text-green-100">
                     {t('hero.price_per_night')}
                   </div>
                 </div>

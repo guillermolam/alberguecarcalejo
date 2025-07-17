@@ -18,7 +18,7 @@ import {
   LogOut
 } from "lucide-react";
 import { useI18n } from "@/contexts/i18n-context";
-import { auth0, Auth0User } from "@/lib/auth0-mock";
+import { auth0Service, Auth0User } from "@/lib/auth0";
 import { useLocation } from "wouter";
 
 export default function Admin() {
@@ -32,11 +32,17 @@ export default function Admin() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const authenticated = await auth0.isAuthenticatedAsync();
+        // Handle Auth0 callback if present
+        if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
+          await auth0Service.handleRedirectCallback();
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        const authenticated = await auth0Service.isAuthenticated();
         setIsAuthenticated(authenticated);
         
         if (authenticated) {
-          const userData = await auth0.getUser();
+          const userData = await auth0Service.getUser();
           setUser(userData);
         } else {
           // Redirect to home if not authenticated
@@ -55,7 +61,7 @@ export default function Admin() {
 
   const handleLogout = async () => {
     try {
-      await auth0.logout();
+      await auth0Service.logout();
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -135,7 +141,7 @@ export default function Admin() {
     <div className="min-h-screen bg-[hsl(45,50%,95%)]">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-gradient-to-b from-[hsl(203,84%,25%)] to-[hsl(203,84%,20%)] text-white min-h-screen">
+        <aside className="w-64 bg-gradient-to-b from-[hsl(75,35%,25%)] to-[hsl(75,35%,20%)] text-white min-h-screen">
           <div className="p-6">
             <h2 className="text-xl font-semibold font-title">{t('admin.title')}</h2>
             <div className="mt-4 pt-4 border-t border-white/20">
@@ -199,28 +205,28 @@ export default function Admin() {
                   title={t('admin.occupancy_today')}
                   value={`${dashboardStats?.occupancy?.occupied || 0}/${dashboardStats?.occupancy?.total || 0}`}
                   icon={Bed}
-                  color="text-[hsl(203,84%,25%)]"
+                  color="text-[hsl(75,35%,25%)]"
                 />
                 
                 <StatCard
                   title={t('admin.revenue_today')}
                   value={`${dashboardStats?.revenue?.total || 0}€`}
                   icon={Euro}
-                  color="text-[hsl(142,76%,36%)]"
+                  color="text-[hsl(75,25%,55%)]"
                 />
                 
                 <StatCard
                   title={t('admin.pending_checkins')}
                   value={dashboardStats?.compliance?.pendingSubmissions || 0}
                   icon={Clock}
-                  color="text-[hsl(43,74%,66%)]"
+                  color="text-[hsl(240,100%,50%)]"
                 />
                 
                 <StatCard
                   title={t('admin.compliance_rate')}
                   value={`${dashboardStats?.compliance?.successRate || 0}%`}
                   icon={Shield}
-                  color="text-[hsl(142,76%,36%)]"
+                  color="text-[hsl(75,25%,55%)]"
                 />
               </div>
 

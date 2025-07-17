@@ -1,6 +1,8 @@
-// Mock Auth0 implementation for admin authentication
-// Based on the Auth0 application: alberguedelcarrascalejo
+// Auth0 implementation for admin authentication
+// Auth0 application: alberguedelcarrascalejo
+// Domain: alberguedelcarrascalejo.eu.auth0.com
 // Client ID: 7nUX3uw17WJB05C1o1XxJhSwKVMTbo3
+// Client Secret: 3rzO32cU5r170g_CEI8o152FqefNMYsJ5mpqn2o6W8dtzjbSyGQ
 
 interface Auth0User {
   email: string;

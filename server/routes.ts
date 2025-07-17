@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { availabilityService } from "./services/availability";
 import { xmlGenerator } from "./services/xml-generator";
 import { governmentApiService } from "./services/government-api";
+import { requireAuth, requireBFFAuth } from "./middleware/auth";
 import { 
   insertPilgrimSchema, 
   insertBookingSchema, 
@@ -160,8 +161,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get dashboard statistics
-  app.get("/api/dashboard/stats", async (req, res) => {
+  // Get dashboard statistics (protected by BFF)
+  app.get("/api/dashboard/stats", requireBFFAuth, async (req, res) => {
     try {
       const today = new Date().toISOString().split('T')[0];
       
@@ -182,8 +183,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get recent bookings
-  app.get("/api/bookings/recent", async (req, res) => {
+  // Get recent bookings (protected by BFF)
+  app.get("/api/bookings/recent", requireBFFAuth, async (req, res) => {
     try {
       const today = new Date().toISOString().split('T')[0];
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
