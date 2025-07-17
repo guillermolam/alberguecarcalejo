@@ -114,7 +114,7 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
       <CardContent className="p-6">
         <div className="space-y-4">
           <div className="text-sm font-medium text-gray-700 mb-2">
-            {i18n.t('registration.id_photo')} *
+            {t('registration.photo_capture')} *
           </div>
           
           {error && (
@@ -129,7 +129,7 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
                 <Camera className="mx-auto h-12 w-12 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-600 mb-2">
-                    Capture or upload a photo of your identity document
+                    {t('registration.photo_instructions')}
                   </p>
                   <div className="flex justify-center space-x-4">
                     <Button
@@ -138,7 +138,7 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <Camera className="w-4 h-4 mr-2" />
-                      {i18n.t('registration.take_photo')}
+                      {t('registration.take_photo')}
                     </Button>
                     <Button
                       type="button"
@@ -146,7 +146,7 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
                       variant="outline"
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      {i18n.t('registration.upload_file')}
+                      {t('registration.upload_photo')}
                     </Button>
                   </div>
                 </div>
@@ -172,7 +172,7 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Camera className="w-4 h-4 mr-2" />
-                  Capture Photo
+{t('registration.take_photo')}
                 </Button>
                 <Button
                   type="button"
@@ -180,7 +180,7 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
                   variant="outline"
                 >
                   <X className="w-4 h-4 mr-2" />
-                  Cancel
+{t('common.cancel')}
                 </Button>
               </div>
             </div>
@@ -207,7 +207,7 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
               {isProcessing && (
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-2 text-sm text-gray-600">Processing document...</p>
+                  <p className="mt-2 text-sm text-gray-600">{t('registration.processing_ocr')}</p>
                 </div>
               )}
               
@@ -215,7 +215,7 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
                 <Alert className="bg-green-50 border-green-200">
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   <AlertDescription className="text-green-800">
-                    Document processed successfully! 
+                    {t('registration.ocr_success')}
                     {ocrResult.extractedData?.documentNumber && (
                       <span className="ml-2">
                         Document: {ocrResult.extractedData.documentNumber}
