@@ -34,7 +34,7 @@ export function GooglePlacesAutocomplete({
           inputRef.current,
           {
             types: ['address'],
-            componentRestrictions: { country: ['es', 'fr', 'pt'] }, // Camino countries
+            // Allow worldwide addresses - pilgrims come from everywhere
             fields: ['address_components', 'formatted_address', 'geometry', 'place_id']
           }
         );

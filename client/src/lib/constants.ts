@@ -36,9 +36,26 @@ export const DOCUMENT_TYPES = [
 ];
 
 export const PAYMENT_TYPES = [
-  { code: 'EFECT', name: 'Efectivo (en recepción)' },
-  { code: 'TARJT', name: 'Tarjeta de crédito/débito' },
-  { code: 'TRANS', name: 'Transferencia bancaria' },
+  { 
+    code: 'EFECT', 
+    name: 'Efectivo (en recepción)',
+    icon: 'money-bill'
+  },
+  { 
+    code: 'TARJT', 
+    name: 'Tarjeta de crédito/débito',
+    icon: 'credit-card'
+  },
+  { 
+    code: 'BIZUM', 
+    name: 'Bizum',
+    icon: 'mobile'
+  },
+  { 
+    code: 'TRANS', 
+    name: 'Transferencia bancaria',
+    icon: 'university'
+  },
 ];
 
 export const GENDER_OPTIONS = [

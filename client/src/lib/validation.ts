@@ -170,6 +170,27 @@ export const getCountryCode = (countryName: string): string => {
   return countryMap[countryName] || 'ESP';
 }
 
+export const getCountryDialCode = (countryCode: string): string => {
+  const dialCodes: Record<string, string> = {
+    'ESP': '+34',
+    'FRA': '+33',
+    'DEU': '+49',
+    'ITA': '+39',
+    'PRT': '+351',
+    'GBR': '+44',
+    'USA': '+1',
+    'CAN': '+1',
+    'BRA': '+55',
+    'AUS': '+61',
+    'JPN': '+81',
+    'KOR': '+82',
+    'NLD': '+31',
+    'POL': '+48'
+  };
+  
+  return dialCodes[countryCode] || '+34';
+}
+
 export function validatePhoneForCountry(phone: string, countryCode: string): boolean {
   if (!phone) return false;
   

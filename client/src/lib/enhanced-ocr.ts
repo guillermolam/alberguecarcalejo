@@ -147,9 +147,9 @@ export class EnhancedOCRService {
         const genderMatch = line.match(patterns.gender)?.[0];
         if (genderMatch) {
           if (['MASCULINO', 'MALE', 'HOMBRE', 'M'].includes(genderMatch)) {
-            result.gender = 'M';
+            result.gender = 'H'; // Hombre
           } else if (['FEMENINO', 'FEMALE', 'MUJER', 'F'].includes(genderMatch)) {
-            result.gender = 'F';
+            result.gender = 'M'; // Mujer
           }
           if (result.gender) detectedFields.push('gender');
         }

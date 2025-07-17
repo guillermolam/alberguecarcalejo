@@ -19,7 +19,7 @@ import { GooglePlacesAutocomplete } from "./google-places-autocomplete";
 import { COUNTRIES, DOCUMENT_TYPES, PAYMENT_TYPES, GENDER_OPTIONS, PRICE_PER_NIGHT } from "@/lib/constants";
 import { useI18n } from "@/contexts/i18n-context";
 import { ComprehensiveOCRResult } from "@/lib/enhanced-ocr";
-import { createRegistrationSchema, getCountryCode, validatePhoneForCountry, type RegistrationFormData } from "@/lib/validation";
+import { createRegistrationSchema, getCountryCode, getCountryDialCode, validatePhoneForCountry, type RegistrationFormData } from "@/lib/validation";
 
 interface RegistrationFormProps {
   stayData: StayData;
@@ -32,6 +32,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
   const [hasPhotoProcessed, setHasPhotoProcessed] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState("");
   const [detectedCountryCode, setDetectedCountryCode] = useState("ESP");
+  const [phoneFormat, setPhoneFormat] = useState("+34");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useI18n();
@@ -40,7 +41,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
     resolver: zodResolver(createRegistrationSchema(selectedDocumentType, detectedCountryCode)),
     defaultValues: {
       language: 'es',
-      paymentType: "cash",
+      paymentType: "EFECT", // Default to cash
       addressCountry: '',
       firstName: '',
       lastName1: '',
@@ -223,9 +224,10 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
       }
       if (countryLong) {
         form.setValue('addressCountry', countryLong);
-        // Update country code for phone validation
+            // Update country code for phone validation
         const countryCode = getCountryCode(countryLong) || countryShort || 'ESP';
         setDetectedCountryCode(countryCode);
+        setPhoneFormat(getCountryDialCode(countryCode));
       }
       
       console.log('Address components extracted:', {
@@ -360,7 +362,12 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                         name="birthDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('registration.birth_date')} *</FormLabel>
+                            <FormLabel>
+                              {t('registration.birth_date')} * 
+                              <span className="text-sm text-gray-500 ml-2">
+                                ({detectedCountryCode === 'USA' ? 'mm/dd/yyyy' : 'dd/mm/yyyy'})
+                              </span>
+                            </FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
                             </FormControl>
@@ -513,6 +520,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                                   // Update country code when user types
                                   const countryCode = getCountryCode(e.target.value);
                                   setDetectedCountryCode(countryCode);
+                                  setPhoneFormat(getCountryDialCode(countryCode));
                                 }}
                               />
                             </FormControl>
@@ -558,10 +566,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                                   }`}
                                 />
                                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
-                                  {detectedCountryCode === 'ESP' ? '+34' :
-                                   detectedCountryCode === 'FRA' ? '+33' :
-                                   detectedCountryCode === 'DEU' ? '+49' :
-                                   `+${detectedCountryCode}`}
+                                  {phoneFormat}
                                 </div>
                               </div>
                             </FormControl>
@@ -602,7 +607,10 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                               <SelectContent>
                                 {PAYMENT_TYPES.map((payment) => (
                                   <SelectItem key={payment.code} value={payment.code}>
-                                    {t(`payment.${payment.code.toLowerCase()}`)}
+                                    <div className="flex items-center gap-2">
+                                      <i className={`fas fa-${payment.icon} text-[#3D5300]`}></i>
+                                      {payment.name}
+                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
