@@ -294,7 +294,7 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
         <Button
           onClick={handleContinue}
           disabled={!availability?.available || isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          className="w-full bg-[hsl(75,35%,25%)] hover:bg-[hsl(75,35%,20%)] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
         >
           {t('stay.continue')}
           <span className="ml-2">→</span>

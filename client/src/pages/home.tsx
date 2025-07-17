@@ -117,7 +117,7 @@ export default function Home() {
                 </div>
                 <div className="w-px h-12 bg-white/20"></div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[hsl(240,100%,75%)]">
+                  <div className="text-2xl font-bold text-[hsl(75,25%,75%)]">
                     {PRICE_PER_NIGHT}€
                   </div>
                   <div className="text-sm text-green-100">
