@@ -1,15 +1,30 @@
-// BFF Client for secure validation
-import init, { ValidationBFF } from './wasm/validation_bff';
+// BFF Client for secure validation (fallback without WASM for now)
+let rateLimits: Record<string, { count: number; resetTime: number }> = {};
 
-let bffInstance: ValidationBFF | null = null;
-
-// Initialize the BFF WASM module
-export async function initBFF(): Promise<ValidationBFF> {
-  if (!bffInstance) {
-    await init();
-    bffInstance = new ValidationBFF();
+// Fallback rate limiting without WASM
+function checkRateLimit(clientId: string, action: string): boolean {
+  const key = `${clientId}:${action}`;
+  const now = Date.now();
+  
+  const limits = {
+    'document_validation': { max: 10, windowMs: 5 * 60 * 1000 },
+    'registration': { max: 3, windowMs: 60 * 60 * 1000 },
+    'ocr': { max: 5, windowMs: 10 * 60 * 1000 }
+  };
+  
+  const limit = limits[action as keyof typeof limits] || { max: 10, windowMs: 5 * 60 * 1000 };
+  
+  if (!rateLimits[key] || now > rateLimits[key].resetTime) {
+    rateLimits[key] = { count: 1, resetTime: now + limit.windowMs };
+    return true;
   }
-  return bffInstance;
+  
+  if (rateLimits[key].count >= limit.max) {
+    return false;
+  }
+  
+  rateLimits[key].count++;
+  return true;
 }
 
 // Generate client fingerprint for rate limiting
@@ -52,16 +67,31 @@ export async function validateDocument(
   rateLimitExceeded?: boolean;
 }> {
   try {
-    const bff = await initBFF();
     const clientId = getClientFingerprint();
-    const result = bff.validate_document(clientId, documentType, documentNumber);
     
-    return {
-      isValid: result.is_valid,
-      errorMessage: result.error_message || undefined,
-      normalizedNumber: result.normalized_number || undefined,
-      rateLimitExceeded: result.rate_limit_exceeded
-    };
+    if (!checkRateLimit(clientId, 'document_validation')) {
+      return {
+        isValid: false,
+        errorMessage: 'Rate limit exceeded. Please try again later.',
+        rateLimitExceeded: true
+      };
+    }
+    
+    // Use backend validation endpoint
+    const response = await fetch('/api/validate/document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ documentType, documentNumber })
+    });
+    
+    if (!response.ok) {
+      if (response.status === 429) {
+        return { isValid: false, errorMessage: 'Rate limit exceeded', rateLimitExceeded: true };
+      }
+      throw new Error('Validation service error');
+    }
+    
+    return await response.json();
   } catch (error) {
     console.error('BFF validation error:', error);
     return {
@@ -139,9 +169,8 @@ export async function checkRegistrationRateLimit(): Promise<boolean> {
 
 export async function checkOCRRateLimit(): Promise<boolean> {
   try {
-    const bff = await initBFF();
     const clientId = getClientFingerprint();
-    return bff.check_ocr_rate_limit(clientId);
+    return checkRateLimit(clientId, 'ocr');
   } catch (error) {
     console.error('BFF OCR rate limit check error:', error);
     return false;

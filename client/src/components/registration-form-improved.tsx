@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,8 +18,8 @@ import { RegistrationStepper } from "./registration-stepper";
 import { GooglePlacesAutocomplete } from "./google-places-autocomplete";
 import { COUNTRIES, DOCUMENT_TYPES, PAYMENT_TYPES, GENDER_OPTIONS, PRICE_PER_NIGHT } from "@/lib/constants";
 import { useI18n } from "@/contexts/i18n-context";
-import { OCRResult } from "@/lib/ocr";
-import { createRegistrationSchema, getCountryCode, type RegistrationFormData } from "@/lib/validation";
+import { ComprehensiveOCRResult } from "@/lib/enhanced-ocr";
+import { createRegistrationSchema, getCountryCode, validatePhoneForCountry, type RegistrationFormData } from "@/lib/validation";
 
 interface RegistrationFormProps {
   stayData: StayData;
@@ -28,7 +28,7 @@ interface RegistrationFormProps {
 }
 
 export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFormProps) {
-  const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
+  const [ocrResult, setOcrResult] = useState<ComprehensiveOCRResult | null>(null);
   const [hasPhotoProcessed, setHasPhotoProcessed] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState("");
   const [detectedCountryCode, setDetectedCountryCode] = useState("ESP");
@@ -63,28 +63,53 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
 
   // Removed duplicate function - using the one below
 
-  // Auto-fill form when OCR data is available
+  // Auto-fill form when comprehensive OCR data is available
   useEffect(() => {
-    if (ocrResult) {
+    if (ocrResult && ocrResult.isValid) {
       const updates: Partial<RegistrationFormData> = {};
       
+      // Personal information
       if (ocrResult.firstName) updates.firstName = ocrResult.firstName;
-      if (ocrResult.lastName) updates.lastName1 = ocrResult.lastName;
+      if (ocrResult.lastName1) updates.lastName1 = ocrResult.lastName1;
+      if (ocrResult.lastName2) updates.lastName2 = ocrResult.lastName2;
       if (ocrResult.documentNumber) updates.documentNumber = ocrResult.documentNumber;
       if (ocrResult.documentType) {
         updates.documentType = ocrResult.documentType;
         setSelectedDocumentType(ocrResult.documentType);
       }
+      if (ocrResult.documentSupport) updates.documentSupport = ocrResult.documentSupport;
       if (ocrResult.birthDate) updates.birthDate = ocrResult.birthDate;
+      if (ocrResult.gender) updates.gender = ocrResult.gender;
       if (ocrResult.nationality) updates.nationality = ocrResult.nationality;
       
-      Object.entries(updates).forEach(([key, value]) => {
-        form.setValue(key as keyof RegistrationFormData, value as any);
+      // Address information (if available)
+      if (ocrResult.addressStreet) updates.addressStreet = ocrResult.addressStreet;
+      if (ocrResult.addressCity) updates.addressCity = ocrResult.addressCity;
+      if (ocrResult.addressPostalCode) updates.addressPostalCode = ocrResult.addressPostalCode;
+      if (ocrResult.addressCountry) {
+        updates.addressCountry = ocrResult.addressCountry;
+        // Update country code for phone validation
+        const countryCode = getCountryCode(ocrResult.addressCountry);
+        setDetectedCountryCode(countryCode);
+      }
+      
+      // Async field updates for better UX
+      Object.entries(updates).forEach(([key, value], index) => {
+        setTimeout(() => {
+          form.setValue(key as keyof RegistrationFormData, value as any);
+        }, index * 50); // Stagger updates for visual effect
       });
       
       setHasPhotoProcessed(true);
+      
+      // Log successful processing
+      console.log('OCR processed successfully:', {
+        detectedFields: ocrResult.detectedFields,
+        confidence: ocrResult.confidence,
+        processingTime: ocrResult.processingTime
+      });
     }
-  }, [ocrResult, form]);
+  }, [ocrResult, form, getCountryCode]);
 
   const registrationMutation = useMutation({
     mutationFn: async (data: RegistrationFormData) => {
@@ -153,37 +178,68 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
     },
   });
 
-  const handlePhotoProcessed = (result: OCRResult) => {
+  const handlePhotoProcessed = (result: ComprehensiveOCRResult) => {
     setOcrResult(result);
   };
 
-  // Updated handlePlaceSelected with country code detection
-  const handlePlaceSelected = (place: any) => {
+  // Enhanced handlePlaceSelected with comprehensive address parsing
+  const handlePlaceSelected = useCallback((place: any) => {
     if (place?.address_components) {
       const components = place.address_components;
       
+      // Extract all address components safely
       const streetNumber = components.find((c: any) => c.types.includes('street_number'))?.long_name || '';
       const route = components.find((c: any) => c.types.includes('route'))?.long_name || '';
-      const city = components.find((c: any) => c.types.includes('locality'))?.long_name || '';
+      const locality = components.find((c: any) => c.types.includes('locality'))?.long_name || '';
+      const adminLevel1 = components.find((c: any) => c.types.includes('administrative_area_level_1'))?.long_name || '';
+      const adminLevel2 = components.find((c: any) => c.types.includes('administrative_area_level_2'))?.long_name || '';
       const postalCode = components.find((c: any) => c.types.includes('postal_code'))?.long_name || '';
-      const country = components.find((c: any) => c.types.includes('country'))?.long_name || '';
+      const countryLong = components.find((c: any) => c.types.includes('country'))?.long_name || '';
+      const countryShort = components.find((c: any) => c.types.includes('country'))?.short_name || '';
       
+      // Build street address
+      let fullAddress = '';
       if (streetNumber && route) {
-        form.setValue('addressStreet', `${streetNumber} ${route}`);
+        fullAddress = `${streetNumber} ${route}`;
       } else if (route) {
-        form.setValue('addressStreet', route);
+        fullAddress = route;
+      } else if (place.formatted_address) {
+        // Fallback to formatted address if components are incomplete
+        fullAddress = place.formatted_address.split(',')[0] || '';
       }
       
-      if (city) form.setValue('addressCity', city);
-      if (postalCode) form.setValue('addressPostalCode', postalCode);
-      if (country) {
-        form.setValue('addressCountry', country);
-        // Detect country code for phone validation
-        const countryCode = getCountryCode(country);
+      // Set city (prefer locality, fallback to admin areas)
+      const city = locality || adminLevel2 || adminLevel1;
+      
+      // Update form fields with comprehensive data
+      if (fullAddress) {
+        form.setValue('addressStreet', fullAddress);
+      }
+      if (city) {
+        form.setValue('addressCity', city);
+      }
+      if (postalCode) {
+        form.setValue('addressPostalCode', postalCode);
+      }
+      if (countryLong) {
+        form.setValue('addressCountry', countryLong);
+        // Update country code for phone validation
+        const countryCode = getCountryCode(countryLong) || countryShort || 'ESP';
         setDetectedCountryCode(countryCode);
       }
+      
+      console.log('Address components extracted:', {
+        fullAddress,
+        city,
+        postalCode,
+        country: countryLong,
+        countryCode: countryShort,
+        rawComponents: components
+      });
+    } else {
+      console.warn('No address components found in place:', place);
     }
-  };
+  }, [form, getCountryCode]);
 
   const onSubmit = (data: RegistrationFormData) => {
     registrationMutation.mutate(data);
@@ -446,20 +502,25 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t('registration.country')} *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('registration.country')} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {COUNTRIES.map((country) => (
-                                  <SelectItem key={country.code} value={country.code}>
-                                    {country.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                list="countries-list"
+                                placeholder={t('registration.country')}
+                                maxLength={50}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                  // Update country code when user types
+                                  const countryCode = getCountryCode(e.target.value);
+                                  setDetectedCountryCode(countryCode);
+                                }}
+                              />
+                            </FormControl>
+                            <datalist id="countries-list">
+                              {COUNTRIES.map((country) => (
+                                <option key={country.code} value={country.name} />
+                              ))}
+                            </datalist>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -482,8 +543,31 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                           <FormItem>
                             <FormLabel>{t('registration.phone')} *</FormLabel>
                             <FormControl>
-                              <Input {...field} maxLength={15} />
+                              <div className="relative">
+                                <Input 
+                                  {...field} 
+                                  type="tel"
+                                  placeholder={detectedCountryCode === 'ESP' ? '+34 XXX XXX XXX' : 
+                                             detectedCountryCode === 'FRA' ? '+33 X XX XX XX XX' :
+                                             detectedCountryCode === 'DEU' ? '+49 XXX XXXXXXX' :
+                                             '+XX XXX XXX XXX'}
+                                  maxLength={20}
+                                  className={`pl-12 ${
+                                    field.value && !validatePhoneForCountry(field.value, detectedCountryCode) 
+                                      ? 'border-red-500' : ''
+                                  }`}
+                                />
+                                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
+                                  {detectedCountryCode === 'ESP' ? '+34' :
+                                   detectedCountryCode === 'FRA' ? '+33' :
+                                   detectedCountryCode === 'DEU' ? '+49' :
+                                   `+${detectedCountryCode}`}
+                                </div>
+                              </div>
                             </FormControl>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {t('registration.phone_format', { country: detectedCountryCode })}
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}

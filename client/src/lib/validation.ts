@@ -167,7 +167,48 @@ export const getCountryCode = (countryName: string): string => {
     'United Kingdom': 'GBR'
   };
   
-  return countryMap[countryName] || 'DEFAULT';
+  return countryMap[countryName] || 'ESP';
+}
+
+export function validatePhoneForCountry(phone: string, countryCode: string): boolean {
+  if (!phone) return false;
+  
+  // Remove all non-digit characters for validation
+  const cleanPhone = phone.replace(/\D/g, '');
+  
+  switch (countryCode) {
+    case 'ESP':
+      // Spanish phone: 9 digits starting with 6, 7, 8, or 9
+      return /^[6789]\d{8}$/.test(cleanPhone) || /^34[6789]\d{8}$/.test(cleanPhone);
+    
+    case 'FRA':
+      // French phone: 10 digits starting with 0, or with country code 33
+      return /^0[1-9]\d{8}$/.test(cleanPhone) || /^33[1-9]\d{8}$/.test(cleanPhone);
+    
+    case 'DEU':
+      // German phone: variable length but typically 10-12 digits
+      return /^0\d{9,11}$/.test(cleanPhone) || /^49\d{10,12}$/.test(cleanPhone);
+    
+    case 'ITA':
+      // Italian phone: typically 10 digits
+      return /^3\d{9}$/.test(cleanPhone) || /^39\d{9,10}$/.test(cleanPhone);
+    
+    case 'PRT':
+      // Portuguese phone: 9 digits starting with 9
+      return /^9\d{8}$/.test(cleanPhone) || /^351\d{9}$/.test(cleanPhone);
+    
+    case 'GBR':
+      // UK phone: 10-11 digits
+      return /^0\d{9,10}$/.test(cleanPhone) || /^44\d{10,11}$/.test(cleanPhone);
+    
+    case 'USA':
+      // US phone: 10 digits
+      return /^\d{10}$/.test(cleanPhone) || /^1\d{10}$/.test(cleanPhone);
+    
+    default:
+      // Generic validation: 7-15 digits
+      return /^\d{7,15}$/.test(cleanPhone);
+  }
 };
 
 // Registration form schema factory

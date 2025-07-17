@@ -2,19 +2,22 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Camera, Upload, X, CheckCircle } from "lucide-react";
-import { ocrService, OCRResult } from "@/lib/ocr";
+import { Progress } from "@/components/ui/progress";
+import { Camera, Upload, X, CheckCircle, AlertCircle, FileText } from "lucide-react";
+import { enhancedOCRService, type ComprehensiveOCRResult } from "@/lib/enhanced-ocr";
+import { checkOCRRateLimit } from "@/lib/bff-client";
 import { useI18n } from "@/contexts/i18n-context";
 
 interface IdPhotoCaptureProps {
-  onPhotoProcessed: (ocrResult: OCRResult) => void;
+  onPhotoProcessed: (ocrResult: ComprehensiveOCRResult) => void;
 }
 
 export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
+  const [ocrResult, setOcrResult] = useState<ComprehensiveOCRResult | null>(null);
+  const [processingProgress, setProcessingProgress] = useState(0);
   const { t } = useI18n();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,15 +93,45 @@ export function IdPhotoCapture({ onPhotoProcessed }: IdPhotoCaptureProps) {
   const processImage = async (file: File) => {
     setIsProcessing(true);
     setError(null);
+    setProcessingProgress(0);
     
     try {
-      const result = await ocrService.processDocument(file);
+      // Check rate limiting first
+      const rateLimitCheck = await checkOCRRateLimit();
+      if (!rateLimitCheck) {
+        setError(t('errors.ocr_rate_limit'));
+        setIsProcessing(false);
+        return;
+      }
+
+      // Simulate processing steps for better UX
+      setProcessingProgress(20);
+      
+      // Process with enhanced OCR
+      const result = await enhancedOCRService.processDocument(file);
+      setProcessingProgress(80);
+      
+      // Validate result
+      if (!result.isValid) {
+        setError(t('errors.ocr_no_data') + ': ' + result.errors.join(', '));
+        setIsProcessing(false);
+        return;
+      }
+      
+      setProcessingProgress(100);
       setOcrResult(result);
-      onPhotoProcessed(result);
+      
+      // Async field update - non-blocking
+      setTimeout(() => {
+        onPhotoProcessed(result);
+      }, 100);
+      
     } catch (err) {
-      setError('Error processing image. Please try again.');
+      console.error('OCR processing error:', err);
+      setError(t('errors.ocr_processing') || 'Error processing image. Please try again.');
     } finally {
       setIsProcessing(false);
+      setTimeout(() => setProcessingProgress(0), 1000);
     }
   };
 

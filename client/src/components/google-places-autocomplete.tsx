@@ -26,6 +26,8 @@ export function GooglePlacesAutocomplete({
   const autocompleteRef = useRef<any>(null);
 
   useEffect(() => {
+    let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+    
     const initializeAutocomplete = () => {
       if (window.google && window.google.maps && inputRef.current) {
         autocompleteRef.current = new window.google.maps.places.Autocomplete(
@@ -33,16 +35,50 @@ export function GooglePlacesAutocomplete({
           {
             types: ['address'],
             componentRestrictions: { country: ['es', 'fr', 'pt'] }, // Camino countries
+            fields: ['address_components', 'formatted_address', 'geometry', 'place_id']
           }
         );
 
-        autocompleteRef.current.addListener('place_changed', () => {
-          const place = autocompleteRef.current.getPlace();
-          if (place && place.formatted_address) {
-            onChange(place.formatted_address);
-            onPlaceSelected?.(place);
+        const handlePlaceChanged = () => {
+          try {
+            const place = autocompleteRef.current.getPlace();
+            if (place && place.address_components) {
+              // Update the input value
+              if (place.formatted_address) {
+                onChange(place.formatted_address);
+              }
+              // Trigger place selection callback with comprehensive data
+              onPlaceSelected?.(place);
+            }
+          } catch (error) {
+            console.error('Error processing place selection:', error);
           }
-        });
+        };
+
+        autocompleteRef.current.addListener('place_changed', handlePlaceChanged);
+        
+        // Handle keyboard events for better UX
+        keydownHandler = (e: KeyboardEvent) => {
+          if (e.key === 'Tab' || e.key === 'Enter') {
+            // Small delay to allow autocomplete to process
+            setTimeout(() => {
+              try {
+                if (autocompleteRef.current) {
+                  const place = autocompleteRef.current.getPlace();
+                  if (place && place.address_components) {
+                    handlePlaceChanged();
+                  }
+                }
+              } catch (error) {
+                console.error('Error handling keyboard selection:', error);
+              }
+            }, 100);
+          }
+        };
+
+        if (inputRef.current && keydownHandler) {
+          inputRef.current.addEventListener('keydown', keydownHandler);
+        }
       }
     };
 
@@ -61,6 +97,9 @@ export function GooglePlacesAutocomplete({
     return () => {
       if (autocompleteRef.current) {
         window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
+      }
+      if (inputRef.current && keydownHandler) {
+        inputRef.current.removeEventListener('keydown', keydownHandler);
       }
     };
   }, []);
