@@ -95,7 +95,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-12">
+      <section className="bg-gradient-to-br from-[hsl(203,84%,25%)] to-[hsl(203,84%,20%)] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 font-title">
@@ -108,7 +108,7 @@ export default function Home() {
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
               <div className="flex items-center justify-center space-x-4 text-lg">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-300">
+                  <div className="text-2xl font-bold text-[hsl(142,76%,56%)]">
                     {dashboardStats?.occupancy?.available || 0}
                   </div>
                   <div className="text-sm text-blue-100">
@@ -117,7 +117,7 @@ export default function Home() {
                 </div>
                 <div className="w-px h-12 bg-white/20"></div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-300">
+                  <div className="text-2xl font-bold text-[hsl(43,74%,76%)]">
                     {PRICE_PER_NIGHT}€
                   </div>
                   <div className="text-sm text-blue-100">

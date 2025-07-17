@@ -88,7 +88,8 @@ export default function Admin() {
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/dashboard/stats');
       return response.json();
-    }
+    },
+    enabled: isAuthenticated // Only fetch when authenticated
   });
 
   const { data: recentBookings, isLoading: bookingsLoading } = useQuery({
@@ -96,7 +97,8 @@ export default function Admin() {
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/bookings/recent');
       return response.json();
-    }
+    },
+    enabled: isAuthenticated // Only fetch when authenticated
   });
 
   const StatCard = ({ title, value, icon: Icon, color }: {
@@ -130,14 +132,14 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[hsl(45,50%,95%)]">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-gray-900 text-white min-h-screen">
+        <aside className="w-64 bg-gradient-to-b from-[hsl(203,84%,25%)] to-[hsl(203,84%,20%)] text-white min-h-screen">
           <div className="p-6">
             <h2 className="text-xl font-semibold font-title">{t('admin.title')}</h2>
-            <div className="mt-4 pt-4 border-t border-gray-700">
-              <p className="text-sm text-gray-400">Welcome</p>
+            <div className="mt-4 pt-4 border-t border-white/20">
+              <p className="text-sm text-blue-100">{t('auth.welcome')}</p>
               <p className="text-sm font-medium">{user?.name || user?.email}</p>
             </div>
           </div>
@@ -145,30 +147,41 @@ export default function Admin() {
           <nav className="mt-6">
             <Button
               variant={activeTab === 'dashboard' ? 'secondary' : 'ghost'}
-              className="w-full justify-start text-left px-6 py-3 text-gray-300 hover:bg-gray-700 hover:text-white"
+              className="w-full justify-start text-left px-6 py-3 text-blue-100 hover:bg-white/10 hover:text-white"
               onClick={() => setActiveTab('dashboard')}
             >
               <BarChart3 className="w-5 h-5 mr-3" />
-              {i18n.t('admin.dashboard')}
+              {t('admin.dashboard')}
             </Button>
             
             <Button
               variant={activeTab === 'beds' ? 'secondary' : 'ghost'}
-              className="w-full justify-start text-left px-6 py-3 text-gray-300 hover:bg-gray-700 hover:text-white"
+              className="w-full justify-start text-left px-6 py-3 text-blue-100 hover:bg-white/10 hover:text-white"
               onClick={() => setActiveTab('beds')}
             >
               <Bed className="w-5 h-5 mr-3" />
-              {i18n.t('admin.beds')}
+              {t('admin.beds')}
             </Button>
             
             <Button
               variant={activeTab === 'payments' ? 'secondary' : 'ghost'}
-              className="w-full justify-start text-left px-6 py-3 text-gray-300 hover:bg-gray-700 hover:text-white"
+              className="w-full justify-start text-left px-6 py-3 text-blue-100 hover:bg-white/10 hover:text-white"
               onClick={() => setActiveTab('payments')}
             >
               <Euro className="w-5 h-5 mr-3" />
-              {i18n.t('admin.payments')}
+              {t('admin.payments')}
             </Button>
+            
+            <div className="mt-8 pt-4 border-t border-white/20">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-left px-6 py-3 text-blue-100 hover:bg-red-500/20 hover:text-red-200"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-5 h-5 mr-3" />
+                {t('auth.logout')}
+              </Button>
+            </div>
           </nav>
         </aside>
 
@@ -176,71 +189,71 @@ export default function Admin() {
         <main className="flex-1 p-6">
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
-              <h3 className="text-2xl font-semibold text-gray-900">
-                {i18n.t('admin.dashboard')}
+              <h3 className="text-2xl font-semibold text-gray-900 font-title">
+                {t('admin.dashboard')}
               </h3>
               
               {/* KPI Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <StatCard
-                  title={i18n.t('admin.occupancy_today')}
+                  title={t('admin.occupancy_today')}
                   value={`${dashboardStats?.occupancy?.occupied || 0}/${dashboardStats?.occupancy?.total || 0}`}
                   icon={Bed}
-                  color="text-blue-600"
+                  color="text-[hsl(203,84%,25%)]"
                 />
                 
                 <StatCard
-                  title={i18n.t('admin.revenue_today')}
+                  title={t('admin.revenue_today')}
                   value={`${dashboardStats?.revenue?.total || 0}€`}
                   icon={Euro}
-                  color="text-green-500"
+                  color="text-[hsl(142,76%,36%)]"
                 />
                 
                 <StatCard
-                  title={i18n.t('admin.pending_checkins')}
+                  title={t('admin.pending_checkins')}
                   value={dashboardStats?.compliance?.pendingSubmissions || 0}
                   icon={Clock}
-                  color="text-yellow-500"
+                  color="text-[hsl(43,74%,66%)]"
                 />
                 
                 <StatCard
-                  title={i18n.t('admin.compliance_rate')}
+                  title={t('admin.compliance_rate')}
                   value={`${dashboardStats?.compliance?.successRate || 0}%`}
                   icon={Shield}
-                  color="text-green-500"
+                  color="text-[hsl(142,76%,36%)]"
                 />
               </div>
 
               {/* Recent Registrations */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center">
+                  <CardTitle className="flex items-center font-title">
                     <Users className="w-5 h-5 mr-2" />
-                    {i18n.t('admin.recent_registrations')}
+                    {t('admin.recent_registrations')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {bookingsLoading ? (
-                    <div className="text-center py-4">Loading recent bookings...</div>
+                    <div className="text-center py-4">{t('loading.processing')}</div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="min-w-full">
                         <thead>
                           <tr className="border-b border-gray-200">
                             <th className="text-left py-3 px-4 font-medium text-gray-700">
-                              {i18n.t('admin.pilgrim')}
+                              {t('admin.pilgrim')}
                             </th>
                             <th className="text-left py-3 px-4 font-medium text-gray-700">
-                              {i18n.t('admin.document')}
+                              {t('admin.document')}
                             </th>
                             <th className="text-left py-3 px-4 font-medium text-gray-700">
-                              {i18n.t('admin.bed')}
+                              {t('admin.bed')}
                             </th>
                             <th className="text-left py-3 px-4 font-medium text-gray-700">
-                              {i18n.t('admin.status')}
+                              {t('admin.status')}
                             </th>
                             <th className="text-left py-3 px-4 font-medium text-gray-700">
-                              {i18n.t('admin.actions')}
+                              {t('admin.actions')}
                             </th>
                           </tr>
                         </thead>
@@ -275,7 +288,7 @@ export default function Admin() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <Button variant="link" size="sm">
-                                    {i18n.t('admin.view_details')}
+                                    {t('admin.view_details')}
                                   </Button>
                                 </td>
                               </tr>
@@ -283,7 +296,7 @@ export default function Admin() {
                           ) : (
                             <tr>
                               <td colSpan={5} className="text-center py-8 text-gray-500">
-                                No recent bookings found
+                                {t('admin.no_bookings')}
                               </td>
                             </tr>
                           )}
@@ -300,14 +313,14 @@ export default function Admin() {
           
           {activeTab === 'payments' && (
             <div className="space-y-6">
-              <h3 className="text-2xl font-semibold text-gray-900">
-                {i18n.t('admin.payments')}
+              <h3 className="text-2xl font-semibold text-gray-900 font-title">
+                {t('admin.payments')}
               </h3>
               
               <Card>
                 <CardContent className="p-6">
                   <div className="text-center py-8 text-gray-500">
-                    Payment management functionality coming soon...
+                    {t('admin.coming_soon')}
                   </div>
                 </CardContent>
               </Card>

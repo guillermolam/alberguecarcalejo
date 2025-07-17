@@ -25,11 +25,11 @@
   --card-foreground: hsl(222, 84%, 4%);
   --border: hsl(214, 32%, 91%);
   --input: hsl(214, 32%, 91%);
-  --primary: hsl(207, 90%, 54%);
+  --primary: hsl(203, 84%, 25%);
   --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(222, 47%, 11%);
-  --accent: hsl(210, 40%, 96%);
+  --secondary: hsl(142, 76%, 36%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: hsl(43, 74%, 66%);
   --accent-foreground: hsl(222, 47%, 11%);
   --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(210, 40%, 98%);
@@ -41,10 +41,13 @@
   --chart-4: hsl(43, 74%, 66%);
   --chart-5: hsl(27, 87%, 67%);
   
-  /* Custom Camino colors from design */
-  --camino-blue: hsl(207, 90%, 54%);
-  --spanish-red: hsl(0, 74%, 42%);
-  --scallop-gold: hsl(43, 96%, 56%);
+  /* Custom Albergue colors from website */
+  --albergue-blue: hsl(203, 84%, 25%); /* Deep blue like the ocean */
+  --albergue-green: hsl(142, 76%, 36%); /* Natural green from garden */
+  --albergue-gold: hsl(43, 74%, 66%); /* Warm gold accents */
+  --albergue-brown: hsl(25, 52%, 44%); /* Earth brown tones */
+  --albergue-sage: hsl(120, 25%, 75%); /* Sage green for calm */
+  --albergue-cream: hsl(45, 50%, 95%); /* Warm cream background */
 }
 
 .dark {
