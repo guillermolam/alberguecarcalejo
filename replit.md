@@ -10,9 +10,10 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-The application follows a modern full-stack architecture with a clear separation between client and server components:
+The application follows a modern full-stack architecture with enhanced security through a Rust-WASM Backend-for-Frontend (BFF) layer:
 
 - **Frontend**: React with TypeScript, using Vite for development and build
+- **BFF Layer**: Tiny Rust-WASM modules for registration and admin operations with rate limiting
 - **Backend**: Express.js with TypeScript
 - **Database**: PostgreSQL with Drizzle ORM
 - **UI Framework**: Shadcn/ui with Tailwind CSS
@@ -30,6 +31,11 @@ The application follows a modern full-stack architecture with a clear separation
 - **Mobile-First Design**: Responsive design optimized for mobile devices
 
 ### Backend Architecture
+- **BFF Security Layer**: 
+  - **Registration BFF**: Rust-WASM module with rate limiting (10 availability checks/min, 3 registrations/hour)
+  - **Admin BFF**: Rust-WASM module with authentication and stricter rate limits (5 auth attempts/hour)
+  - **Input Validation**: Spanish document validation, XSS prevention, buffer overflow protection
+  - **Abuse Detection**: Pattern recognition for bot behavior and suspicious activity
 - **Express.js Server**: RESTful API with middleware for logging and error handling
 - **Service Layer**: Separated business logic into dedicated services
 - **Storage Layer**: Abstract storage interface with Drizzle ORM implementation
@@ -44,9 +50,14 @@ The database schema supports:
 - **Government Submissions**: Compliance tracking for Spanish authorities
 
 ### Authentication & Security
-- No authentication system currently implemented (designed for kiosk use)
-- Data protection compliance with Spanish regulations
-- Automatic government reporting via XML submissions
+- **Multi-layered Security**: Rust-WASM BFF modules provide enhanced input validation and rate limiting
+- **Admin Authentication**: Session-based auth with SHA-256 hashing and progressive lockouts
+- **Rate Limiting**: Granular limits per operation type (availability, registration, admin functions)
+- **Input Sanitization**: XSS prevention, SQL injection protection, buffer overflow safeguards
+- **Document Validation**: Real-time Spanish DNI/NIE/Passport validation with checksums
+- **Client Fingerprinting**: Browser-based identification for abuse detection
+- **Data Protection**: Compliance with Spanish regulations and GDPR
+- **Automatic Government Reporting**: Secure XML submissions with retry logic
 
 ## Data Flow
 

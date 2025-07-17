@@ -263,7 +263,7 @@ export class DatabaseStorage implements IStorage {
     const [submission] = await db.select().from(governmentSubmissions).where(eq(governmentSubmissions.id, id));
     if (submission) {
       await db.update(governmentSubmissions).set({ 
-        attempts: submission.attempts + 1,
+        attempts: (submission.attempts || 0) + 1,
         lastAttempt: new Date()
       }).where(eq(governmentSubmissions.id, id));
     }
