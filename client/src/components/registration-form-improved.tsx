@@ -514,8 +514,8 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                               </FormControl>
                               <SelectContent>
                                 {PAYMENT_TYPES.map((payment) => (
-                                  <SelectItem key={payment.value} value={payment.value}>
-                                    {t(`payment.${payment.label.toLowerCase()}`)}
+                                  <SelectItem key={payment.code} value={payment.code}>
+                                    {payment.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
