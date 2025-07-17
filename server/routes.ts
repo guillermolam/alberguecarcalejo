@@ -161,8 +161,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get dashboard statistics (protected by BFF)
-  app.get("/api/dashboard/stats", requireBFFAuth, async (req, res) => {
+  // Get dashboard statistics (public endpoint for home page)
+  app.get("/api/dashboard/stats", async (req, res) => {
     try {
       const today = new Date().toISOString().split('T')[0];
       

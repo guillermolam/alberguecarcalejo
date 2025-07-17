@@ -5,11 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Plus, Minus } from "lucide-react";
+import { CheckCircle, AlertCircle, Plus, Minus, Euro } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useI18n } from "@/contexts/i18n-context";
-import { MAX_NIGHTS } from "@/lib/constants";
+import { MAX_NIGHTS, PRICE_PER_NIGHT } from "@/lib/constants";
 
 interface StayInfoFormProps {
   onContinue: (stayData: StayData) => void;
@@ -56,12 +56,13 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
 
   const handleCheckInDateChange = (date: string) => {
     setCheckInDate(date);
-    if (date && checkOutDate) {
+    
+    // Auto-update checkout date based on current nights setting
+    if (date) {
       const startDate = new Date(date);
-      const endDate = new Date(checkOutDate);
-      const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      setNights(diffDays);
+      const newCheckOutDate = new Date(startDate);
+      newCheckOutDate.setDate(newCheckOutDate.getDate() + nights);
+      setCheckOutDate(newCheckOutDate.toISOString().split('T')[0]);
     }
   };
 
@@ -70,7 +71,18 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
     if (checkInDate && date) {
       const startDate = new Date(checkInDate);
       const endDate = new Date(date);
-      const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+      
+      // Validate that checkout is after checkin
+      if (endDate <= startDate) {
+        // Reset to minimum 1 night
+        const newCheckOutDate = new Date(startDate);
+        newCheckOutDate.setDate(newCheckOutDate.getDate() + 1);
+        setCheckOutDate(newCheckOutDate.toISOString().split('T')[0]);
+        setNights(1);
+        return;
+      }
+      
+      const diffTime = endDate.getTime() - startDate.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       setNights(diffDays);
     }
@@ -197,6 +209,24 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
             <p className="text-xs text-gray-500 mt-1">
               {t('stay.individual_only')}
             </p>
+          </div>
+        </div>
+
+        {/* Pricing Summary */}
+        <div className="bg-gradient-to-r from-[hsl(75,25%,55%)] to-[hsl(75,35%,25%)] text-white p-4 rounded-lg mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-2xl font-bold">{PRICE_PER_NIGHT}€</div>
+              <div className="text-sm opacity-90">Per person/night</div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">{nights * PRICE_PER_NIGHT}€</div>
+              <div className="text-sm opacity-90">Total ({nights} {nights === 1 ? 'night' : 'nights'})</div>
+            </div>
+            <Euro className="h-8 w-8 opacity-75" />
+          </div>
+          <div className="mt-2 text-sm opacity-90">
+            Payment due at arrival
           </div>
         </div>
         

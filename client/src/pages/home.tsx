@@ -109,7 +109,7 @@ export default function Home() {
               <div className="flex items-center justify-center space-x-4 text-lg">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-[hsl(75,25%,75%)]">
-                    {dashboardStats?.occupancy?.available || 0}
+                    {dashboardStats?.occupancy?.available || 'Loading...'}
                   </div>
                   <div className="text-sm text-green-100">
                     {t('hero.beds_available')}
