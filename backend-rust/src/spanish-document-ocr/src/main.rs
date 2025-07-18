@@ -5,8 +5,9 @@ mod ocr_engine;
 mod spanish_validator;
 mod passport_parser;
 mod utils;
+mod http_handler;
 
-use lambda_runtime::{run, service_fn, Error, LambdaEvent};
+use lambda_web::{lambda_web, Request, RequestExt, Response};
 use serde_json::{json, Value};
 use std::time::Instant;
 use tracing::{info, error, warn};
@@ -19,27 +20,50 @@ use crate::spanish_validator::SpanishValidator;
 use crate::passport_parser::PassportParser;
 use crate::utils::Utils;
 
-async fn function_handler(event: LambdaEvent<Value>) -> Result<Value, Error> {
+#[lambda_web]
+async fn function_handler(request: Request) -> Result<Response<String>, lambda_web::Error> {
     let start_time = Instant::now();
     
-    // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .json()
-        .init();
+    // Handle CORS preflight
+    if request.method() == "OPTIONS" {
+        return Ok(Response::builder()
+            .status(200)
+            .header("Access-Control-Allow-Origin", "*")
+            .header("Access-Control-Allow-Methods", "POST, OPTIONS")
+            .header("Access-Control-Allow-Headers", "Content-Type, Origin, Accept, Authorization")
+            .header("Access-Control-Max-Age", "86400")
+            .body("".to_string())?);
+    }
+    
+    // Only allow POST requests
+    if request.method() != "POST" {
+        return Ok(Response::builder()
+            .status(405)
+            .header("Access-Control-Allow-Origin", "*")
+            .header("Content-Type", "application/json")
+            .body(json!({
+                "success": false,
+                "error": "Method not allowed"
+            }).to_string())?);
+    }
     
     info!("Processing OCR request");
     
-    // Parse the request
-    let request: ImageUploadRequest = match serde_json::from_value(event.payload) {
+    // Parse request body
+    let body = request.body();
+    let request_data: ImageUploadRequest = match serde_json::from_str(body) {
         Ok(req) => req,
         Err(e) => {
             error!("Failed to parse request: {}", e);
-            return Ok(json!({
-                "success": false,
-                "error": "Invalid request format",
-                "processing_time_ms": start_time.elapsed().as_millis()
-            }));
+            return Ok(Response::builder()
+                .status(400)
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Content-Type", "application/json")
+                .body(json!({
+                    "success": false,
+                    "error": "Invalid request format",
+                    "processing_time_ms": start_time.elapsed().as_millis()
+                }).to_string())?);
         }
     };
     
@@ -47,25 +71,35 @@ async fn function_handler(event: LambdaEvent<Value>) -> Result<Value, Error> {
     let max_size_mb = 10.0;
     
     // Process the document
-    match process_document(request, max_size_mb).await {
+    match process_document(request_data, max_size_mb).await {
         Ok(response) => {
             let processing_time = start_time.elapsed().as_millis();
             info!("OCR processing completed in {}ms", processing_time);
             
-            Ok(serde_json::to_value(OCRResponse {
+            let final_response = OCRResponse {
                 processing_time_ms: processing_time as u64,
                 ..response
-            }).unwrap())
+            };
+            
+            Ok(Response::builder()
+                .status(200)
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Content-Type", "application/json")
+                .body(serde_json::to_string(&final_response)?)?)
         }
         Err(e) => {
             let processing_time = start_time.elapsed().as_millis();
             error!("OCR processing failed: {}", e);
             
-            Ok(json!({
-                "success": false,
-                "error": e.to_string(),
-                "processing_time_ms": processing_time
-            }))
+            Ok(Response::builder()
+                .status(500)
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Content-Type", "application/json")
+                .body(json!({
+                    "success": false,
+                    "error": e.to_string(),
+                    "processing_time_ms": processing_time
+                }).to_string())?)
         }
     }
 }
@@ -150,8 +184,14 @@ async fn process_document(
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
-    run(service_fn(function_handler)).await
+async fn main() -> Result<(), lambda_web::Error> {
+    // Initialize tracing
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .json()
+        .init();
+    
+    lambda_web::run(function_handler).await
 }
 
 #[cfg(test)]

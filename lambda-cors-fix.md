@@ -1,8 +1,10 @@
-# AWS Lambda CORS Fix
+# AWS Lambda CORS Fix - UPDATED CODE READY
 
-## Quick CORS Fix (AWS Console Method)
+## ✅ Code Updated with CORS Support
 
-Your Lambda function is working but blocked by CORS. Fix this in 2 minutes:
+I've updated your Lambda function code to include proper CORS headers. Now you have 3 deployment options:
+
+## Option 1: Deploy Updated Code (Recommended)
 
 1. **AWS Lambda Console** → `spanish-document-ocr` function
 2. **Configuration** → **Function URL** → **Edit**
@@ -19,12 +21,16 @@ Your Lambda function is working but blocked by CORS. Fix this in 2 minutes:
 
 If you want to deploy the latest code with CORS fixes:
 
-### Option A: Use deploy-lambda.sh (Local Machine)
+Run the CORS-enabled deployment script:
 ```bash
 # On your local machine with AWS CLI configured
-chmod +x deploy-lambda.sh
-./deploy-lambda.sh
+chmod +x update-lambda-cors.sh
+./update-lambda-cors.sh
 ```
+
+## Option 2: AWS Console CORS Configuration (Quick Fix)
+
+If you prefer not to redeploy, configure CORS in AWS Console:
 
 ### Option B: Manual ZIP Upload
 1. Build the Rust code locally:
