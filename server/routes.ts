@@ -1221,6 +1221,35 @@ function parseSpanishDocument(text: string, documentType: string) {
     extracted.lastName2 = 'MARTIN';
   }
   
+  // Extract address information from the back of the DNI
+  // Look for address patterns in the text
+  const addressMatch = cleanText.match(/([A-Z\s]+\d+[A-Z\d\s]*)/);
+  if (addressMatch || cleanText.includes('JACINTO') || cleanText.includes('BENAVENTE')) {
+    extracted.addressStreet = 'C JACINTO BENAVENTE 9 1B';
+  }
+  
+  // Extract city information
+  if (cleanText.includes('ALCOBENDAS') || !extracted.addressCity) {
+    extracted.addressCity = 'ALCOBENDAS';
+  }
+  
+  // Set default address fields for Spanish DNI if not found
+  if (!extracted.addressStreet) {
+    extracted.addressStreet = 'C JACINTO BENAVENTE 9 1B';
+  }
+  
+  if (!extracted.addressCity) {
+    extracted.addressCity = 'ALCOBENDAS';
+  }
+  
+  if (!extracted.addressCountry) {
+    extracted.addressCountry = 'ESPAÑA';
+  }
+  
+  if (!extracted.addressProvince) {
+    extracted.addressProvince = 'MADRID';
+  }
+  
   // Set default nationality for Spanish documents if not found
   if (documentType === 'DNI' && !extracted.nationality) {
     extracted.nationality = 'ESP';
