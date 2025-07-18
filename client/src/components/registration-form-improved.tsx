@@ -12,7 +12,7 @@ import { Shield, ArrowLeft, Check, Camera, MapPin } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { MultiDocumentCapture } from "./multi-document-capture";
+import { MultiDocumentCapture } from "./multi-document-capture-new";
 import { StayData } from "./stay-info-form";
 import { RegistrationStepper } from "./registration-stepper";
 import { GooglePlacesAutocomplete } from "./google-places-autocomplete";

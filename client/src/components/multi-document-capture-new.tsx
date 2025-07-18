@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { Camera, Upload, X, CheckCircle, AlertCircle, FileText, FlipHorizontal } from "lucide-react";
+import { Camera, Upload, X, CheckCircle, AlertCircle, FileText } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ocrBFFClient, type OCRResponse, type ExtractedDocumentData } from "@/lib/ocr-bff-client";
 import { useI18n } from "@/contexts/i18n-context";
@@ -25,8 +25,6 @@ interface MultiDocumentCaptureProps {
 
 export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: MultiDocumentCaptureProps) {
   const [selectedDocumentType, setSelectedDocumentType] = useState("");
-  const [currentSide, setCurrentSide] = useState<DocumentSide>('front');
-  const [activeUploadSide, setActiveUploadSide] = useState<DocumentSide>('front');
   const [frontImage, setFrontImage] = useState<string | null>(null);
   const [backImage, setBackImage] = useState<string | null>(null);
   const [frontOCR, setFrontOCR] = useState<OCRResponse | null>(null);
@@ -35,6 +33,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
   const [error, setError] = useState<string | null>(null);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [isUsingCamera, setIsUsingCamera] = useState(false);
+  const [currentSide, setCurrentSide] = useState<DocumentSide>('front');
   
   const { t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,13 +51,11 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
     setBackImage(null);
     setFrontOCR(null);
     setBackOCR(null);
-    setCurrentSide('front');
     setError(null);
     onDocumentTypeChange?.(value);
   };
 
   const startCameraForSide = async (side: DocumentSide) => {
-    setActiveUploadSide(side);
     setCurrentSide(side);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -76,26 +73,8 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
   };
 
   const triggerFileUpload = (side: DocumentSide) => {
-    setActiveUploadSide(side);
     setCurrentSide(side);
     fileInputRef.current?.click();
-  };
-
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setIsUsingCamera(true);
-        setError(null);
-      }
-    } catch (err) {
-      setError('Unable to access camera. Please check permissions.');
-    }
   };
 
   const stopCamera = () => {
@@ -215,44 +194,11 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
     }
   };
 
-  const resetCurrentSide = () => {
-    if (currentSide === 'front') {
-      setFrontImage(null);
-      setFrontOCR(null);
-    } else {
-      setBackImage(null);
-      setBackOCR(null);
-    }
-    setError(null);
-    stopCamera();
-  };
-
-  const resetAll = () => {
-    setFrontImage(null);
-    setBackImage(null);
-    setFrontOCR(null);
-    setBackOCR(null);
-    setCurrentSide('front');
-    setError(null);
-    stopCamera();
-  };
-
-  const getCurrentImage = () => currentSide === 'front' ? frontImage : backImage;
-  const getCurrentOCR = () => currentSide === 'front' ? frontOCR : backOCR;
-  const isCurrentSideComplete = () => getCurrentImage() && getCurrentOCR();
-
   const getSideTitle = (side: DocumentSide) => {
     if (side === 'front') {
       return selectedDocumentType === 'PASSPORT' ? 'Photo Page' : 'Front Side';
     }
     return 'Back Side';
-  };
-
-  const getExpectedFields = (side: DocumentSide) => {
-    if (side === 'front') {
-      return 'Name, Document Number, Photo, Validity Date';
-    }
-    return 'Address, Postal Code, Additional Details';
   };
 
   return (
@@ -285,38 +231,6 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
 
         {selectedDocumentType && (
           <>
-            {/* Progress Indicator */}
-            {requiresBothSides(selectedDocumentType) && (
-              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  frontOCR ? 'bg-green-500 text-white' : currentSide === 'front' ? 'bg-blue-500 text-white' : 'bg-gray-300'
-                }`}>
-                  {frontOCR ? <CheckCircle className="w-4 h-4" /> : '1'}
-                </div>
-                <div className="flex-1 h-2 bg-gray-200 rounded">
-                  <div className={`h-2 rounded transition-all ${frontOCR ? 'bg-green-500 w-full' : 'bg-blue-500 w-1/2'}`} />
-                </div>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  backOCR ? 'bg-green-500 text-white' : currentSide === 'back' ? 'bg-blue-500 text-white' : 'bg-gray-300'
-                }`}>
-                  {backOCR ? <CheckCircle className="w-4 h-4" /> : '2'}
-                </div>
-              </div>
-            )}
-
-            {/* Current Side Instructions */}
-            <div className="p-4 border-l-4 border-blue-500 bg-blue-50">
-              <div className="flex items-center gap-2 mb-2">
-                <FlipHorizontal className="w-4 h-4" />
-                <span className="font-medium">
-                  {getSideTitle(currentSide)}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600">
-                Expected fields: {getExpectedFields(currentSide)}
-              </p>
-            </div>
-
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="w-4 h-4" />
@@ -328,7 +242,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
             {isProcessing && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Processing {getSideTitle(currentSide).toLowerCase()}...</span>
+                  <span>Processing document...</span>
                   <span>{processingProgress}%</span>
                 </div>
                 <Progress value={processingProgress} className="w-full" />
@@ -507,100 +421,6 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
             <canvas ref={canvasRef} className="hidden" />
           </>
         )}
-      </CardContent>
-    </Card>
-  );
-}
-                      disabled={isProcessing}
-                    >
-                      <Upload className="w-6 h-6" />
-                      <div className="text-left">
-                        <div className="font-medium">Upload File</div>
-                        <div className="text-sm text-gray-500">Choose image</div>
-                      </div>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <video
-                        ref={videoRef}
-                        className="w-full max-w-md mx-auto rounded-lg"
-                        autoPlay
-                        playsInline
-                      />
-                      <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-                        {getSideTitle(currentSide)}
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2 justify-center">
-                      <Button onClick={capturePhoto} disabled={isProcessing}>
-                        <Camera className="w-4 h-4 mr-2" />
-                        Capture
-                      </Button>
-                      <Button onClick={stopCamera} variant="outline">
-                        <X className="w-4 h-4 mr-2" />
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </div>
-            )}
-
-            {/* Current Side Result */}
-            {isCurrentSideComplete() && (
-              <div className="space-y-4">
-                <div className="border rounded-lg p-4 bg-green-50">
-                  <div className="flex items-center gap-2 text-green-700 mb-2">
-                    <CheckCircle className="w-4 h-4" />
-                    <span className="font-medium">{getSideTitle(currentSide)} processed successfully</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <img 
-                        src={getCurrentImage()!} 
-                        alt={`${getSideTitle(currentSide)}`}
-                        className="w-full max-w-xs rounded border"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2 text-sm">
-                      <div className="font-medium">Detected Information:</div>
-                      {getCurrentOCR()?.firstName && <div>Name: {getCurrentOCR()?.firstName}</div>}
-                      {getCurrentOCR()?.documentNumber && <div>Document: {getCurrentOCR()?.documentNumber}</div>}
-                      {getCurrentOCR()?.addressStreet && <div>Address: {getCurrentOCR()?.addressStreet}</div>}
-                      {getCurrentOCR()?.addressPostalCode && <div>Postal Code: {getCurrentOCR()?.addressPostalCode}</div>}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2 mt-4">
-                    <Button onClick={resetCurrentSide} variant="outline" size="sm">
-                      Retake {getSideTitle(currentSide)}
-                    </Button>
-                    {currentSide === 'front' && requiresBothSides(selectedDocumentType) && (
-                      <Button onClick={() => setCurrentSide('back')} size="sm">
-                        Continue to Back Side
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        <canvas ref={canvasRef} className="hidden" />
       </CardContent>
     </Card>
   );
