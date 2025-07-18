@@ -76,36 +76,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { documentType, documentSide, fileData } = req.body;
       
-      // Mock OCR response for development (Lambda fallback)
-      const mockData = {
-        documentNumber: "12345678A",
-        firstName: "JUAN",
-        lastName1: "GARCÍA",
-        lastName2: "LÓPEZ",
-        lastName: "GARCÍA LÓPEZ", // For compatibility
-        birthDate: "01-01-1990",
-        expiryDate: "01-01-2030",
-        nationality: "ESP"
-      };
+      // Try AWS Lambda OCR first
+      const lambdaUrl = process.env.VITE_LAMBDA_OCR_URL || 'https://ypeekiyyo4wb4mvzg3vsa2yy2m0lhmew.lambda-url.eu-west-3.on.aws/';
+      
+      try {
+        const lambdaResponse = await fetch(lambdaUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image_base64: fileData.split(',')[1] || fileData, // Remove data:image prefix if present
+            document_type: 'DNI',
+            side: documentSide || 'front'
+          })
+        });
 
+        if (lambdaResponse.ok) {
+          const lambdaResult = await lambdaResponse.json();
+          if (lambdaResult.success && lambdaResult.data) {
+            return res.json({
+              success: true,
+              extractedData: lambdaResult.data,
+              confidence: lambdaResult.data.confidence_score || 0.8,
+              processingTimeMs: lambdaResult.processing_time_ms || 0,
+              detectedFields: Object.keys(lambdaResult.data).filter(key => 
+                lambdaResult.data[key] && key !== 'confidence_score'
+              ),
+              errors: [],
+              rawText: lambdaResult.data.raw_text || ""
+            });
+          }
+        }
+      } catch (lambdaError) {
+        console.warn('Lambda OCR failed, using local fallback:', lambdaError);
+      }
+
+      // Local fallback with Tesseract.js
+      const tesseract = await import('tesseract.js');
+      const { data: { text } } = await tesseract.recognize(fileData, 'spa', {
+        logger: m => console.log(m)
+      });
+
+      // Basic Spanish document parsing
+      const extractedData = parseSpanishDocument(text, documentType);
+      
       res.json({
         success: true,
-        extractedData: mockData,
-        confidence: 0.85,
-        processingTimeMs: 1500,
-        detectedFields: ["documentNumber", "firstName", "lastName", "birthDate"],
+        extractedData,
+        confidence: 0.7, // Lower confidence for local OCR
+        processingTimeMs: Date.now(),
+        detectedFields: Object.keys(extractedData).filter(key => extractedData[key]),
         errors: [],
-        rawText: ""
+        rawText: text
       });
+
     } catch (error) {
+      console.error('OCR processing error:', error);
       res.status(500).json({ 
         success: false, 
-        error: "OCR processing failed",
+        error: "OCR processing failed: " + error.message,
         extractedData: {},
         confidence: 0,
         processingTimeMs: 0,
         detectedFields: [],
-        errors: ["Processing failed"],
+        errors: [error.message],
         rawText: ""
       });
     }
@@ -115,36 +150,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { documentType, documentSide, fileData } = req.body;
       
-      // Mock OCR response for development (Lambda fallback)
-      const mockData = {
-        documentNumber: "X1234567A",
-        firstName: "MARIA",
-        lastName1: "ROSSI",
-        lastName2: "BIANCHI",
-        lastName: "ROSSI BIANCHI", // For compatibility
-        birthDate: "15-03-1985",
-        expiryDate: "15-03-2035",
-        nationality: "ITA"
-      };
+      // Try AWS Lambda OCR first
+      const lambdaUrl = process.env.VITE_LAMBDA_OCR_URL || 'https://ypeekiyyo4wb4mvzg3vsa2yy2m0lhmew.lambda-url.eu-west-3.on.aws/';
+      
+      try {
+        const lambdaResponse = await fetch(lambdaUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image_base64: fileData.split(',')[1] || fileData,
+            document_type: 'NIE', 
+            side: documentSide || 'front'
+          })
+        });
 
+        if (lambdaResponse.ok) {
+          const lambdaResult = await lambdaResponse.json();
+          if (lambdaResult.success && lambdaResult.data) {
+            return res.json({
+              success: true,
+              extractedData: lambdaResult.data,
+              confidence: lambdaResult.data.confidence_score || 0.8,
+              processingTimeMs: lambdaResult.processing_time_ms || 0,
+              detectedFields: Object.keys(lambdaResult.data).filter(key => 
+                lambdaResult.data[key] && key !== 'confidence_score'
+              ),
+              errors: [],
+              rawText: lambdaResult.data.raw_text || ""
+            });
+          }
+        }
+      } catch (lambdaError) {
+        console.warn('Lambda OCR failed, using local fallback:', lambdaError);
+      }
+
+      // Local fallback with Tesseract.js
+      const tesseract = await import('tesseract.js');
+      const { data: { text } } = await tesseract.recognize(fileData, 'spa', {
+        logger: m => console.log(m)
+      });
+
+      const extractedData = parseSpanishDocument(text, documentType);
+      
       res.json({
         success: true,
-        extractedData: mockData,
-        confidence: 0.82,
-        processingTimeMs: 1800,
-        detectedFields: ["documentNumber", "firstName", "lastName", "birthDate", "nationality"],
+        extractedData,
+        confidence: 0.7,
+        processingTimeMs: Date.now(),
+        detectedFields: Object.keys(extractedData).filter(key => extractedData[key]),
         errors: [],
-        rawText: ""
+        rawText: text
       });
+
     } catch (error) {
+      console.error('OCR processing error:', error);
       res.status(500).json({ 
         success: false, 
-        error: "OCR processing failed",
+        error: "OCR processing failed: " + error.message,
         extractedData: {},
         confidence: 0,
         processingTimeMs: 0,
         detectedFields: [],
-        errors: ["Processing failed"],
+        errors: [error.message],
         rawText: ""
       });
     }
@@ -154,36 +223,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { documentType, fileData } = req.body;
       
-      // Mock OCR response for development (Lambda fallback)
-      const mockData = {
-        documentNumber: "AB1234567",
-        firstName: "JOHN",
-        lastName1: "SMITH",
-        lastName2: "",
-        lastName: "SMITH", // For compatibility
-        birthDate: "10-07-1988",
-        expiryDate: "10-07-2028",
-        nationality: "USA"
-      };
+      // Try AWS Lambda OCR first
+      const lambdaUrl = process.env.VITE_LAMBDA_OCR_URL || 'https://ypeekiyyo4wb4mvzg3vsa2yy2m0lhmew.lambda-url.eu-west-3.on.aws/';
+      
+      try {
+        const lambdaResponse = await fetch(lambdaUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image_base64: fileData.split(',')[1] || fileData,
+            document_type: 'PASSPORT'
+          })
+        });
 
+        if (lambdaResponse.ok) {
+          const lambdaResult = await lambdaResponse.json();
+          if (lambdaResult.success && lambdaResult.data) {
+            return res.json({
+              success: true,
+              extractedData: lambdaResult.data,
+              confidence: lambdaResult.data.confidence_score || 0.8,
+              processingTimeMs: lambdaResult.processing_time_ms || 0,
+              detectedFields: Object.keys(lambdaResult.data).filter(key => 
+                lambdaResult.data[key] && key !== 'confidence_score'
+              ),
+              errors: [],
+              rawText: lambdaResult.data.raw_text || ""
+            });
+          }
+        }
+      } catch (lambdaError) {
+        console.warn('Lambda OCR failed, using local fallback:', lambdaError);
+      }
+
+      // Local fallback with Tesseract.js
+      const tesseract = await import('tesseract.js');
+      const { data: { text } } = await tesseract.recognize(fileData, 'eng', {
+        logger: m => console.log(m)
+      });
+
+      const extractedData = parsePassportDocument(text);
+      
       res.json({
         success: true,
-        extractedData: mockData,
-        confidence: 0.88,
-        processingTimeMs: 2200,
-        detectedFields: ["documentNumber", "firstName", "lastName", "birthDate", "nationality"],
+        extractedData,
+        confidence: 0.7,
+        processingTimeMs: Date.now(),
+        detectedFields: Object.keys(extractedData).filter(key => extractedData[key]),
         errors: [],
-        rawText: ""
+        rawText: text
       });
+
     } catch (error) {
+      console.error('OCR processing error:', error);
       res.status(500).json({ 
         success: false, 
-        error: "OCR processing failed",
+        error: "OCR processing failed: " + error.message,
         extractedData: {},
         confidence: 0,
         processingTimeMs: 0,
         detectedFields: [],
-        errors: ["Processing failed"],
+        errors: [error.message],
         rawText: ""
       });
     }
@@ -839,6 +941,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   bedManager.initializeBeds().catch(console.error);
 
   return httpServer;
+}
+
+// Document parsing functions
+function parseSpanishDocument(text: string, documentType: string) {
+  const extracted: any = {};
+
+  // DNI/NIE patterns
+  const dniPattern = /\b\d{8}[A-Z]\b/;
+  const niePattern = /\b[XYZ]\d{7}[A-Z]\b/;
+  const namePattern = /[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+/g;
+  const datePattern = /\b\d{1,2}[-/]\d{1,2}[-/]\d{4}\b/g;
+
+  // Extract document number
+  const dniMatch = text.match(dniPattern);
+  const nieMatch = text.match(niePattern);
+  if (dniMatch) extracted.documentNumber = dniMatch[0];
+  if (nieMatch) extracted.documentNumber = nieMatch[0];
+
+  // Extract names (basic heuristics)
+  const names = text.match(namePattern) || [];
+  if (names.length > 0) extracted.firstName = names[0];
+  if (names.length > 1) extracted.lastName1 = names[1];
+  if (names.length > 2) extracted.lastName2 = names[2];
+
+  // Extract dates
+  const dates = text.match(datePattern) || [];
+  if (dates.length > 0) extracted.birthDate = dates[0];
+  if (dates.length > 1) extracted.expiryDate = dates[1];
+
+  // Default nationality for Spanish documents
+  if (documentType === 'DNI') extracted.nationality = 'ESP';
+
+  return extracted;
+}
+
+function parsePassportDocument(text: string) {
+  const extracted: any = {};
+  
+  // Passport number pattern
+  const passportNumPattern = /\b[A-Z]{1,2}\d{6,9}\b/;
+  const namePattern = /[A-Z][A-Z\s]+/g;
+  const datePattern = /\b\d{1,2}[-/]\d{1,2}[-/]\d{4}\b/g;
+
+  // Extract passport number
+  const passportMatch = text.match(passportNumPattern);
+  if (passportMatch) extracted.documentNumber = passportMatch[0];
+
+  // Extract names
+  const names = text.match(namePattern) || [];
+  if (names.length > 0) extracted.firstName = names[0];
+  if (names.length > 1) extracted.lastName1 = names[1];
+
+  // Extract dates
+  const dates = text.match(datePattern) || [];
+  if (dates.length > 0) extracted.birthDate = dates[0];
+  if (dates.length > 1) extracted.expiryDate = dates[1];
+
+  return extracted;
 }
 
 // Fallback OCR response generator with realistic Spanish data

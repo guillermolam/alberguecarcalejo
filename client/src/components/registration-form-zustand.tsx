@@ -373,21 +373,28 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   <GooglePlacesAutocomplete
                     value={formData.addressStreet || ''}
                     onChange={(address) => updateField('addressStreet', address)}
-                    onPlaceSelect={(place) => {
-                      updateField('addressStreet', place.formatted_address || '');
-                      // Extract additional details from place if available
-                      place.address_components?.forEach((component) => {
-                        if (component.types.includes('locality')) {
-                          updateField('addressCity', component.long_name);
-                        }
-                        if (component.types.includes('postal_code')) {
-                          updateField('addressPostalCode', component.long_name);
-                        }
-                        if (component.types.includes('country')) {
-                          updateField('addressCountry', component.long_name);
-                          setDetectedCountryCode(component.short_name);
-                        }
-                      });
+                    onPlaceSelected={(place) => {
+                      if (place.formattedAddress) {
+                        updateField('addressStreet', place.formattedAddress);
+                      }
+                      // Extract address components
+                      if (place.addressComponents) {
+                        place.addressComponents.forEach((component) => {
+                          if (component.types.includes('locality')) {
+                            updateField('addressCity', component.longName);
+                          }
+                          if (component.types.includes('postal_code')) {
+                            updateField('addressPostalCode', component.longName);
+                          }
+                          if (component.types.includes('country')) {
+                            updateField('addressCountry', component.longName);
+                            setDetectedCountryCode(component.shortName || 'ESP');
+                          }
+                          if (component.types.includes('administrative_area_level_1')) {
+                            updateField('addressProvince', component.longName);
+                          }
+                        });
+                      }
                     }}
                     placeholder={t('registration.address')}
                   />
