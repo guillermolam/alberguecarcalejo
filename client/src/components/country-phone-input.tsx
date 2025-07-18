@@ -29,6 +29,14 @@ export function CountryPhoneInput({
   useEffect(() => {
     if (countryName && countryName.trim().length > 0) {
       fetchCountryInfo(countryName);
+    } else {
+      // Default to Spain for Spanish DNI/NIE
+      setCountryInfo({
+        country_name: 'Spain',
+        country_code: 'ESP',
+        dial_code: '+34',
+        flag_url: 'https://flagcdn.com/w320/es.png'
+      });
     }
   }, [countryName]);
 

@@ -342,7 +342,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                           disabled={isProcessing}
                         >
                           <Camera className="w-4 h-4" />
-                          Take Photo
+{t('document.take_photo')}
                         </Button>
                         <Button
                           onClick={() => triggerFileUpload('front')}
@@ -351,7 +351,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                           disabled={isProcessing}
                         >
                           <Upload className="w-4 h-4" />
-                          Upload File
+{t('document.upload')}
                         </Button>
                       </div>
                       <p className="text-xs text-gray-500">

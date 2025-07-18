@@ -146,27 +146,32 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
             shouldDirty: true,
             shouldTouch: true 
           });
-          // Also manually trigger field change for immediate visual update
-          const event = new Event('input', { bubbles: true });
+          // Force immediate UI update by directly updating DOM elements
           const field = document.querySelector(`[name="${key}"]`) as HTMLInputElement;
           if (field) {
             field.value = value;
-            field.dispatchEvent(event);
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
           }
         }
       });
       
-      // Force complete form re-render with delay
-      setTimeout(() => {
+      // Immediately force form re-render with proper state updates
+      requestAnimationFrame(() => {
+        // Force React to re-render the form with new values
         form.trigger();
-        // Force re-render by updating form state
-        Object.keys(updates).forEach(key => {
-          const currentValue = form.getValues(key as keyof RegistrationFormData);
-          if (currentValue) {
-            form.setValue(key as keyof RegistrationFormData, currentValue, { shouldDirty: true });
+        
+        // Update all fields in React Hook Form state properly
+        Object.entries(updates).forEach(([key, value]) => {
+          if (value && typeof value === 'string') {
+            form.setValue(key as keyof RegistrationFormData, value, { 
+              shouldValidate: true,
+              shouldDirty: true,
+              shouldTouch: true 
+            });
           }
         });
-      }, 200);
+      });
       
       setHasDocumentProcessed(true);
     }
@@ -618,7 +623,13 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                           <FormItem>
                             <FormLabel>{t('registration.email')}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" maxLength={100} />
+                              <Input 
+                                {...field} 
+                                type="email" 
+                                maxLength={100}
+                                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                                title="Please enter a valid email address"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
