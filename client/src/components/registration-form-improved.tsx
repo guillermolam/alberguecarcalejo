@@ -36,27 +36,21 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
   const [detectedCountryCode, setDetectedCountryCode] = useState("ESP");
   const [phoneFormat, setPhoneFormat] = useState("+34");
   const [forceRerender, setForceRerender] = useState(0);
+  const [ocrDataReceived, setOcrDataReceived] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useI18n();
 
-  // Custom event listener for form updates
+  // Individual field update effect for reactive OCR population
   useEffect(() => {
-    const handleFormDataUpdate = (event: CustomEvent) => {
-      console.log('Custom form update event received:', event.detail);
-      setForceRerender(prev => prev + 1); // Force component re-render
-    };
-
-    document.addEventListener('formDataUpdate', handleFormDataUpdate as EventListener);
-    
-    return () => {
-      document.removeEventListener('formDataUpdate', handleFormDataUpdate as EventListener);
-    };
-  }, []);
+    if (ocrDataReceived) {
+      console.log('OCR data received, form now ready for final validation on submit');
+    }
+  }, [ocrDataReceived]);
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(createRegistrationSchema(selectedDocumentType, detectedCountryCode)),
-    mode: 'onBlur', // Only validate on blur, not on change
+    mode: 'onSubmit', // Only validate on submit
     defaultValues: {
       language: 'es',
       paymentType: "EFECT", // Default to cash
@@ -154,95 +148,62 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
       console.log('Updates to apply:', updates);
       console.log('Current form values before update:', form.getValues());
 
-      // Enhanced form update strategy with custom action pattern
-      const performEnhancedUpdate = () => {
-        console.log('Performing enhanced form update with OCR data');
+      // Create individual field watchers that react to OCR data
+      const createFieldWatcher = (fieldName: string, value: any) => {
+        if (!value || typeof value !== 'string' || value.trim() === '') return;
         
-        // Step 1: Apply updates using multiple strategies
+        console.log(`Setting up field watcher for ${fieldName} with value: ${value}`);
+        
+        // Set the value immediately without validation
+        form.setValue(fieldName as keyof RegistrationFormData, value, { 
+          shouldValidate: false,
+          shouldDirty: true,
+          shouldTouch: false 
+        });
+        
+        // Also set DOM value for immediate visual feedback
+        const inputElement = document.querySelector(`[name="${fieldName}"]`) as HTMLInputElement;
+        if (inputElement && inputElement.type !== 'hidden') {
+          const descriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value");
+          if (descriptor?.set) {
+            descriptor.set.call(inputElement, value);
+          }
+          inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      };
+      
+      // Apply each field update individually with watchers
+      Object.entries(updates).forEach(([fieldName, value]) => {
+        createFieldWatcher(fieldName, value);
+      });
+      
+      // Mark OCR as received and force re-render
+      setOcrDataReceived(true);
+      setForceRerender(prev => prev + 1);
+      
+      // Final verification without validation triggers
+      setTimeout(() => {
+        console.log('=== OCR FORM POPULATION VERIFICATION ===');
+        const currentValues = form.getValues();
+        console.log('Final form values after OCR population:', currentValues);
+        
+        // Re-apply any missing values without validation
         Object.entries(updates).forEach(([fieldName, value]) => {
-          if (value && typeof value === 'string' && value.trim() !== '') {
-            console.log(`Updating field ${fieldName} with value: ${value}`);
-            
-            // Strategy 1: React Hook Form update
-            form.setValue(fieldName as keyof RegistrationFormData, value as any, { 
-              shouldValidate: false, 
+          const currentValue = form.getValues(fieldName as keyof RegistrationFormData);
+          if (value && currentValue !== value) {
+            console.log(`Re-applying missing field ${fieldName}: "${value}"`);
+            form.setValue(fieldName as keyof RegistrationFormData, value, { 
+              shouldValidate: false,
               shouldDirty: true,
-              shouldTouch: false 
+              shouldTouch: false
             });
-            
-            // Strategy 2: Direct DOM manipulation with native events
-            const inputElement = document.querySelector(`[name="${fieldName}"]`) as HTMLInputElement;
-            if (inputElement) {
-              // Set value using native property descriptor
-              const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-              if (valueSetter) {
-                valueSetter.call(inputElement, value);
-              }
-              
-              // Dispatch comprehensive event sequence
-              inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-              inputElement.dispatchEvent(new Event('change', { bubbles: true }));
-              inputElement.dispatchEvent(new Event('blur', { bubbles: true }));
-            }
-            
-            // Strategy 3: Handle Select components specifically
-            const selectButton = document.querySelector(`button[aria-describedby*="${fieldName}"]`);
-            if (selectButton) {
-              // Trigger select update through React Hook Form
-              setTimeout(() => {
-                form.setValue(fieldName as keyof RegistrationFormData, value as any, { 
-                  shouldValidate: true, 
-                  shouldDirty: true,
-                  shouldTouch: true 
-                });
-                form.trigger(fieldName as keyof RegistrationFormData);
-              }, 100);
-            }
+          } else if (value) {
+            console.log(`✓ Field ${fieldName} correctly populated: "${currentValue}"`);
           }
         });
         
-        // Step 2: Force complete form re-render with custom event and state update
-        setForceRerender(prev => prev + 1);
-        const customEvent = new CustomEvent('formDataUpdate', { 
-          detail: { updates, source: 'ocr' } 
-        });
-        document.dispatchEvent(customEvent);
-        
-        // Step 3: Multiple validation triggers with delays and verification
-        setTimeout(() => form.trigger(), 200);
-        setTimeout(() => {
-          // Final verification and re-application
-          console.log('=== FINAL VERIFICATION AND FORM STATE CHECK ===');
-          const currentValues = form.getValues();
-          console.log('Current form values after update:', currentValues);
-          
-          Object.entries(updates).forEach(([key, value]) => {
-            const currentValue = form.getValues(key as keyof RegistrationFormData);
-            if (value && currentValue !== value) {
-              console.log(`Re-applying ${key}: expected "${value}", current "${currentValue}"`);
-              form.setValue(key as keyof RegistrationFormData, value as any, { 
-                shouldValidate: false,
-                shouldDirty: true 
-              });
-            } else {
-              console.log(`✓ Field ${key} correctly set to: "${currentValue}"`);
-            }
-          });
-          form.trigger();
-          
-          // Final state logging
-          console.log('Final form values after all updates:', form.getValues());
-          console.log('=== FORM POPULATION COMPLETE ===');
-        }, 500);
-      };
-      
-      // Execute enhanced update immediately and with fallback
-      performEnhancedUpdate();
-      
-      // Fallback execution after DOM stabilizes
-      requestAnimationFrame(() => {
-        setTimeout(performEnhancedUpdate, 100);
-      });
+        console.log('=== OCR POPULATION COMPLETE - NO VALIDATION TRIGGERED ===');
+      }, 300);
       
       setHasDocumentProcessed(true);
     }
