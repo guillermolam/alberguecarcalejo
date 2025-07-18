@@ -38,7 +38,7 @@ export class EnhancedOCRService {
     }
   }
 
-  async processDocument(imageFile: File): Promise<ComprehensiveOCRResult> {
+  async processDocument(imageFile: File, context?: { documentType?: string; documentSide?: 'front' | 'back' }): Promise<ComprehensiveOCRResult> {
     const startTime = Date.now();
     
     try {
@@ -52,7 +52,7 @@ export class EnhancedOCRService {
       });
 
       const processingTime = Date.now() - startTime;
-      const extractedData = this.extractAllDocumentData(text);
+      const extractedData = this.extractAllDocumentData(text, context);
       
       return {
         ...extractedData,
@@ -75,7 +75,7 @@ export class EnhancedOCRService {
     }
   }
 
-  private extractAllDocumentData(text: string): Omit<ComprehensiveOCRResult, 'confidence' | 'processingTime' | 'rawText' | 'isValid' | 'errors'> {
+  private extractAllDocumentData(text: string, context?: { documentType?: string; documentSide?: 'front' | 'back' }): Omit<ComprehensiveOCRResult, 'confidence' | 'processingTime' | 'rawText' | 'isValid' | 'errors'> {
     const lines = text.split('\n').map(line => line.trim().toUpperCase()).filter(line => line.length > 0);
     const result: any = {};
     const detectedFields: string[] = [];
@@ -100,13 +100,17 @@ export class EnhancedOCRService {
       nationality: /\b(ESP|ESPAÑA|SPAIN|FRA|FRANCE|FRANCIA|DEU|GERMANY|ALEMANIA)\b/g
     };
 
+    // Context-aware processing - prioritize fields based on document side
+    const prioritizeFrontFields = !context?.documentSide || context.documentSide === 'front';
+    const prioritizeBackFields = context?.documentSide === 'back';
+
     // Process each line for comprehensive extraction
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const nextLine = lines[i + 1] || '';
       const prevLine = lines[i - 1] || '';
 
-      // Extract document number and type
+      // Extract document number and type (primarily front side)
       if (patterns.dni.test(line)) {
         const match = line.match(patterns.dni)?.[0];
         if (match) {
@@ -169,11 +173,15 @@ export class EnhancedOCRService {
         }
       }
 
-      // Extract names using context clues
-      this.extractNames(line, nextLine, prevLine, result, detectedFields);
+      // Extract names (primarily front side)
+      if (prioritizeFrontFields) {
+        this.extractNames(line, nextLine, prevLine, result, detectedFields);
+      }
       
-      // Extract address information
-      this.extractAddress(line, result, detectedFields);
+      // Extract address information (primarily back side for DNI/NIE)
+      if (prioritizeBackFields || !context?.documentSide) {
+        this.extractAddress(line, result, detectedFields);
+      }
     }
 
     return { ...result, detectedFields };

@@ -12,7 +12,7 @@ import { Shield, ArrowLeft, Check, Camera, MapPin } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { IdPhotoCapture } from "./id-photo-capture";
+import { MultiDocumentCapture } from "./multi-document-capture";
 import { StayData } from "./stay-info-form";
 import { RegistrationStepper } from "./registration-stepper";
 import { GooglePlacesAutocomplete } from "./google-places-autocomplete";
@@ -29,8 +29,9 @@ interface RegistrationFormProps {
 }
 
 export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFormProps) {
-  const [ocrResult, setOcrResult] = useState<ComprehensiveOCRResult | null>(null);
-  const [hasPhotoProcessed, setHasPhotoProcessed] = useState(false);
+  const [frontOCR, setFrontOCR] = useState<ComprehensiveOCRResult | null>(null);
+  const [backOCR, setBackOCR] = useState<ComprehensiveOCRResult | null>(null);
+  const [hasDocumentProcessed, setHasDocumentProcessed] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState("");
   const [detectedCountryCode, setDetectedCountryCode] = useState("ESP");
   const [phoneFormat, setPhoneFormat] = useState("+34");
@@ -65,33 +66,67 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
 
   // Removed duplicate function - using the one below
 
+  // Handle document type change - set defaults for DNI
+  const handleDocumentTypeChange = (documentType: string) => {
+    setSelectedDocumentType(documentType);
+    
+    // Set defaults for Spanish documents
+    if (documentType === 'DNI' || documentType === 'NIE') {
+      setDetectedCountryCode("ESP");
+      setPhoneFormat("+34");
+      form.setValue('addressCountry', 'Spain');
+      form.setValue('nationality', 'ESP');
+    }
+  };
+
+  // Handle multi-document capture results
+  const handleDocumentProcessed = (result: any) => {
+    const { frontOCR: front, backOCR: back, documentType } = result;
+    
+    setFrontOCR(front);
+    setBackOCR(back);
+    setHasDocumentProcessed(true);
+    setSelectedDocumentType(documentType);
+    
+    // Merge data from both sides
+    const mergedOCR: Partial<ComprehensiveOCRResult> = {
+      ...front,
+      ...back, // Back side data takes precedence for address info
+      detectedFields: [...(front?.detectedFields || []), ...(back?.detectedFields || [])],
+      isValid: (front?.isValid || false) || (back?.isValid || false)
+    };
+    
+    // Auto-fill the form
+    fillFormFromOCR(mergedOCR);
+  };
+
   // Auto-fill form when comprehensive OCR data is available
-  useEffect(() => {
-    if (ocrResult && ocrResult.isValid) {
+  const fillFormFromOCR = (ocrData: Partial<ComprehensiveOCRResult>) => {
+    if (ocrData && ocrData.isValid) {
       const updates: Partial<RegistrationFormData> = {};
       
       // Personal information
-      if (ocrResult.firstName) updates.firstName = ocrResult.firstName;
-      if (ocrResult.lastName1) updates.lastName1 = ocrResult.lastName1;
-      if (ocrResult.lastName2) updates.lastName2 = ocrResult.lastName2;
-      if (ocrResult.documentNumber) updates.documentNumber = ocrResult.documentNumber;
-      if (ocrResult.documentType) {
-        updates.documentType = ocrResult.documentType;
-        setSelectedDocumentType(ocrResult.documentType);
+      if (ocrData.firstName) updates.firstName = ocrData.firstName;
+      if (ocrData.lastName1) updates.lastName1 = ocrData.lastName1;
+      if (ocrData.lastName2) updates.lastName2 = ocrData.lastName2;
+      if (ocrData.documentNumber) updates.documentNumber = ocrData.documentNumber;
+      if (ocrData.documentType) {
+        updates.documentType = ocrData.documentType;
+        setSelectedDocumentType(ocrData.documentType);
       }
-      if (ocrResult.documentSupport) updates.documentSupport = ocrResult.documentSupport;
-      if (ocrResult.birthDate) updates.birthDate = ocrResult.birthDate;
-      if (ocrResult.gender) updates.gender = ocrResult.gender;
-      if (ocrResult.nationality) updates.nationality = ocrResult.nationality;
+      if (ocrData.documentSupport) updates.documentSupport = ocrData.documentSupport;
+      if (ocrData.birthDate) updates.birthDate = ocrData.birthDate;
+      if (ocrData.gender) updates.gender = ocrData.gender;
+      if (ocrData.nationality) updates.nationality = ocrData.nationality;
       
       // Address information (if available)
-      if (ocrResult.addressStreet) updates.addressStreet = ocrResult.addressStreet;
-      if (ocrResult.addressCity) updates.addressCity = ocrResult.addressCity;
-      if (ocrResult.addressPostalCode) updates.addressPostalCode = ocrResult.addressPostalCode;
-      if (ocrResult.addressCountry) {
-        updates.addressCountry = ocrResult.addressCountry;
+      if (ocrData.addressStreet) updates.addressStreet = ocrData.addressStreet;
+      if (ocrData.addressCity) updates.addressCity = ocrData.addressCity;
+      if (ocrData.addressPostalCode) updates.addressPostalCode = ocrData.addressPostalCode;
+      if (ocrData.addressCountry) {
+        updates.addressCountry = ocrData.addressCountry;
         // Update country code for phone validation
-        const countryCode = getCountryCode(ocrResult.addressCountry);
+        const countryCode = getCountryCode(ocrData.addressCountry);
         setDetectedCountryCode(countryCode);
       }
       
@@ -102,16 +137,9 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
         }, index * 50); // Stagger updates for visual effect
       });
       
-      setHasPhotoProcessed(true);
-      
-      // Log successful processing
-      console.log('OCR processed successfully:', {
-        detectedFields: ocrResult.detectedFields,
-        confidence: ocrResult.confidence,
-        processingTime: ocrResult.processingTime
-      });
+      setHasDocumentProcessed(true);
     }
-  }, [ocrResult, form, getCountryCode]);
+  };
 
   const registrationMutation = useMutation({
     mutationFn: async (data: RegistrationFormData) => {
@@ -180,9 +208,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
     },
   });
 
-  const handlePhotoProcessed = (result: ComprehensiveOCRResult) => {
-    setOcrResult(result);
-  };
+
 
   // Enhanced handlePlaceSelected with comprehensive address parsing
   const handlePlaceSelected = useCallback((place: any) => {
@@ -288,26 +314,20 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 
-                {/* Photo Capture Section */}
-                <Card className="border-[#45c655] border-2">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center text-[#3D5300]">
-                      <Camera className="w-5 h-5 mr-2" />
-                      {t('registration.photo_capture')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <IdPhotoCapture onPhotoProcessed={handlePhotoProcessed} />
-                    {hasPhotoProcessed && (
-                      <Alert className="mt-3 border-[#45c655] bg-green-50">
-                        <Check className="h-4 w-4 text-[#45c655]" />
-                        <AlertDescription className="text-[#3D5300]">
-                          {t('registration.ocr_success')}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
+                {/* Document Capture Section */}
+                <MultiDocumentCapture 
+                  onDocumentProcessed={handleDocumentProcessed}
+                  onDocumentTypeChange={handleDocumentTypeChange}
+                />
+                
+                {hasDocumentProcessed && (
+                  <Alert className="mt-3 border-[#45c655] bg-green-50">
+                    <Check className="h-4 w-4 text-[#45c655]" />
+                    <AlertDescription className="text-[#3D5300]">
+                      {t('registration.ocr_success')}
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 {/* Personal Information */}
                 <Card>
