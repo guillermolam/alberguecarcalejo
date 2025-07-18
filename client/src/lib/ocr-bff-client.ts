@@ -351,6 +351,10 @@ class OCRBFFClient {
   }
 
   private async makeRequest(endpoint: string, data: any): Promise<any> {
+    console.log(`=== OCR API REQUEST ===`);
+    console.log('Endpoint:', endpoint);
+    console.log('Request data:', data);
+    
     // Try Rust backend first
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -365,12 +369,27 @@ class OCRBFFClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log(`=== OCR API RESPONSE from ${endpoint} ===`);
+      console.log('Raw OCR response:', JSON.stringify(result, null, 2));
+      console.log('Success:', result.success);
+      console.log('Extracted data:', result.extractedData);
+      if (result.extractedData) {
+        console.log('firstName in response:', result.extractedData.firstName);
+        console.log('lastName1 in response:', result.extractedData.lastName1);
+        console.log('lastName2 in response:', result.extractedData.lastName2);
+        console.log('documentNumber in response:', result.extractedData.documentNumber);
+      }
+      
+      return result;
     } catch (error) {
       console.warn(`Rust backend unavailable for ${endpoint}, using fallback:`, error);
       
       // Fallback to local processing (simplified)
-      return this.processFallback(data);
+      const fallbackResult = this.processFallback(data);
+      console.log('=== FALLBACK OCR RESPONSE ===');
+      console.log('Fallback result:', fallbackResult);
+      return fallbackResult;
     }
   }
 

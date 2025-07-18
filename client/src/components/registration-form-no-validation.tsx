@@ -95,13 +95,22 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
   // Handle OCR results
   const handleDocumentProcessed = (result: any) => {
     console.log('=== STARTING OCR PROCESSING - NO VALIDATION DURING PROCESSING ===');
+    console.log('Raw OCR result received:', result);
     setIsProcessingOCR(true);
     
     const { frontOCR: front, backOCR: back, documentType } = result;
+    console.log('Front OCR data:', front);
+    console.log('Back OCR data:', back);
 
     if (front?.extractedData || back?.extractedData) {
       const data = { ...front?.extractedData, ...back?.extractedData };
-      console.log('OCR extracted data:', JSON.stringify(data, null, 2));
+      console.log('=== MERGED OCR EXTRACTED DATA ===');
+      console.log('Combined OCR data:', JSON.stringify(data, null, 2));
+      console.log('Individual fields:');
+      console.log('firstName:', data.firstName);
+      console.log('lastName1:', data.lastName1);
+      console.log('lastName2:', data.lastName2);
+      console.log('documentNumber:', data.documentNumber);
 
       // Batch update all form fields to trigger single re-render
       const updates: Partial<RegistrationFormData> = {};
@@ -127,10 +136,17 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
       }
 
       // Apply all updates in a single state change to trigger re-render
+      console.log('=== APPLYING FORM UPDATES ===');
+      console.log('Updates to apply:', updates);
+      
       setFormData(prev => {
         const newData = { ...prev, ...updates };
-        console.log('Batch OCR update applied:', updates);
-        console.log('New form state:', newData);
+        console.log('Previous form state:', prev);
+        console.log('New form state after OCR:', newData);
+        console.log('Field comparison:');
+        console.log('firstName: old =', prev.firstName, 'new =', newData.firstName);
+        console.log('lastName1: old =', prev.lastName1, 'new =', newData.lastName1);
+        console.log('lastName2: old =', prev.lastName2, 'new =', newData.lastName2);
         return newData;
       });
 
@@ -140,7 +156,19 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
         console.log('=== OCR PROCESSING COMPLETE - FORCING COMPONENT RELOAD ===');
         setIsProcessingOCR(false);
         setForceRerender(prev => prev + 1); // Force component re-render for i18n
+        
+        // Log final state after timeout
+        console.log('Final form state after timeout:');
+        console.log('Current formData values:');
+        console.log('firstName:', formData.firstName);
+        console.log('lastName1:', formData.lastName1);
+        console.log('lastName2:', formData.lastName2);
       }, 500);
+    } else {
+      console.log('=== NO OCR DATA EXTRACTED ===');
+      console.log('Front OCR result:', front);
+      console.log('Back OCR result:', back);
+      setIsProcessingOCR(false);
     }
   };
 
