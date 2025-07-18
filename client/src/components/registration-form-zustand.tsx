@@ -304,7 +304,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   <label className="text-sm font-medium">{t('registration.gender')} *</label>
                   <Select value={formData.gender || ''} onValueChange={(value) => updateField('gender', value)}>
                     <SelectTrigger className={showValidation && validationErrors.gender ? 'border-red-500' : ''}>
-                      <SelectValue />
+                      <SelectValue placeholder="Seleccionar género" />
                     </SelectTrigger>
                     <SelectContent>
                       {GENDER_OPTIONS.map((option) => (
@@ -338,7 +338,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   <label className="text-sm font-medium">{t('registration.document_type')} *</label>
                   <Select value={selectedDocumentType} onValueChange={handleDocumentTypeChange}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Seleccionar tipo de documento" />
                     </SelectTrigger>
                     <SelectContent>
                       {DOCUMENT_TYPES.map((type) => (
@@ -485,7 +485,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 <label className="text-sm font-medium">{t('registration.payment_type')} *</label>
                 <Select value={formData.paymentType || 'efect'} onValueChange={(value) => updateField('paymentType', value)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Seleccionar tipo de pago" />
                   </SelectTrigger>
                   <SelectContent>
                     {PAYMENT_TYPES.map((type) => (
@@ -498,7 +498,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               </div>
 
               <div className="text-sm text-gray-600">
-                <p>{t('pricing.total')}: €{(stayData.nights * 15).toFixed(2)}</p>
+                <p>{t('pricing.total')}: €{(stayData.nights * (stayData.roomType === 'private' ? 35 : 15)).toFixed(2)}</p>
                 <p>{t('pricing.payment_due')}</p>
               </div>
             </CardContent>

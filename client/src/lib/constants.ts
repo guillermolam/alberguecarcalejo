@@ -29,42 +29,42 @@ export const COUNTRIES = [
 ];
 
 export const DOCUMENT_TYPES = [
-  { code: 'NIF', name: 'DNI/NIF (España)' },
-  { code: 'NIE', name: 'NIE (España)' },
-  { code: 'PAS', name: 'Pasaporte' },
-  { code: 'OTRO', name: 'Otro documento' },
+  { value: 'NIF', label: 'documents.dni' },
+  { value: 'NIE', label: 'documents.nie' },
+  { value: 'PAS', label: 'documents.passport' },
+  { value: 'OTRO', label: 'documents.other' },
 ];
 
 export const PAYMENT_TYPES = [
   { 
-    code: 'EFECT', 
-    name: 'Efectivo (en recepción)',
+    value: 'efect', 
+    label: 'payment.cash',
     icon: 'money-bill'
   },
   { 
-    code: 'TARJT', 
-    name: 'Tarjeta de crédito/débito',
+    value: 'tarjt', 
+    label: 'payment.card',
     icon: 'credit-card'
   },
   { 
-    code: 'BIZUM', 
-    name: 'Bizum',
+    value: 'bizum', 
+    label: 'payment.bizum',
     icon: 'mobile'
   },
   { 
-    code: 'TRANS', 
-    name: 'Transferencia bancaria',
+    value: 'trans', 
+    label: 'payment.transfer',
     icon: 'university'
   },
 ];
 
 export const GENDER_OPTIONS = [
-  { code: 'H', name: 'Hombre' },
-  { code: 'M', name: 'Mujer' },
-  { code: 'O', name: 'Otro' },
+  { value: 'M', label: 'registration.gender_male' },
+  { value: 'F', label: 'registration.gender_female' },
+  { value: 'O', label: 'registration.gender_other' },
 ];
 
 export const PRICE_PER_NIGHT = 15;
 export const CURRENCY = 'EUR';
 export const MAX_NIGHTS = 30;
-export const TOTAL_BEDS = 25;
+export const TOTAL_BEDS = 24;
