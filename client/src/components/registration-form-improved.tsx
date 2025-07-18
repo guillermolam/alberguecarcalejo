@@ -140,18 +140,33 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
       Object.entries(updates).forEach(([key, value]) => {
         if (value && typeof value === 'string' && value.trim() !== '') {
           console.log(`Setting form field ${key} to:`, value);
+          // Use proper form.setValue with all options
           form.setValue(key as keyof RegistrationFormData, value as any, { 
-            shouldValidate: true, 
+            shouldValidate: false, 
             shouldDirty: true,
             shouldTouch: true 
           });
+          // Also manually trigger field change for immediate visual update
+          const event = new Event('input', { bubbles: true });
+          const field = document.querySelector(`[name="${key}"]`) as HTMLInputElement;
+          if (field) {
+            field.value = value;
+            field.dispatchEvent(event);
+          }
         }
       });
       
-      // Force complete form re-render
+      // Force complete form re-render with delay
       setTimeout(() => {
         form.trigger();
-      }, 100);
+        // Force re-render by updating form state
+        Object.keys(updates).forEach(key => {
+          const currentValue = form.getValues(key as keyof RegistrationFormData);
+          if (currentValue) {
+            form.setValue(key as keyof RegistrationFormData, currentValue, { shouldDirty: true });
+          }
+        });
+      }, 200);
       
       setHasDocumentProcessed(true);
     }
