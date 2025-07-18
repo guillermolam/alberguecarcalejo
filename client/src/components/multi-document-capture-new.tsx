@@ -23,7 +23,7 @@ interface MultiDocumentCaptureProps {
   onDocumentTypeChange?: (documentType: string) => void;
 }
 
-export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: MultiDocumentCaptureProps) {
+function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: MultiDocumentCaptureProps) {
   const [selectedDocumentType, setSelectedDocumentType] = useState("NIF"); // Default to DNI/NIF
   const [frontImage, setFrontImage] = useState<string | null>(null);
   const [backImage, setBackImage] = useState<string | null>(null);
@@ -505,3 +505,5 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
     </Card>
   );
 }
+
+export default MultiDocumentCapture;

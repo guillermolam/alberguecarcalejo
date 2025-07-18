@@ -14,11 +14,13 @@ The application follows a zero-cost, modern full-stack architecture optimized fo
 
 - **Frontend**: React with TypeScript, using Vite for development and build
 - **Zero-Cost OCR Service**: 
-  - **AWS Lambda Function**: Rust-based Spanish document OCR service
+  - **AWS Lambda Function**: Rust-based Spanish document OCR service (DEPLOYED)
+  - **Function URL**: https://ypeekiyyo4wb4mvzg3vsa2yy2m0lhmew.lambda-url.eu-west-3.on.aws/
   - **Tesseract Integration**: Spanish DNI/NIE validation with checksum verification
   - **MRZ Parsing**: International passport processing
   - **Cost Optimization**: 256MB memory, 30s timeout, fits AWS free tier
   - **Processing**: <$0/month for 720 requests (24 users/day)
+  - **Status**: ACTIVE - Connected to frontend via VITE_LAMBDA_OCR_URL
 - **Secure Backend Services**: 
   - **Database Service**: Secure PostgreSQL operations with input validation
   - **Validation Service**: Document, email, and phone validation with rate limiting

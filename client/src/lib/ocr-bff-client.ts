@@ -355,8 +355,57 @@ class OCRBFFClient {
     console.log('Endpoint:', endpoint);
     console.log('Request data:', data);
     
-    // Try Rust backend first
+    // Try AWS Lambda Rust backend first if URL is configured
+    if (this.lambdaUrl) {
+      console.log('=== ATTEMPTING RUST LAMBDA OCR ===');
+      console.log('Lambda URL:', this.lambdaUrl);
+      
+      try {
+        const lambdaPayload = {
+          image_base64: data.fileData,
+          document_type: data.documentType.toUpperCase(),
+          side: data.documentSide || 'front'
+        };
+        
+        console.log('Lambda payload:', {
+          ...lambdaPayload,
+          image_base64: `[base64 data: ${lambdaPayload.image_base64.length} chars]`
+        });
+
+        const response = await fetch(this.lambdaUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(lambdaPayload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Lambda HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const lambdaResult = await response.json();
+        console.log('=== RUST LAMBDA OCR RESPONSE ===');
+        console.log('Lambda result:', JSON.stringify(lambdaResult, null, 2));
+        
+        // Transform Lambda response to match our interface
+        const transformedResult = this.transformLambdaResponse(lambdaResult);
+        console.log('=== TRANSFORMED RUST OCR RESULT ===');
+        console.log('Transformed result:', transformedResult);
+        
+        return transformedResult;
+        
+      } catch (error) {
+        console.warn('Rust Lambda OCR failed, falling back to local BFF:', error);
+      }
+    } else {
+      console.log('=== NO LAMBDA URL CONFIGURED ===');
+      console.log('VITE_LAMBDA_OCR_URL not set, skipping Rust backend');
+    }
+    
+    // Try local Rust BFF backend
     try {
+      console.log('=== ATTEMPTING LOCAL RUST BFF ===');
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'POST',
         headers: {
@@ -366,31 +415,63 @@ class OCRBFFClient {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`BFF HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log(`=== OCR API RESPONSE from ${endpoint} ===`);
-      console.log('Raw OCR response:', JSON.stringify(result, null, 2));
-      console.log('Success:', result.success);
-      console.log('Extracted data:', result.extractedData);
-      if (result.extractedData) {
-        console.log('firstName in response:', result.extractedData.firstName);
-        console.log('lastName1 in response:', result.extractedData.lastName1);
-        console.log('lastName2 in response:', result.extractedData.lastName2);
-        console.log('documentNumber in response:', result.extractedData.documentNumber);
-      }
+      console.log(`=== LOCAL RUST BFF RESPONSE from ${endpoint} ===`);
+      console.log('BFF result:', JSON.stringify(result, null, 2));
       
       return result;
     } catch (error) {
-      console.warn(`Rust backend unavailable for ${endpoint}, using fallback:`, error);
+      console.warn(`Local Rust BFF unavailable for ${endpoint}, using JavaScript fallback:`, error);
       
-      // Fallback to local processing (simplified)
+      // Final fallback to local JavaScript processing
       const fallbackResult = this.processFallback(data);
-      console.log('=== FALLBACK OCR RESPONSE ===');
+      console.log('=== JAVASCRIPT FALLBACK RESPONSE ===');
       console.log('Fallback result:', fallbackResult);
       return fallbackResult;
     }
+  }
+
+  // Transform AWS Lambda response to match our OCRResponse interface
+  private transformLambdaResponse(lambdaResult: any): OCRResponse {
+    console.log('=== TRANSFORMING LAMBDA RESPONSE ===');
+    console.log('Raw lambda result:', lambdaResult);
+    
+    const extractedData: ExtractedDocumentData = {};
+    
+    if (lambdaResult.success && lambdaResult.extracted_data) {
+      const data = lambdaResult.extracted_data;
+      
+      // Map Lambda response fields to our interface
+      if (data.first_name) extractedData.firstName = data.first_name;
+      if (data.first_surname) extractedData.lastName1 = data.first_surname;
+      if (data.second_surname) extractedData.lastName2 = data.second_surname;
+      if (data.document_number) extractedData.documentNumber = data.document_number;
+      if (data.document_type) extractedData.documentType = data.document_type;
+      if (data.birth_date) extractedData.birthDate = data.birth_date;
+      if (data.gender) extractedData.gender = data.gender;
+      if (data.nationality) extractedData.nationality = data.nationality;
+      if (data.address) extractedData.addressStreet = data.address;
+      if (data.city) extractedData.addressCity = data.city;
+      if (data.postal_code) extractedData.addressPostalCode = data.postal_code;
+      if (data.country) extractedData.addressCountry = data.country;
+      if (data.province) extractedData.addressProvince = data.province;
+      
+      console.log('=== MAPPED EXTRACTED DATA ===');
+      console.log('Extracted data:', extractedData);
+    }
+    
+    return {
+      success: lambdaResult.success || false,
+      extractedData,
+      confidence: lambdaResult.confidence || 0,
+      processingTimeMs: lambdaResult.processing_time_ms || 0,
+      detectedFields: lambdaResult.detected_fields || [],
+      errors: lambdaResult.errors || [],
+      rawText: lambdaResult.raw_text || ''
+    };
   }
 
   private processFallback(data: any): OCRResponse {
