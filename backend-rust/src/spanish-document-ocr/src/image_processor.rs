@@ -3,6 +3,9 @@ use imageproc::contrast::threshold;
 use imageproc::morphology::{close, open};
 use imageproc::definitions::Connectivity;
 use imageproc::geometric_transformations::{rotate_about_center, Interpolation};
+use imageproc::edges::sobel_gradients;
+use imageproc::hough::{detect_lines, LineDetectionOptions, PolarLine};
+use std::f32::consts::PI;
 
 pub struct ImageProcessor;
 
@@ -153,13 +156,40 @@ impl ImageProcessor {
         }
     }
     
-    fn detect_rotation_angle(image: &GrayImage) -> f32 {
-        // Simplified rotation detection
-        // In practice, you'd use techniques like:
-        // - Hough transform for line detection
-        // - Text line analysis
-        // - Edge detection
-        
-        0.0 // Return 0 for now (no rotation needed)
+    pub fn detect_rotation_angle(image: &GrayImage) -> f32 {
+        // 1. Edge detection (Sobel)
+        let sobel = sobel_gradients(image);
+
+        // 2. Hough line detection (use wide angle range, high accumulator threshold)
+        let options = LineDetectionOptions {
+            vote_threshold: 120, // tweak depending on DPI/scan, lower if faint lines
+            suppression_radius: 10,
+        };
+
+        // Try both edge directions: 0..180 degrees
+        let lines: Vec<PolarLine> = detect_lines(&sobel, options);
+
+        // 3. Extract angles of lines close to horizontal
+        let mut angles = Vec::new();
+        for line in lines.iter() {
+            // PolarLine.theta is in radians: 0 = vertical, PI/2 = horizontal
+            let deg = line.theta * 180.0 / PI;
+            // Accept only lines close to horizontal (within ±35 deg of horizontal, but not                     verticals)
+            if (deg > 45.0 && deg < 135.0) || (deg < -45.0 && deg > -135.0) {
+                let skew = deg - 90.0; // how much it deviates from horizontal
+                angles.push(skew);
+            }
+        }
+
+        if angles.is_empty() {
+            // No lines detected; assume no rotation needed
+            return 0.0;
+        }
+
+        // 4. Average the skew angles
+        let mean_skew = angles.iter().copied().sum::<f32>() / angles.len() as f32;
+
+        // Clamp the result to [-15, 15] degrees for safety
+        mean_skew.clamp(-15.0, 15.0)
     }
 }

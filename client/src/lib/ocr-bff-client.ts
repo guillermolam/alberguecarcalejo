@@ -1,6 +1,8 @@
 // OCR Backend-for-Frontend Client
 // Handles communication with specialized Rust WASM OCR services
 
+import { imageRotationDetector, type RotationResult } from './image-rotation-detector';
+
 export interface OCRRequest {
   documentType: string;
   documentSide?: 'front' | 'back';
@@ -34,6 +36,13 @@ export interface OCRResponse {
   detectedFields: string[];
   errors: string[];
   rawText: string;
+  rotationCorrection?: {
+    originalAngle: number;
+    correctedAngle: number;
+    rotationConfidence: number;
+    rotationMethod: string;
+    rotationTimeMs: number;
+  };
 }
 
 export interface MultiFileOCRRequest {
@@ -55,15 +64,43 @@ class OCRBFFClient {
     try {
       const fileData = await this.fileToBase64(file);
       
+      // Apply rotation detection and correction
+      const rotationResult = await imageRotationDetector.detectAndCorrectRotation(fileData, {
+        enableBinarization: true,
+        thresholdValue: 128,
+        enableGaussianBlur: true,
+        blurRadius: 1,
+        detectionMethods: ['projection', 'text-orientation', 'edge-detection']
+      });
+      
+      console.log('Rotation detection result:', {
+        angle: rotationResult.angle,
+        confidence: rotationResult.confidence,
+        method: rotationResult.method,
+        processingTimeMs: rotationResult.processingTimeMs
+      });
+
       const request: OCRRequest = {
         documentType: 'DNI',
         documentSide,
-        fileData,
+        fileData: rotationResult.correctedImage, // Use corrected image
         fileName: file.name,
         mimeType: file.type,
       };
 
       const response = await this.makeRequest('/api/ocr/dni', request);
+      
+      // Add rotation correction info to response
+      if (response.success) {
+        response.rotationCorrection = {
+          originalAngle: rotationResult.angle,
+          correctedAngle: 0, // Always corrected to 0
+          rotationConfidence: rotationResult.confidence,
+          rotationMethod: rotationResult.method,
+          rotationTimeMs: rotationResult.processingTimeMs
+        };
+      }
+      
       return response;
     } catch (error) {
       console.error('DNI OCR processing error:', error);
@@ -76,15 +113,43 @@ class OCRBFFClient {
     try {
       const fileData = await this.fileToBase64(file);
       
+      // Apply rotation detection and correction
+      const rotationResult = await imageRotationDetector.detectAndCorrectRotation(fileData, {
+        enableBinarization: true,
+        thresholdValue: 128,
+        enableGaussianBlur: true,
+        blurRadius: 1,
+        detectionMethods: ['projection', 'text-orientation', 'edge-detection']
+      });
+      
+      console.log('NIE rotation detection result:', {
+        angle: rotationResult.angle,
+        confidence: rotationResult.confidence,
+        method: rotationResult.method,
+        processingTimeMs: rotationResult.processingTimeMs
+      });
+
       const request: OCRRequest = {
         documentType: 'NIE',
         documentSide,
-        fileData,
+        fileData: rotationResult.correctedImage, // Use corrected image
         fileName: file.name,
         mimeType: file.type,
       };
 
       const response = await this.makeRequest('/api/ocr/nie', request);
+      
+      // Add rotation correction info to response
+      if (response.success) {
+        response.rotationCorrection = {
+          originalAngle: rotationResult.angle,
+          correctedAngle: 0,
+          rotationConfidence: rotationResult.confidence,
+          rotationMethod: rotationResult.method,
+          rotationTimeMs: rotationResult.processingTimeMs
+        };
+      }
+      
       return response;
     } catch (error) {
       console.error('NIE OCR processing error:', error);
@@ -97,14 +162,42 @@ class OCRBFFClient {
     try {
       const fileData = await this.fileToBase64(file);
       
+      // Apply rotation detection and correction
+      const rotationResult = await imageRotationDetector.detectAndCorrectRotation(fileData, {
+        enableBinarization: true,
+        thresholdValue: 128,
+        enableGaussianBlur: true,
+        blurRadius: 1,
+        detectionMethods: ['projection', 'text-orientation', 'edge-detection']
+      });
+      
+      console.log('Passport rotation detection result:', {
+        angle: rotationResult.angle,
+        confidence: rotationResult.confidence,
+        method: rotationResult.method,
+        processingTimeMs: rotationResult.processingTimeMs
+      });
+
       const request: OCRRequest = {
         documentType: 'PASSPORT',
-        fileData,
+        fileData: rotationResult.correctedImage, // Use corrected image
         fileName: file.name,
         mimeType: file.type,
       };
 
       const response = await this.makeRequest('/api/ocr/passport', request);
+      
+      // Add rotation correction info to response
+      if (response.success) {
+        response.rotationCorrection = {
+          originalAngle: rotationResult.angle,
+          correctedAngle: 0,
+          rotationConfidence: rotationResult.confidence,
+          rotationMethod: rotationResult.method,
+          rotationTimeMs: rotationResult.processingTimeMs
+        };
+      }
+      
       return response;
     } catch (error) {
       console.error('Passport OCR processing error:', error);

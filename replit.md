@@ -148,6 +148,13 @@ The database schema supports:
 - **Advanced Document Validation**: Checksum verification for DNI/NIE using mod-23 algorithm
 - **International Passport Support**: MRZ (Machine Readable Zone) parsing for worldwide passports
 - **Intelligent Document Classification**: Automatic document type detection and routing
+- **Smart Rotation Detection**: Multi-algorithm rotation correction system with binarization/thresholding for optimal OCR accuracy
+  - **Projection Method**: Variance-based rotation detection using document projections
+  - **Text Orientation**: Gradient-based text line detection for proper alignment
+  - **Edge Detection**: Sobel filter-based edge analysis for document orientation
+  - **Hough Transform**: Line detection for precise angle correction
+  - **Preprocessing Pipeline**: Gaussian blur and binarization before rotation detection
+  - **Confidence Scoring**: Weighted algorithm selection based on detection confidence
 - **Secure Bed Management**: Backend service automatically assigns beds after payment confirmation
 - **Automatic Bed Initialization**: Sets up 25-bed inventory (Dormitorios A/B, Private rooms) on first run
 - **Payment-to-Bed Integration**: Atomic transactions ensuring payment success before bed assignment

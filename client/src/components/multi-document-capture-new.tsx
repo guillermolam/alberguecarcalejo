@@ -281,8 +281,15 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                     <div className="space-y-3">
                       <img src={frontImage} alt="Document" className="w-full h-32 object-cover rounded" />
                       {frontOCR && (
-                        <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                          ✓ {t('document.processed_successfully')}
+                        <div className="text-sm text-green-600 bg-green-50 p-2 rounded space-y-1">
+                          <div>✓ {t('document.processed_successfully')}</div>
+                          {frontOCR.rotationCorrection && (
+                            <div className="text-xs text-blue-600">
+                              📐 Rotation corrected: {frontOCR.rotationCorrection.originalAngle.toFixed(1)}° 
+                              ({frontOCR.rotationCorrection.rotationMethod}, 
+                              {(frontOCR.rotationCorrection.rotationConfidence * 100).toFixed(0)}% confidence)
+                            </div>
+                          )}
                         </div>
                       )}
                       <Button
@@ -344,8 +351,15 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                     <div className="space-y-3">
                       <img src={frontImage} alt="Front side" className="w-full h-32 object-cover rounded" />
                       {frontOCR && (
-                        <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                          ✓ {t('document.processed_successfully')}
+                        <div className="text-sm text-green-600 bg-green-50 p-2 rounded space-y-1">
+                          <div>✓ {t('document.processed_successfully')}</div>
+                          {frontOCR.rotationCorrection && (
+                            <div className="text-xs text-blue-600">
+                              📐 Rotation corrected: {frontOCR.rotationCorrection.originalAngle.toFixed(1)}° 
+                              ({frontOCR.rotationCorrection.rotationMethod}, 
+                              {(frontOCR.rotationCorrection.rotationConfidence * 100).toFixed(0)}% confidence)
+                            </div>
+                          )}
                         </div>
                       )}
                       <Button
@@ -405,8 +419,15 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                       <div className="space-y-3">
                         <img src={backImage} alt="Back side" className="w-full h-32 object-cover rounded" />
                         {backOCR && (
-                          <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                            ✓ {t('document.processed_successfully')}
+                          <div className="text-sm text-green-600 bg-green-50 p-2 rounded space-y-1">
+                            <div>✓ {t('document.processed_successfully')}</div>
+                            {backOCR.rotationCorrection && (
+                              <div className="text-xs text-blue-600">
+                                📐 Rotation corrected: {backOCR.rotationCorrection.originalAngle.toFixed(1)}° 
+                                ({backOCR.rotationCorrection.rotationMethod}, 
+                                {(backOCR.rotationCorrection.rotationConfidence * 100).toFixed(0)}% confidence)
+                              </div>
+                            )}
                           </div>
                         )}
                         <Button

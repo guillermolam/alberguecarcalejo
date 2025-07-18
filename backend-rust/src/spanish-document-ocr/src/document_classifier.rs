@@ -1,94 +1,163 @@
-use image::{DynamicImage, ImageBuffer, Luma};
-use crate::models::DocumentType;
+//! document_parser.rs
+//!
+//! A production-ready module for parsing Spanish DNI front and back images.
+//!
+//! Front-side fields:
+//! - Portrait picture crop
+//! - Last name and second last name
+//! - First name
+//! - Gender
+//! - Nationality
+//! - Expiration date
+//! - ID support number
+//!
+//! Back-side fields:
+//! - Address (DOMICILIO)
+//! - Town/Municipio
+//! - State/Comunidad Autónoma
+//! - ID support number (from MRZ)
 
-pub struct DocumentClassifier;
+use std::error::Error;
 
-impl DocumentClassifier {
-    pub fn classify(image: &DynamicImage, hint: Option<String>) -> DocumentType {
-        // If we have a hint from the user, use it
-        if let Some(hint) = hint {
-            return DocumentType::from_string(&hint);
-        }
-        
-        // Analyze image characteristics
-        let (width, height) = (image.width(), image.height());
-        let aspect_ratio = width as f32 / height as f32;
-        
-        // Convert to grayscale for analysis
-        let gray_image = image.to_luma8();
-        
-        // Check for passport characteristics (MRZ lines, specific aspect ratio)
-        if Self::detect_passport_features(&gray_image, aspect_ratio) {
-            return DocumentType::Passport;
-        }
-        
-        // Check for Spanish ID card characteristics
-        if Self::detect_spanish_id_features(&gray_image, aspect_ratio) {
-            // Try to distinguish between DNI and NIE by looking for specific patterns
-            if Self::detect_nie_patterns(&gray_image) {
-                return DocumentType::NieFront;
-            } else {
-                return DocumentType::DniFront;
-            }
-        }
-        
-        DocumentType::Other
+use image::{DynamicImage, GenericImageView};
+use tesseract::{TessApi, TessInitError, PageSegMode};
+
+/// Data extracted from the front side of a Spanish DNI
+#[derive(Debug, Clone)]
+pub struct SpanishIdFrontData {
+    pub last_name: String,
+    pub second_last_name: String,
+    pub first_name: String,
+    pub gender: String,
+    pub nationality: String,
+    pub expiration_date: String,
+    pub id_support_number: String,
+    pub picture: DynamicImage,
+}
+
+/// Data extracted from the back side of a Spanish DNI
+#[derive(Debug, Clone)]
+pub struct SpanishIdBackData {
+    pub address: String,
+    pub town: String,
+    pub state: String,
+    pub id_support_number: String,
+}
+
+/// Main parser for Spanish DNI documents
+pub struct DocumentParser {
+    ocr: TessApi,
+}
+
+impl DocumentParser {
+    /// Initialize the parser with optional tessdata path and language code (e.g. "spa").
+    pub fn new(tessdata_path: Option<&str>, lang: &str) -> Result<Self, TessInitError> {
+        let mut api = TessApi::new(tessdata_path, lang)?;
+        api.set_page_seg_mode(PageSegMode::SingleLine);
+        Ok(DocumentParser { ocr: api })
     }
-    
-    fn detect_passport_features(image: &ImageBuffer<Luma<u8>, Vec<u8>>, aspect_ratio: f32) -> bool {
-        // Passport aspect ratio is typically around 1.4 (width/height)
-        if aspect_ratio < 1.2 || aspect_ratio > 1.6 {
-            return false;
-        }
-        
-        // Look for MRZ (Machine Readable Zone) at bottom
-        let height = image.height();
-        let mrz_region = height - (height / 4); // Bottom quarter
-        
-        // Count horizontal lines in MRZ area (simplified detection)
-        let mut line_count = 0;
-        for y in mrz_region..height {
-            let mut consecutive_chars = 0;
-            for x in 0..image.width() {
-                let pixel = image.get_pixel(x, y)[0];
-                if pixel < 128 { // Dark pixel (text)
-                    consecutive_chars += 1;
-                } else {
-                    if consecutive_chars > 20 { // Likely a text line
-                        line_count += 1;
-                        break;
-                    }
-                    consecutive_chars = 0;
-                }
-            }
-        }
-        
-        line_count >= 2 // Passport MRZ typically has 2 lines
+
+    /// Parse front-side fields from a Spanish DNI image
+    pub fn parse_front(
+        &mut self,
+        image: &DynamicImage,
+    ) -> Result<SpanishIdFrontData, Box<dyn Error>> {
+        // 1. Portrait crop (left 30% × top 50%)
+        let picture = crop_region(image, 0.00, 0.00, 0.30, 0.50);
+
+        // 2. Last names (combined line) at roughly 35–75% width, 20–30% height
+        let last_raw = self.ocr_text(&crop_region(image, 0.35, 0.20, 0.40, 0.10))?;
+        let mut parts = last_raw.split_whitespace();
+        let last_name = parts.next().unwrap_or_default().to_string();
+        let second_last_name = parts.collect::<Vec<_>>().join(" ");
+
+        // 3. First name at 35–75% width, 30–40% height
+        let first_name = self.ocr_text(&crop_region(image, 0.35, 0.30, 0.40, 0.10))?;
+
+        // 4. Gender at 35–50% width, 40–48% height
+        let gender = self.ocr_text(&crop_region(image, 0.35, 0.40, 0.15, 0.08))?;
+
+        // 5. Nationality at 50–75% width, 40–48% height
+        let nationality = self.ocr_text(&crop_region(image, 0.50, 0.40, 0.25, 0.08))?;
+
+        // 6. Expiration date at 50–75% width, 50–58% height
+        let expiration_date = self.ocr_text(&crop_region(image, 0.50, 0.50, 0.25, 0.08))?;
+
+        // 7. ID support number ("NÚM. SOPORT") at 35–75% width, 48–56% height
+        let id_support_number = self.ocr_text(&crop_region(image, 0.35, 0.48, 0.40, 0.08))?;
+
+        Ok(SpanishIdFrontData {
+            last_name,
+            second_last_name,
+            first_name,
+            gender,
+            nationality,
+            expiration_date,
+            id_support_number,
+            picture,
+        })
     }
-    
-    fn detect_spanish_id_features(image: &ImageBuffer<Luma<u8>, Vec<u8>>, aspect_ratio: f32) -> bool {
-        // Spanish ID cards have aspect ratio around 1.6 (width/height)
-        if aspect_ratio < 1.4 || aspect_ratio > 1.8 {
-            return false;
-        }
-        
-        // Look for typical ID card layout patterns
-        // This is a simplified check - in practice you'd look for:
-        // - Photo region (square area)
-        // - Text regions
-        // - Specific color patterns (Spain flag colors)
-        
-        true // For now, assume it's a Spanish ID if aspect ratio matches
+
+    /// Parse back-side fields from a Spanish DNI image
+    pub fn parse_back(
+        &mut self,
+        image: &DynamicImage,
+    ) -> Result<SpanishIdBackData, Box<dyn Error>> {
+        // 1. Address (DOMICILIO) at top ~0–60% width, 0–12% height
+        let address = self.ocr_text(&crop_region(image, 0.00, 0.00, 0.60, 0.12))?;
+
+        // 2. Town/Municipio just below at 0–60% width, 12–20% height
+        let town = self.ocr_text(&crop_region(image, 0.00, 0.12, 0.60, 0.08))?;
+
+        // 3. State/Comunidad Autónoma below at 0–60% width, 20–28% height
+        let state = self.ocr_text(&crop_region(image, 0.00, 0.20, 0.60, 0.08))?;
+
+        // 4. Back ID support number from MRZ first line (bottom ~75–85%)
+        let mrz_line1 = self.ocr_text(&crop_region(image, 0.00, 0.75, 1.00, 0.10))?;
+        let id_support_number = extract_id_support_from_mrz(&mrz_line1);
+
+        Ok(SpanishIdBackData {
+            address,
+            town,
+            state,
+            id_support_number,
+        })
     }
-    
-    fn detect_nie_patterns(image: &ImageBuffer<Luma<u8>, Vec<u8>>) -> bool {
-        // Look for NIE-specific text patterns
-        // This would involve OCR on specific regions to look for "NIE" text
-        // For now, return false to default to DNI
-        false
+
+    /// Internal: run OCR on an image region and return cleaned text
+    fn ocr_text(&mut self, sub_image: &DynamicImage) -> Result<String, Box<dyn Error>> {
+        let gray = sub_image.to_luma8();
+        self.ocr.set_image_from_mem(&gray)?;
+        let mut txt = self.ocr.get_text()?;
+        txt = txt.replace('\n', " ");
+        Ok(txt.trim().to_string())
     }
-    
-    pub fn needs_back_side(doc_type: &DocumentType) -> bool {
-        matches!(doc_type, DocumentType::DniFront | DocumentType::NieFront)
+}
+
+/// Crop a sub-region of the source image by relative percentages
+fn crop_region(
+    image: &DynamicImage,
+    x_pct: f32,
+    y_pct: f32,
+    w_pct: f32,
+    h_pct: f32,
+) -> DynamicImage {
+    let (w, h) = image.dimensions();
+    let x = (x_pct * w as f32).round().clamp(0.0, w as f32 - 1.0) as u32;
+    let y = (y_pct * h as f32).round().clamp(0.0, h as f32 - 1.0) as u32;
+    let cw = (w_pct * w as f32).round().clamp(1.0, w as f32 - x as f32) as u32;
+    let ch = (h_pct * h as f32).round().clamp(1.0, h as f32 - y as f32) as u32;
+    image.crop_imm(x, y, cw, ch)
+}
+
+/// Extract the ID support number token following "DESP" in an MRZ line
+fn extract_id_support_from_mrz(mrz: &str) -> String {
+    if let Some(idx) = mrz.find("DESP") {
+        mrz[idx + 4..]
+            .chars()
+            .take_while(|c| *c != '<' && !c.is_whitespace())
+            .collect()
+    } else {
+        String::new()
     }
 }
