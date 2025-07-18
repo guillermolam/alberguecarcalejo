@@ -58,7 +58,7 @@ The application follows a zero-cost, modern full-stack architecture optimized fo
   - **Automatic Bed Assignment**: Assigns beds automatically after payment confirmation
   - **Real-time Availability**: Checks bed availability with date range validation
   - **Payment Integration**: Processes payments and assigns beds atomically
-  - **Inventory Management**: Initializes and manages 25-bed inventory (Dormitorios A/B, Private rooms)
+  - **Inventory Management**: Initializes and manages 24-bed inventory (Dormitorios A/B, Private rooms)
   - **Security**: All bed operations secured and validated before database updates
 - **Express.js Proxy**: Minimal proxy layer routing requests to Rust WASM backend services
 - **Secure Database Access**: All database operations validated and secured through backend services
@@ -144,6 +144,7 @@ The database schema supports:
 - Replit-specific optimizations for cloud deployment
 
 ### Key Features
+- **Dynamic Pricing System**: Database-driven pricing with dormitory beds (€15/night) and private rooms (€35/night)
 - **Zero-Cost OCR Processing**: AWS Lambda function for Spanish DNI/NIE and passport processing (<$0/month for 24 users/day)
 - **Advanced Document Validation**: Checksum verification for DNI/NIE using mod-23 algorithm
 - **International Passport Support**: MRZ (Machine Readable Zone) parsing for worldwide passports
@@ -156,7 +157,7 @@ The database schema supports:
   - **Preprocessing Pipeline**: Gaussian blur and binarization before rotation detection
   - **Confidence Scoring**: Weighted algorithm selection based on detection confidence
 - **Secure Bed Management**: Backend service automatically assigns beds after payment confirmation
-- **Automatic Bed Initialization**: Sets up 25-bed inventory (Dormitorios A/B, Private rooms) on first run
+- **Automatic Bed Initialization**: Sets up 24-bed inventory (Dormitorios A/B, Private rooms) on first run
 - **Payment-to-Bed Integration**: Atomic transactions ensuring payment success before bed assignment
 - **Government Compliance**: Automated XML submission to Spanish authorities
 - **Independent Document Upload**: Separate front/back upload areas for DNI/NIE processing with responsive layout

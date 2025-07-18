@@ -23,8 +23,9 @@ const completeRegistrationSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize beds on startup
-  await storage.initializeBeds();
+  // Initialize beds and pricing on startup
+  await bedManager.initializePricing();
+  await bedManager.initializeBeds();
 
   // Document validation endpoint - with fallback to local validation
   app.post("/api/validate/document", async (req, res) => {
@@ -1051,8 +1052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
-  // Initialize bed inventory on server start
-  bedManager.initializeBeds().catch(console.error);
+  // Bed inventory and pricing already initialized above
 
   return httpServer;
 }

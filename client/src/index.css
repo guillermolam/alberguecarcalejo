@@ -78,6 +78,25 @@
   --chart-5: hsl(340, 75%, 55%);
 }
 
+/* Fix dropdown visibility */
+[data-radix-select-content] {
+  z-index: 9999 !important;
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-radix-select-item] {
+  color: #1f2937 !important;
+  background-color: white !important;
+}
+
+[data-radix-select-item]:hover,
+[data-radix-select-item][data-highlighted] {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
 @layer base {
   * {
     @apply border-border;

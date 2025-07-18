@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { beds, bookings, pilgrims, payments } from "@shared/schema";
+import { beds, bookings, pilgrims, payments, pricing } from "@shared/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
 
 export interface BedAssignmentRequest {
@@ -19,6 +19,35 @@ export interface BedAssignmentResult {
 }
 
 export class BedManager {
+  /**
+   * Initialize pricing if it doesn't exist
+   */
+  async initializePricing(): Promise<void> {
+    const existingPricing = await db.select().from(pricing).limit(1);
+    
+    if (existingPricing.length === 0) {
+      const defaultPricing = [
+        {
+          roomType: "dormitory",
+          bedType: "shared",
+          pricePerNight: "15.00",
+          currency: "EUR",
+          isActive: true
+        },
+        {
+          roomType: "private",
+          bedType: "private",
+          pricePerNight: "35.00",
+          currency: "EUR",
+          isActive: true
+        }
+      ];
+      
+      await db.insert(pricing).values(defaultPricing);
+      console.log("Initialized default pricing for Albergue Del Carrascalejo");
+    }
+  }
+
   /**
    * Initialize bed inventory if it doesn't exist
    */
@@ -51,8 +80,8 @@ export class BedManager {
         });
       }
       
-      // Room 3: Private rooms (7 beds)
-      for (let i = 19; i <= 25; i++) {
+      // Room 3: Private rooms (6 beds)
+      for (let i = 19; i <= 24; i++) {
         bedsToCreate.push({
           bedNumber: i,
           roomNumber: 3,
@@ -65,6 +94,40 @@ export class BedManager {
       await db.insert(beds).values(bedsToCreate);
       console.log(`Initialized ${bedsToCreate.length} beds for Albergue Del Carrascalejo`);
     }
+  }
+
+  /**
+   * Calculate pricing for a booking
+   */
+  async calculateBookingPrice(bedNumber: number, numberOfNights: number): Promise<{ total: number; currency: string; roomType: string }> {
+    // Determine room type based on bed number
+    let roomType = "dormitory";
+    if (bedNumber >= 19) {
+      roomType = "private";
+    }
+    
+    // Get pricing from database
+    const pricingData = await db
+      .select()
+      .from(pricing)
+      .where(and(
+        eq(pricing.roomType, roomType),
+        eq(pricing.isActive, true)
+      ))
+      .limit(1);
+    
+    if (pricingData.length === 0) {
+      throw new Error(`No pricing found for room type: ${roomType}`);
+    }
+    
+    const pricePerNight = parseFloat(pricingData[0].pricePerNight);
+    const total = pricePerNight * numberOfNights;
+    
+    return {
+      total,
+      currency: pricingData[0].currency,
+      roomType
+    };
   }
 
   /**

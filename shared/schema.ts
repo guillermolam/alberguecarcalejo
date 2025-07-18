@@ -74,6 +74,17 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const pricing = pgTable("pricing", {
+  id: serial("id").primaryKey(),
+  roomType: text("room_type").notNull(), // dormitory, private
+  bedType: text("bed_type").notNull(), // shared, private
+  pricePerNight: decimal("price_per_night", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("EUR"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const governmentSubmissions = pgTable("government_submissions", {
   id: serial("id").primaryKey(),
   bookingId: integer("booking_id").references(() => bookings.id).notNull(),
@@ -155,6 +166,12 @@ export const insertGovernmentSubmissionSchema = createInsertSchema(governmentSub
   createdAt: true,
 });
 
+export const insertPricingSchema = createInsertSchema(pricing).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -168,3 +185,5 @@ export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type GovernmentSubmission = typeof governmentSubmissions.$inferSelect;
 export type InsertGovernmentSubmission = z.infer<typeof insertGovernmentSubmissionSchema>;
+export type Pricing = typeof pricing.$inferSelect;
+export type InsertPricing = z.infer<typeof insertPricingSchema>;
