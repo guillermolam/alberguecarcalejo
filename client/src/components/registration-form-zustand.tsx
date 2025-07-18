@@ -438,14 +438,11 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">{t('registration.phone')} *</label>
-                  <CountryPhoneInput
+                  <Input 
+                    type="tel"
                     value={formData.phone || ''}
-                    onChange={(phone) => updateField('phone', phone)}
-                    countryCode={detectedCountryCode}
-                    onCountryChange={(country) => {
-                      setDetectedCountryCode(country.code);
-                      setPhoneFormat(country.dialCode);
-                    }}
+                    onChange={(e) => updateField('phone', e.target.value)}
+                    placeholder="+34 600 123 456"
                     className={showValidation && validationErrors.phone ? 'border-red-500' : ''}
                   />
                   {showValidation && validationErrors.phone && (
