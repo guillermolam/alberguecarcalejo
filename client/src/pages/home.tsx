@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { LanguageSelector } from "@/components/language-selector";
 import { StayInfoForm, StayData } from "@/components/stay-info-form";
-import { RegistrationForm } from "@/components/registration-form-improved";
+import { RegistrationFormNoValidation } from "@/components/registration-form-no-validation";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { ShieldQuestion, CheckCircle } from "lucide-react";
@@ -138,7 +138,7 @@ export default function Home() {
           )}
           
           {currentStep === 'registration' && stayData && (
-            <RegistrationForm
+            <RegistrationFormNoValidation
               stayData={stayData}
               onBack={handleBackToStayInfo}
               onSuccess={handleRegistrationSuccess}
