@@ -135,6 +135,19 @@ export const translations: Record<string, Translations> = {
     'auth.logout': 'Cerrar sesión',
     'auth.login_required': 'Autenticación requerida',
     'auth.loading': 'Cargando panel de administración...',
+    
+    // Validation
+    'validation.first_name_required': 'El nombre es obligatorio',
+    'validation.last_name_required': 'El apellido es obligatorio', 
+    'validation.birth_date_required': 'La fecha de nacimiento es obligatoria',
+    'validation.document_number_required': 'El número de documento es obligatorio',
+    'validation.gender_required': 'El género es obligatorio',
+    'validation.nationality_required': 'La nacionalidad es obligatoria',
+    'validation.phone_required': 'El teléfono es obligatorio',
+    'validation.country_required': 'El país es obligatorio',
+    
+    // General
+    'general.locale_code': 'es-ES',
   },
   en: {
     'nav.title': 'Albergue Del Carrascalejo',
@@ -266,6 +279,19 @@ export const translations: Record<string, Translations> = {
     'auth.logout': 'Logout',
     'auth.login_required': 'Authentication required',
     'auth.loading': 'Loading admin panel...',
+    
+    // Validation
+    'validation.first_name_required': 'First name is required',
+    'validation.last_name_required': 'Last name is required', 
+    'validation.birth_date_required': 'Birth date is required',
+    'validation.document_number_required': 'Document number is required',
+    'validation.gender_required': 'Gender is required',
+    'validation.nationality_required': 'Nationality is required',
+    'validation.phone_required': 'Phone number is required',
+    'validation.country_required': 'Country is required',
+    
+    // General
+    'general.locale_code': 'en-US',
   },
   // Additional languages would be added here...
 };

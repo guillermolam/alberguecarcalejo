@@ -57,6 +57,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [showValidation, setShowValidation] = useState(false);
+  const [forceRerender, setForceRerender] = useState(0);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -121,10 +122,27 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
       setHasDocumentProcessed(true);
       
       setTimeout(() => {
-        console.log('=== OCR PROCESSING COMPLETE ===');
+        console.log('=== OCR PROCESSING COMPLETE - FORCING COMPONENT RELOAD ===');
         setIsProcessingOCR(false);
+        setForceRerender(prev => prev + 1); // Force component re-render for i18n
       }, 500);
     }
+  };
+
+  // Translate validation errors to current language
+  const translateValidationError = (field: string, message: string): string => {
+    const errorMap: Record<string, string> = {
+      'firstName': t('validation.first_name_required'),
+      'lastName1': t('validation.last_name_required'),
+      'birthDate': t('validation.birth_date_required'),
+      'documentNumber': t('validation.document_number_required'),
+      'gender': t('validation.gender_required'),
+      'nationality': t('validation.nationality_required'),
+      'phone': t('validation.phone_required'),
+      'addressCountry': t('validation.country_required')
+    };
+    
+    return errorMap[field] || message;
   };
 
   // Validate form only on submit
@@ -139,7 +157,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
       if (error.errors) {
         error.errors.forEach((err: any) => {
           const field = err.path[0];
-          errors[field] = err.message;
+          errors[field] = translateValidationError(field, err.message);
         });
       }
       setValidationErrors(errors);
@@ -292,6 +310,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
                       onChange={(e) => updateField('firstName', e.target.value)}
                       maxLength={50}
                       className={showValidation && validationErrors.firstName ? 'border-red-500' : ''}
+                      key={`firstName-${forceRerender}`} // Force re-render for i18n
                     />
                     {showValidation && validationErrors.firstName && (
                       <p className="text-sm text-red-500 mt-1">{validationErrors.firstName}</p>
@@ -305,6 +324,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
                       onChange={(e) => updateField('lastName1', e.target.value)}
                       maxLength={50}
                       className={showValidation && validationErrors.lastName1 ? 'border-red-500' : ''}
+                      key={`lastName1-${forceRerender}`} // Force re-render for i18n
                     />
                     {showValidation && validationErrors.lastName1 && (
                       <p className="text-sm text-red-500 mt-1">{validationErrors.lastName1}</p>
@@ -317,6 +337,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
                       value={formData.lastName2}
                       onChange={(e) => updateField('lastName2', e.target.value)}
                       maxLength={50}
+                      key={`lastName2-${forceRerender}`} // Force re-render for i18n
                     />
                   </div>
                 </div>
@@ -329,6 +350,8 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
                       value={formData.birthDate}
                       onChange={(e) => updateField('birthDate', e.target.value)}
                       className={showValidation && validationErrors.birthDate ? 'border-red-500' : ''}
+                      key={`birthDate-${forceRerender}`} // Force re-render for i18n
+                      lang={t('general.locale_code')} // Set language for date picker
                     />
                     {showValidation && validationErrors.birthDate && (
                       <p className="text-sm text-red-500 mt-1">{validationErrors.birthDate}</p>
