@@ -1,131 +1,78 @@
-use wasm_bindgen::prelude::*;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use worker::*;
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
+mod database;
+mod database_service;
+mod validation;
+mod rate_limiter;
+mod country_api;
+mod security;
+mod types;
 
-macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
-}
+use database_service::DatabaseService;
+use validation::ValidationService;
+use rate_limiter::RateLimiter;
+use country_api::CountryService;
+use security::SecurityService;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CountryInfo {
-    pub calling_code: String,
-    pub flag_url: String,
-    pub country_code: String,
-    pub country_name: String,
-}
+#[event(fetch)]
+pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
+    // Initialize services
+    let db_service = DatabaseService::new(&env).await?;
+    let validation_service = ValidationService::new();
+    let rate_limiter = RateLimiter::new();
+    let country_service = CountryService::new();
+    let security_service = SecurityService::new();
 
-#[derive(Deserialize, Debug)]
-struct RestCountryResponse {
-    name: RestCountryName,
-    idd: Option<RestCountryIdd>,
-    flags: RestCountryFlags,
-    cca2: String,
-}
+    // Parse the request path
+    let url = req.url()?;
+    let path = url.path();
+    
+    // Add CORS headers
+    let mut response = match (req.method(), path) {
+        // Database operations
+        (Method::Post, "/api/db/availability") => {
+            db_service.check_availability(req).await
+        },
+        (Method::Get, "/api/db/stats") => {
+            db_service.get_dashboard_stats(req).await
+        },
+        (Method::Post, "/api/db/register") => {
+            db_service.register_pilgrim(req).await
+        },
+        
+        // Validation services
+        (Method::Post, "/api/validate/document") => {
+            validation_service.validate_document(req, &rate_limiter).await
+        },
+        (Method::Post, "/api/validate/email") => {
+            validation_service.validate_email(req, &rate_limiter).await
+        },
+        (Method::Post, "/api/validate/phone") => {
+            validation_service.validate_phone(req, &rate_limiter).await
+        },
+        
+        // Country information service
+        (Method::Post, "/api/country/info") => {
+            country_service.get_country_info(req, &rate_limiter).await
+        },
+        
+        // Admin authentication
+        (Method::Post, "/api/admin/auth") => {
+            security_service.authenticate_admin(req, &rate_limiter).await
+        },
+        
+        // Health check
+        (Method::Get, "/health") => {
+            Response::ok("Backend services healthy")
+        },
+        
+        _ => Response::error("Not Found", 404)
+    }?;
 
-#[derive(Deserialize, Debug)]
-struct RestCountryName {
-    common: String,
-}
+    // Add CORS headers
+    response.headers_mut().set("Access-Control-Allow-Origin", "*")?;
+    response.headers_mut().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")?;
+    response.headers_mut().set("Access-Control-Allow-Headers", "Content-Type")?;
 
-#[derive(Deserialize, Debug)]
-struct RestCountryIdd {
-    root: Option<String>,
-    suffixes: Option<Vec<String>>,
-}
-
-#[derive(Deserialize, Debug)]
-struct RestCountryFlags {
-    svg: Option<String>,
-    png: Option<String>,
-}
-
-// Cache for country data
-static mut COUNTRY_CACHE: Option<HashMap<String, CountryInfo>> = None;
-
-#[wasm_bindgen]
-pub async fn get_country_info(country_name: &str) -> Result<JsValue, JsValue> {
-    console_log!("Fetching country info for: {}", country_name);
-    
-    // Initialize cache if needed
-    unsafe {
-        if COUNTRY_CACHE.is_none() {
-            COUNTRY_CACHE = Some(HashMap::new());
-        }
-    }
-    
-    // Check cache first
-    let cache_key = country_name.to_lowercase();
-    unsafe {
-        if let Some(ref cache) = COUNTRY_CACHE {
-            if let Some(cached_info) = cache.get(&cache_key) {
-                console_log!("Returning cached data for: {}", country_name);
-                return Ok(serde_wasm_bindgen::to_value(cached_info)?);
-            }
-        }
-    }
-    
-    // Fetch from REST Countries API
-    let url = format!("https://restcountries.com/v3.1/name/{}", country_name);
-    
-    let window = web_sys::window().unwrap();
-    let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_str(&url)).await?;
-    let resp: web_sys::Response = resp_value.dyn_into().unwrap();
-    
-    if !resp.ok() {
-        return Err(JsValue::from_str(&format!("HTTP error: {}", resp.status())));
-    }
-    
-    let json = wasm_bindgen_futures::JsFuture::from(resp.json()?).await?;
-    let countries: Vec<RestCountryResponse> = serde_wasm_bindgen::from_value(json)?;
-    
-    if countries.is_empty() {
-        return Err(JsValue::from_str("No country found"));
-    }
-    
-    let country = &countries[0];
-    
-    // Extract calling code
-    let calling_code = if let Some(ref idd) = country.idd {
-        let root = idd.root.as_deref().unwrap_or("");
-        let suffix = idd.suffixes.as_ref()
-            .and_then(|suffixes| suffixes.first())
-            .map(|s| s.as_str())
-            .unwrap_or("");
-        format!("{}{}", root, suffix)
-    } else {
-        "+".to_string()
-    };
-    
-    // Extract flag URL
-    let flag_url = country.flags.svg.clone()
-        .or_else(|| country.flags.png.clone())
-        .unwrap_or_else(|| "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTUiIHZpZXdCb3g9IjAgMCAyMCAxNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjE1IiBmaWxsPSIjQ0NDIi8+Cjx0ZXh0IHg9IjEwIiB5PSI4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjgiIGZpbGw9IiM2NjYiPj88L3RleHQ+Cjwvc3ZnPg==".to_string());
-    
-    let country_info = CountryInfo {
-        calling_code,
-        flag_url,
-        country_code: country.cca2.clone(),
-        country_name: country.name.common.clone(),
-    };
-    
-    // Cache the result
-    unsafe {
-        if let Some(ref mut cache) = COUNTRY_CACHE {
-            cache.insert(cache_key, country_info.clone());
-        }
-    }
-    
-    console_log!("Successfully fetched country info: {:?}", country_info);
-    Ok(serde_wasm_bindgen::to_value(&country_info)?)
-}
-
-#[wasm_bindgen]
-pub fn init_country_service() {
-    console_log!("Country service initialized");
+    Ok(response)
 }

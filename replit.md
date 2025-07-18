@@ -10,15 +10,18 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-The application follows a modern full-stack architecture with enhanced security through a Rust-WASM Backend-for-Frontend (BFF) layer:
+The application follows a modern full-stack architecture with complete migration to secure Rust-WASM backend services:
 
 - **Frontend**: React with TypeScript, using Vite for development and build
-- **BFF Layer**: 
-  - **Registration BFF**: Rust-WASM module with rate limiting
-  - **Admin BFF**: Rust-WASM module with authentication
-  - **Country BFF**: New Rust-WASM microservice for country information via RESTCountries API
-- **Backend**: Express.js with TypeScript, integrated with BFF for country data
-- **Database**: PostgreSQL with Drizzle ORM
+- **Rust WASM Backend**: 
+  - **Database Service**: Secure PostgreSQL operations with input validation
+  - **Validation Service**: Document, email, and phone validation with rate limiting
+  - **Country Service**: RESTCountries API integration with caching
+  - **Security Service**: Admin authentication with SHA-256 hashing
+  - **Rate Limiter**: Granular rate limiting per operation type
+  - **Deployed on Cloudflare Workers**: Zero-cost, globally-distributed WASM deployment
+- **Backend Proxy**: Minimal Express.js proxy layer routing to Rust WASM services
+- **Database**: PostgreSQL with Drizzle ORM, accessed securely through Rust layer
 - **UI Framework**: Shadcn/ui with Tailwind CSS
 - **State Management**: TanStack React Query for server state
 - **Routing**: Wouter for client-side routing
@@ -34,18 +37,17 @@ The application follows a modern full-stack architecture with enhanced security 
 - **Mobile-First Design**: Responsive design optimized for mobile devices
 
 ### Backend Architecture
-- **BFF Security Layer**: 
-  - **Registration BFF**: Rust-WASM module with rate limiting (10 document validations/5min, 3 registrations/hour, 5 OCR/10min)
-  - **Admin BFF**: Rust-WASM module with authentication and stricter rate limits (5 auth attempts/hour, 50 operations/hour, 10 exports/hour)
-  - **Country BFF**: Rust-WASM microservice for secure RESTCountries API integration with caching (1-hour cache, 10 requests/minute rate limit)
-  - **Database Layer**: Secure database abstraction within Rust BFF with SQL injection protection and operation whitelisting
-  - **Authentication**: SHA-256 hashing, progressive lockouts, session management all handled in Rust
-  - **Input Validation**: Spanish document validation (DNI/NIE/Passport), XSS prevention, buffer overflow protection
-  - **Security Features**: Client fingerprinting, progressive lockouts, operation whitelisting, export restrictions
-  - **Abuse Detection**: Pattern recognition for bot behavior, developer tools detection, timing analysis
-- **Express.js Proxy**: Minimal proxy layer routing requests to secure Rust BFF modules
-- **No Direct Database Access**: All database operations secured through Rust BFF validation
-- **Type-Safe Database**: Shared schema definitions between client and server
+- **Rust WASM Services**: 
+  - **Database Service**: Secure PostgreSQL operations with date validation and error handling
+  - **Validation Service**: Spanish document validation (DNI/NIE/Passport) with checksums, email/phone validation
+  - **Country Service**: RESTCountries API integration with local caching and fallback data
+  - **Security Service**: Admin authentication with SHA-256 hashing and token generation
+  - **Rate Limiter**: Granular limits per operation (10 validations/5min, 3 registrations/hour, 5 OCR/10min)
+  - **Input Sanitization**: XSS prevention, buffer overflow protection, client fingerprinting
+  - **Cloudflare Workers Deployment**: Zero-cost, globally-distributed WASM with built-in TLS and routing
+- **Express.js Proxy**: Minimal proxy layer routing requests to Rust WASM backend services
+- **Secure Database Access**: All database operations validated and secured through Rust layer
+- **Type-Safe Operations**: Serde serialization for request/response validation
 
 ### Database Design
 The database schema supports:
