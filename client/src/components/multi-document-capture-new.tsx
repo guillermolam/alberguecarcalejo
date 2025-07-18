@@ -41,7 +41,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const requiresBothSides = (docType: string) => {
-    return docType === 'NIF' || docType === 'NIE' || docType === 'OTRO';
+    return docType === 'NIF' || docType === 'NIE';
   };
 
   const handleDocumentTypeChange = (value: string) => {
@@ -124,34 +124,24 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
 
     setIsProcessing(true);
     setError(null);
-    setProcessingProgress(20);
+    setProcessingProgress(0);
 
     try {
-      // Convert data URL to file for OCR processing
-      const response = await fetch(imageDataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], `document-${currentSide}.jpg`, { type: 'image/jpeg' });
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setProcessingProgress(prev => Math.min(prev + 10, 90));
+      }, 100);
 
-      setProcessingProgress(40);
+      const result = await ocrBFFClient.processDocument(
+        imageDataUrl,
+        selectedDocumentType,
+        currentSide
+      );
 
-      // Process with OCR BFF client based on document type and side
-      let result: OCRResponse;
-      
-      if (selectedDocumentType === 'DNI') {
-        result = await ocrBFFClient.processDNI(file, currentSide);
-      } else if (selectedDocumentType === 'NIE') {
-        result = await ocrBFFClient.processNIE(file, currentSide);
-      } else if (selectedDocumentType === 'PASSPORT') {
-        result = await ocrBFFClient.processPassport(file);
-      } else {
-        const results = await ocrBFFClient.processOtherDocument([file]);
-        result = results[0];
-      }
+      clearInterval(progressInterval);
 
-      setProcessingProgress(80);
-
-      if (!result || !result.success) {
-        setError(t('errors.ocr_no_data') + ': ' + (result?.errors.join(', ') || 'Unknown error'));
+      if (!result.success) {
+        setError(result.error || 'Failed to process document');
         setIsProcessing(false);
         return;
       }
@@ -196,7 +186,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
 
   const getSideTitle = (side: DocumentSide) => {
     if (side === 'front') {
-      return selectedDocumentType === 'PAS' ? 'Photo Page' : 'Front Side';
+      return selectedDocumentType === 'PAS' ? 'Passport Main Page' : 'Front Side';
     }
     return 'Back Side';
   };
@@ -249,88 +239,29 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
               </div>
             )}
 
-            {/* Independent Upload Areas for Front and Back */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-              {/* Front Side Upload */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 space-y-4">
-                <h3 className="font-medium text-lg flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Front Side
-                  {frontOCR && <CheckCircle className="w-5 h-5 text-green-500" />}
-                </h3>
-                
-                {frontImage ? (
-                  <div className="space-y-3">
-                    <img src={frontImage} alt="Front side" className="w-full h-32 object-cover rounded" />
-                    {frontOCR && (
-                      <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                        ✓ Processed successfully
-                      </div>
-                    )}
-                    <Button
-                      onClick={() => {
-                        setFrontImage(null);
-                        setFrontOCR(null);
-                      }}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Remove
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 gap-2">
-                      <Button
-                        onClick={() => startCameraForSide('front')}
-                        variant="outline"
-                        className="flex items-center gap-2"
-                        disabled={isProcessing}
-                      >
-                        <Camera className="w-4 h-4" />
-                        Take Photo
-                      </Button>
-                      <Button
-                        onClick={() => triggerFileUpload('front')}
-                        variant="outline"
-                        className="flex items-center gap-2"
-                        disabled={isProcessing}
-                      >
-                        <Upload className="w-4 h-4" />
-                        Upload File
-                      </Button>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Expected: Name, ID number, photo, validity date
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Back Side Upload - ALWAYS show for DNI/NIE/OTHER */}
-              {requiresBothSides(selectedDocumentType) && (
+            {/* Upload Areas - Layout depends on document type */}
+            {selectedDocumentType === 'OTRO' ? (
+              // Single upload area for Other Documents
+              <div className="max-w-md mx-auto">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 space-y-4">
                   <h3 className="font-medium text-lg flex items-center gap-2">
                     <FileText className="w-5 h-5" />
-                    Back Side
-                    {backOCR && <CheckCircle className="w-5 h-5 text-green-500" />}
+                    Upload Document
+                    {frontOCR && <CheckCircle className="w-5 h-5 text-green-500" />}
                   </h3>
                   
-                  {backImage ? (
+                  {frontImage ? (
                     <div className="space-y-3">
-                      <img src={backImage} alt="Back side" className="w-full h-32 object-cover rounded" />
-                      {backOCR && (
+                      <img src={frontImage} alt="Document" className="w-full h-32 object-cover rounded" />
+                      {frontOCR && (
                         <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
                           ✓ Processed successfully
                         </div>
                       )}
                       <Button
                         onClick={() => {
-                          setBackImage(null);
-                          setBackOCR(null);
+                          setFrontImage(null);
+                          setFrontOCR(null);
                         }}
                         variant="outline"
                         size="sm"
@@ -344,7 +275,68 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 gap-2">
                         <Button
-                          onClick={() => startCameraForSide('back')}
+                          onClick={() => triggerFileUpload('front')}
+                          variant="outline"
+                          className="flex items-center gap-2"
+                          disabled={isProcessing}
+                        >
+                          <Upload className="w-4 h-4" />
+                          Upload File
+                        </Button>
+                        <Button
+                          onClick={() => startCameraForSide('front')}
+                          variant="outline"
+                          className="flex items-center gap-2"
+                          disabled={isProcessing}
+                        >
+                          <Camera className="w-4 h-4" />
+                          Take Photo
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Accepted files: DOC, DOCX, PDF, ODT, OTT, RTF
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // Dual upload areas for DNI/NIE/Passport
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Front Side Upload */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 space-y-4">
+                  <h3 className="font-medium text-lg flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    {selectedDocumentType === 'PAS' ? 'Passport Main Page' : 'Front Side'}
+                    {frontOCR && <CheckCircle className="w-5 h-5 text-green-500" />}
+                  </h3>
+                
+                  {frontImage ? (
+                    <div className="space-y-3">
+                      <img src={frontImage} alt="Front side" className="w-full h-32 object-cover rounded" />
+                      {frontOCR && (
+                        <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                          ✓ Processed successfully
+                        </div>
+                      )}
+                      <Button
+                        onClick={() => {
+                          setFrontImage(null);
+                          setFrontOCR(null);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button
+                          onClick={() => startCameraForSide('front')}
                           variant="outline"
                           className="flex items-center gap-2"
                           disabled={isProcessing}
@@ -353,7 +345,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                           Take Photo
                         </Button>
                         <Button
-                          onClick={() => triggerFileUpload('back')}
+                          onClick={() => triggerFileUpload('front')}
                           variant="outline"
                           className="flex items-center gap-2"
                           disabled={isProcessing}
@@ -363,13 +355,73 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                         </Button>
                       </div>
                       <p className="text-xs text-gray-500">
-                        Expected: Address, postal code, additional details
+                        Expected: Name, ID number, photo, validity date
                       </p>
                     </div>
                   )}
                 </div>
-              )}
-            </div>
+
+                {/* Back Side Upload - Only for DNI/NIE */}
+                {requiresBothSides(selectedDocumentType) && (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 space-y-4">
+                    <h3 className="font-medium text-lg flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Back Side
+                      {backOCR && <CheckCircle className="w-5 h-5 text-green-500" />}
+                    </h3>
+                    
+                    {backImage ? (
+                      <div className="space-y-3">
+                        <img src={backImage} alt="Back side" className="w-full h-32 object-cover rounded" />
+                        {backOCR && (
+                          <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                            ✓ Processed successfully
+                          </div>
+                        )}
+                        <Button
+                          onClick={() => {
+                            setBackImage(null);
+                            setBackOCR(null);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Remove
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 gap-2">
+                          <Button
+                            onClick={() => startCameraForSide('back')}
+                            variant="outline"
+                            className="flex items-center gap-2"
+                            disabled={isProcessing}
+                          >
+                            <Camera className="w-4 h-4" />
+                            Take Photo
+                          </Button>
+                          <Button
+                            onClick={() => triggerFileUpload('back')}
+                            variant="outline"
+                            className="flex items-center gap-2"
+                            disabled={isProcessing}
+                          >
+                            <Upload className="w-4 h-4" />
+                            Upload File
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Expected: Address, postal code, additional details
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Camera Interface (when active) */}
             {isUsingCamera && (
@@ -399,7 +451,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
             )}
 
             {/* Complete document processing notification */}
-            {frontOCR && (!requiresBothSides(selectedDocumentType) || backOCR) && (
+            {frontOCR && (selectedDocumentType === 'PAS' || selectedDocumentType === 'OTRO' || backOCR) && (
               <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center gap-2 text-green-800">
                   <CheckCircle className="w-5 h-5" />
@@ -416,7 +468,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
               type="file"
               ref={fileInputRef}
               className="hidden"
-              accept="image/*,.pdf,.docx"
+              accept={selectedDocumentType === 'OTRO' ? '.doc,.docx,.pdf,.odt,.ott,.rtf,image/*' : 'image/*,.pdf,.docx'}
               onChange={handleFileUpload}
             />
             <canvas ref={canvasRef} className="hidden" />
