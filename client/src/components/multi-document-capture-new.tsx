@@ -255,7 +255,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                       <img src={frontImage} alt="Document" className="w-full h-32 object-cover rounded" />
                       {frontOCR && (
                         <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                          ✓ Processed successfully
+                          ✓ {t('document.processed_successfully')}
                         </div>
                       )}
                       <Button
@@ -316,7 +316,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                       <img src={frontImage} alt="Front side" className="w-full h-32 object-cover rounded" />
                       {frontOCR && (
                         <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                          ✓ Processed successfully
+                          ✓ {t('document.processed_successfully')}
                         </div>
                       )}
                       <Button
@@ -375,7 +375,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                         <img src={backImage} alt="Back side" className="w-full h-32 object-cover rounded" />
                         {backOCR && (
                           <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                            ✓ Processed successfully
+                            ✓ {t('document.processed_successfully')}
                           </div>
                         )}
                         <Button

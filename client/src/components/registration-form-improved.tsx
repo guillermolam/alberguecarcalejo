@@ -41,18 +41,19 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(createRegistrationSchema(selectedDocumentType, detectedCountryCode)),
+    mode: 'onBlur', // Only validate on blur, not on change
     defaultValues: {
       language: 'es',
       paymentType: "EFECT", // Default to cash
-      addressCountry: '',
+      addressCountry: 'Spain',
       firstName: '',
       lastName1: '',
       lastName2: '',
-      documentType: '',
+      documentType: 'DNI',
       documentNumber: '',
-      documentSupport: '',
-      gender: '',
-      nationality: '',
+      documentSupport: 'físico',
+      gender: 'h',
+      nationality: 'ESP',
       birthDate: '',
       addressStreet: '',
       addressStreet2: '',
@@ -156,21 +157,23 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
         }
       });
       
-      // Immediately force form re-render with proper state updates
+      // Delay validation to allow OCR processing to complete
       requestAnimationFrame(() => {
-        // Force React to re-render the form with new values
-        form.trigger();
-        
-        // Update all fields in React Hook Form state properly
+        // Update all fields without immediate validation
         Object.entries(updates).forEach(([key, value]) => {
           if (value && typeof value === 'string') {
             form.setValue(key as keyof RegistrationFormData, value, { 
-              shouldValidate: true,
+              shouldValidate: false, // Don't validate immediately during OCR
               shouldDirty: true,
-              shouldTouch: true 
+              shouldTouch: false  // Don't mark as touched to avoid red validation
             });
           }
         });
+        
+        // Trigger validation only after all fields are set
+        setTimeout(() => {
+          form.trigger();
+        }, 500);
       });
       
       setHasDocumentProcessed(true);
@@ -433,33 +436,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                         )}
                       />
 
-                      <FormField
-                        control={form.control}
-                        name="documentType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('registration.document_type')} *</FormLabel>
-                            <Select onValueChange={(value) => {
-                              field.onChange(value);
-                              setSelectedDocumentType(value);
-                            }} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('registration.document_type')} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {DOCUMENT_TYPES.map((type) => (
-                                  <SelectItem key={type.code} value={type.code}>
-                                    {t(`document.${type.code.toLowerCase()}`)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+
 
                       <FormField
                         control={form.control}
