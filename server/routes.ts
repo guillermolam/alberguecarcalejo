@@ -191,9 +191,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Fallback to local availability logic
-      const checkInDate_parsed = new Date(checkInDate);
-      const checkOutDate_parsed = new Date(checkOutDate);
+      // Parse dates and normalize to UTC start of day for consistent comparison
+      const checkInDate_parsed = new Date(checkInDate + 'T00:00:00.000Z');
+      const checkOutDate_parsed = new Date(checkOutDate + 'T00:00:00.000Z');
       const today = new Date();
+      // Normalize today to start of day in UTC
+      const todayUTC = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      
+
       
       // Basic date validation
       if (checkInDate_parsed >= checkOutDate_parsed) {
@@ -203,7 +208,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      if (checkInDate_parsed < today) {
+      // Allow check-in today or future dates only
+      if (checkInDate_parsed < todayUTC) {
         return res.status(400).json({ 
           error: "Invalid request", 
           details: "Check-in date cannot be in the past" 
