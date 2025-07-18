@@ -46,6 +46,11 @@ export function GooglePlacesAutocomplete({
           throw new Error('Google Maps not loaded');
         }
 
+        // Check if the new API is available (requires newer Maps API version)
+        if (typeof google.maps.importLibrary !== 'function') {
+          throw new Error('Modern Places API not available');
+        }
+
         // Import the Places library
         await google.maps.importLibrary("places");
         
@@ -132,7 +137,7 @@ export function GooglePlacesAutocomplete({
     // Load Google Maps API if not already loaded
     if (!window.google) {
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY || 'AIzaSyBhfWQngB6-nBsCfcjROUyl203icnmn0sQ'}&libraries=places&loading=async`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY || 'AIzaSyBhfWQngB6-nBsCfcjROUyl203icnmn0sQ'}&libraries=places&v=weekly`;
       script.async = true;
       script.defer = true;
       script.onload = () => {

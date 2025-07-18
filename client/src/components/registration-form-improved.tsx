@@ -133,12 +133,20 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
         setDetectedCountryCode(countryCode);
       }
       
-      // Async field updates for better UX
-      Object.entries(updates).forEach(([key, value], index) => {
-        setTimeout(() => {
+      // Debug logging
+      console.log('Processing OCR data for form filling:', data);
+      console.log('Updates to apply:', updates);
+
+      // Apply all updates immediately
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          console.log(`Setting form field ${key} to:`, value);
           form.setValue(key as keyof RegistrationFormData, value as any);
-        }, index * 50); // Stagger updates for visual effect
+        }
       });
+      
+      // Force form validation and re-render
+      form.trigger();
       
       setHasDocumentProcessed(true);
     }

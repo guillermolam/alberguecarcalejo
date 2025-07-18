@@ -196,18 +196,18 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="w-5 h-5" />
-          Document Upload
+          {t('document.upload_title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Document Type Selection - Always First */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700">
-            Document Type *
+            {t('document.type_required')}
           </label>
           <Select value={selectedDocumentType} onValueChange={handleDocumentTypeChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Select document type first" />
+              <SelectValue placeholder={t('document.select_first')} />
             </SelectTrigger>
             <SelectContent>
               {DOCUMENT_TYPES.map((type) => (
@@ -307,7 +307,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 space-y-4">
                   <h3 className="font-medium text-lg flex items-center gap-2">
                     <FileText className="w-5 h-5" />
-                    {selectedDocumentType === 'PAS' ? 'Passport Main Page' : 'Front Side'}
+                    {selectedDocumentType === 'PAS' ? t('document.main_page') : t('document.front_side')}
                     {frontOCR && <CheckCircle className="w-5 h-5 text-green-500" />}
                   </h3>
                 
@@ -366,7 +366,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 space-y-4">
                     <h3 className="font-medium text-lg flex items-center gap-2">
                       <FileText className="w-5 h-5" />
-                      Back Side
+{t('document.back_side')}
                       {backOCR && <CheckCircle className="w-5 h-5 text-green-500" />}
                     </h3>
                     
