@@ -302,6 +302,7 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 gap-2">
                         <Button
+                          type="button"
                           onClick={() => triggerFileUpload('front')}
                           variant="outline"
                           className="flex items-center gap-2"
@@ -311,6 +312,7 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                           {t('document.upload')}
                         </Button>
                         <Button
+                          type="button"
                           onClick={() => startCameraForSide('front')}
                           variant="outline"
                           className="flex items-center gap-2"
@@ -363,6 +365,7 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 gap-2">
                         <Button
+                          type="button"
                           onClick={() => startCameraForSide('front')}
                           variant="outline"
                           className="flex items-center gap-2"
@@ -372,6 +375,7 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
 {t('document.take_photo')}
                         </Button>
                         <Button
+                          type="button"
                           onClick={() => triggerFileUpload('front')}
                           variant="outline"
                           className="flex items-center gap-2"
@@ -466,11 +470,11 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                 </div>
                 
                 <div className="flex gap-2 justify-center">
-                  <Button onClick={capturePhoto} disabled={isProcessing}>
+                  <Button type="button" onClick={capturePhoto} disabled={isProcessing}>
                     <Camera className="w-4 h-4 mr-2" />
                     Capture
                   </Button>
-                  <Button onClick={stopCamera} variant="outline">
+                  <Button type="button" onClick={stopCamera} variant="outline">
                     Cancel
                   </Button>
                 </div>
