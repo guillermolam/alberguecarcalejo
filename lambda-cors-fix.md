@@ -12,7 +12,7 @@ I've updated your Lambda function code to include proper CORS headers. Now you h
    ```
    Allow origins: *
    Allow headers: Content-Type,Origin,Accept,Authorization
-   Allow methods: POST,OPTIONS
+   Allow methods: HEAD,POST,PATCH,OPTIONS
    Max age: 86400
    ```
 4. **Save**
