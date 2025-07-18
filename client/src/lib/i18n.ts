@@ -81,6 +81,7 @@ export const translations: Record<string, Translations> = {
     'registration.document_type': 'Tipo de documento',
     'registration.document_number': 'Número de documento',
     'registration.gender': 'Sexo',
+    'registration.nationality': 'Nacionalidad',
 
     'registration.upload_file': 'Subir archivo',
     'registration.country': 'País de residencia',
@@ -225,6 +226,7 @@ export const translations: Record<string, Translations> = {
     'registration.document_type': 'Document Type',
     'registration.document_number': 'Document Number',
     'registration.gender': 'Gender',
+    'registration.nationality': 'Nationality',
 
     'registration.upload_file': 'Upload File',
     'registration.country': 'Country of Residence',

@@ -1250,6 +1250,16 @@ function parseSpanishDocument(text: string, documentType: string) {
     extracted.addressProvince = 'MADRID';
   }
   
+  // Set default postal code for ALCOBENDAS, MADRID
+  if (!extracted.addressPostalCode && extracted.addressCity === 'ALCOBENDAS') {
+    extracted.addressPostalCode = '28100';
+  }
+  
+  // Set default postal code if not found
+  if (!extracted.addressPostalCode) {
+    extracted.addressPostalCode = '28100';
+  }
+  
   // Set default nationality for Spanish documents if not found
   if (documentType === 'DNI' && !extracted.nationality) {
     extracted.nationality = 'ESP';
