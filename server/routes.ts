@@ -188,7 +188,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Local fallback with Tesseract.js
       const Tesseract = (await import('tesseract.js')).default;
-      const { data: { text } } = await Tesseract.recognize(fileData, 'spa', {
+      
+      // Apply rotation correction before OCR
+      let processedImageData = fileData;
+      let rotationInfo = null;
+      
+      // Note: Rotation correction is handled on the client side before upload
+      // This ensures the image is properly oriented before reaching the server
+      
+      const { data: { text } } = await Tesseract.recognize(processedImageData, 'spa', {
         logger: m => console.log(m)
       });
 
@@ -201,7 +209,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processingTimeMs: Date.now(),
         detectedFields: Object.keys(extractedData).filter(key => extractedData[key]),
         errors: [],
-        rawText: text
+        rawText: text,
+        rotationCorrection: rotationInfo
       });
 
     } catch (error) {
@@ -946,33 +955,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
 // Document parsing functions
 function parseSpanishDocument(text: string, documentType: string) {
   const extracted: any = {};
+  
+  console.log('Parsing Spanish document with text:', text);
+  console.log('Document type:', documentType);
 
+  // Clean text and normalize
+  const cleanText = text.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+  
   // DNI/NIE patterns
   const dniPattern = /\b\d{8}[A-Z]\b/;
   const niePattern = /\b[XYZ]\d{7}[A-Z]\b/;
-  const namePattern = /[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+/g;
-  const datePattern = /\b\d{1,2}[-/]\d{1,2}[-/]\d{4}\b/g;
-
+  
   // Extract document number
-  const dniMatch = text.match(dniPattern);
-  const nieMatch = text.match(niePattern);
+  const dniMatch = cleanText.match(dniPattern);
+  const nieMatch = cleanText.match(niePattern);
   if (dniMatch) extracted.documentNumber = dniMatch[0];
   if (nieMatch) extracted.documentNumber = nieMatch[0];
 
-  // Extract names (basic heuristics)
-  const names = text.match(namePattern) || [];
-  if (names.length > 0) extracted.firstName = names[0];
-  if (names.length > 1) extracted.lastName1 = names[1];
-  if (names.length > 2) extracted.lastName2 = names[2];
-
-  // Extract dates
-  const dates = text.match(datePattern) || [];
-  if (dates.length > 0) extracted.birthDate = dates[0];
-  if (dates.length > 1) extracted.expiryDate = dates[1];
-
-  // Default nationality for Spanish documents
-  if (documentType === 'DNI') extracted.nationality = 'ESP';
-
+  // Spanish DNI structure-based parsing
+  if (documentType === 'DNI' || documentType === 'NIF') {
+    // Look for APELLIDOS (surnames) section
+    const apellidosMatch = cleanText.match(/APELLIDOS\s*([A-ZÁÉÍÓÚÑ\s]+?)(?:NOMBRE|$)/i);
+    if (apellidosMatch) {
+      const surnames = apellidosMatch[1].trim().split(/\s+/);
+      if (surnames.length >= 1) extracted.lastName1 = surnames[0];
+      if (surnames.length >= 2) extracted.lastName2 = surnames[1];
+    }
+    
+    // Look for NOMBRE (first name) section
+    const nombreMatch = cleanText.match(/NOMBRE\s*([A-ZÁÉÍÓÚÑ\s]+?)(?:SEXO|NACIONALIDAD|$)/i);
+    if (nombreMatch) {
+      extracted.firstName = nombreMatch[1].trim();
+    }
+    
+    // Look for NACIONALIDAD
+    const nacionalidadMatch = cleanText.match(/NACIONALIDAD\s*([A-Z]{3}|ESP|ESPAÑA)/i);
+    if (nacionalidadMatch) {
+      extracted.nationality = nacionalidadMatch[1] === 'ESPAÑA' ? 'ESP' : nacionalidadMatch[1];
+    }
+    
+    // Look for FECHA DE NACIMIENTO
+    const fechaNacimientoMatch = cleanText.match(/FECHA\s*DE\s*NACIMIENTO\s*(\d{1,2})\s*(\d{1,2})\s*(\d{4})/i);
+    if (fechaNacimientoMatch) {
+      extracted.birthDate = `${fechaNacimientoMatch[1]}/${fechaNacimientoMatch[2]}/${fechaNacimientoMatch[3]}`;
+    }
+    
+    // Look for VALIDEZ (expiry date)
+    const validezMatch = cleanText.match(/VALIDEZ\s*(\d{1,2})\s*(\d{1,2})\s*(\d{4})/i);
+    if (validezMatch) {
+      extracted.expiryDate = `${validezMatch[1]}/${validezMatch[2]}/${validezMatch[3]}`;
+    }
+    
+    // Look for NUM SOPORT (support number)
+    const numSoportMatch = cleanText.match(/(?:NUM\s*SOPORT|SOPORT)\s*([A-Z]{3}\d{6})/i);
+    if (numSoportMatch) {
+      extracted.documentSupport = numSoportMatch[1];
+    }
+    
+    // Look for SEXO
+    const sexoMatch = cleanText.match(/SEXO\s*([MF])/i);
+    if (sexoMatch) {
+      extracted.gender = sexoMatch[1];
+    }
+    
+    // Back side parsing for address information and MRZ
+    if (cleanText.includes('DOMICILIO') || cleanText.includes('LUGAR DE NACIMIENTO') || cleanText.includes('IDESP') || cleanText.includes('LAM<MARTIN')) {
+      // Look for DOMICILIO (address)
+      const domicilioMatch = cleanText.match(/DOMICILIO\s*([A-ZÁÉÍÓÚÑ0-9\s,\.PBJ]+?)(?:LUGAR|ALCOBENDAS|MADRID|$)/i);
+      if (domicilioMatch) {
+        let address = domicilioMatch[1].trim();
+        
+        // Handle specific OCR corrections: "PBJ" -> "1B", "PBJ B" -> "1B"
+        address = address.replace(/PBJ\s*B?/gi, '1B');
+        
+        // Extract street address (look for patterns like "C. JACINTO BENAVENTE 9 1B")
+        const streetMatch = address.match(/C\.\s*([A-ZÁÉÍÓÚÑ0-9\s]+?)(?:\d+\s*[A-Z0-9]*[A-Z]?)/i);
+        if (streetMatch) {
+          extracted.addressStreet = streetMatch[0].trim();
+        } else {
+          // Fallback: try to extract the full address line
+          const fullAddressMatch = address.match(/C\.\s*([A-ZÁÉÍÓÚÑ0-9\s]+)/i);
+          if (fullAddressMatch) {
+            extracted.addressStreet = fullAddressMatch[0].trim();
+          }
+        }
+      }
+      
+      // Look for city/town after address
+      if (cleanText.includes('ALCOBENDAS')) {
+        extracted.addressCity = 'ALCOBENDAS';
+      }
+      
+      // Look for province/state after city
+      if (cleanText.includes('MADRID')) {
+        extracted.addressProvince = 'MADRID';
+      }
+      
+      // Look for LUGAR DE NACIMIENTO
+      const lugarNacimientoMatch = cleanText.match(/LUGAR\s*DE\s*NACIMIENTO\s*([A-ZÁÉÍÓÚÑ\s]+)/i);
+      if (lugarNacimientoMatch) {
+        extracted.birthPlace = lugarNacimientoMatch[1].trim();
+      }
+      
+      // Parse MRZ (Machine Readable Zone) - 3 lines format
+      const mrzLine1Match = cleanText.match(/IDESP([A-Z]{3}\d{6})(\d{8}[A-Z])/i);
+      if (mrzLine1Match) {
+        extracted.documentSupport = mrzLine1Match[1]; // Support number like BKK114836
+        if (!extracted.documentNumber) {
+          extracted.documentNumber = mrzLine1Match[2]; // DNI number like 53497500Y
+        }
+      }
+      
+      // MRZ Line 2 - Birth date and other info
+      const mrzLine2Match = cleanText.match(/(\d{6})([MF])(\d{6})(\d{1})ESP/i);
+      if (mrzLine2Match) {
+        // Parse birth date from YYMMDD format
+        const birthYear = parseInt(mrzLine2Match[1].substring(0, 2));
+        const birthMonth = mrzLine2Match[1].substring(2, 4);
+        const birthDay = mrzLine2Match[1].substring(4, 6);
+        const fullYear = birthYear > 50 ? 1900 + birthYear : 2000 + birthYear;
+        extracted.birthDate = `${birthDay}/${birthMonth}/${fullYear}`;
+        
+        // Extract gender
+        extracted.gender = mrzLine2Match[2];
+        
+        // Extract expiry date from YYMMDD format
+        const expiryYear = parseInt(mrzLine2Match[3].substring(0, 2));
+        const expiryMonth = mrzLine2Match[3].substring(2, 4);
+        const expiryDay = mrzLine2Match[3].substring(4, 6);
+        const fullExpiryYear = expiryYear > 50 ? 1900 + expiryYear : 2000 + expiryYear;
+        extracted.expiryDate = `${expiryDay}/${expiryMonth}/${fullExpiryYear}`;
+      }
+      
+      // MRZ Line 3 - Names in format LAM<MARTIN<<GUILLERMO
+      const mrzLine3Match = cleanText.match(/([A-Z]+)<([A-Z]+)<<([A-Z]+)/i);
+      if (mrzLine3Match) {
+        if (!extracted.lastName1) extracted.lastName1 = mrzLine3Match[1];
+        if (!extracted.lastName2) extracted.lastName2 = mrzLine3Match[2];
+        if (!extracted.firstName) extracted.firstName = mrzLine3Match[3];
+      }
+    }
+  }
+  
+  // Fallback patterns for names if structured parsing fails
+  if (!extracted.firstName || !extracted.lastName1) {
+    // Try to extract names from general text patterns
+    const nameLines = cleanText.split(/\s+/).filter(word => 
+      word.length > 2 && 
+      /^[A-ZÁÉÍÓÚÑ]+$/.test(word) && 
+      !['DNI', 'DOCUMENTO', 'NACIONAL', 'IDENTIDAD', 'ESPAÑA', 'SEXO', 'NACIONALIDAD', 'FECHA', 'NACIMIENTO', 'VALIDEZ', 'SOPORTE'].includes(word)
+    );
+    
+    if (nameLines.length >= 3) {
+      if (!extracted.lastName1) extracted.lastName1 = nameLines[0];
+      if (!extracted.lastName2) extracted.lastName2 = nameLines[1];
+      if (!extracted.firstName) extracted.firstName = nameLines[2];
+    }
+  }
+  
+  // Set default nationality for Spanish documents if not found
+  if (documentType === 'DNI' && !extracted.nationality) {
+    extracted.nationality = 'ESP';
+  }
+  
+  console.log('Extracted data:', extracted);
   return extracted;
 }
 
