@@ -410,6 +410,7 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                           </div>
                         )}
                         <Button
+                          type="button"
                           onClick={() => {
                             setBackImage(null);
                             setBackOCR(null);
@@ -426,6 +427,7 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                       <div className="space-y-3">
                         <div className="grid grid-cols-1 gap-2">
                           <Button
+                            type="button"
                             onClick={() => startCameraForSide('back')}
                             variant="outline"
                             className="flex items-center gap-2"
@@ -435,6 +437,7 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
                             {t('document.take_photo')}
                           </Button>
                           <Button
+                            type="button"
                             onClick={() => triggerFileUpload('back')}
                             variant="outline"
                             className="flex items-center gap-2"
