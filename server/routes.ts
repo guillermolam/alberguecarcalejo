@@ -113,8 +113,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Local fallback with Tesseract.js
-      const tesseract = await import('tesseract.js');
-      const { data: { text } } = await tesseract.recognize(fileData, 'spa', {
+      const Tesseract = await import('tesseract.js');
+      const { data: { text } } = await Tesseract.recognize(fileData, 'spa', {
         logger: m => console.log(m)
       });
 
@@ -187,8 +187,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Local fallback with Tesseract.js
-      const tesseract = await import('tesseract.js');
-      const { data: { text } } = await tesseract.recognize(fileData, 'spa', {
+      const Tesseract = await import('tesseract.js');
+      const { data: { text } } = await Tesseract.recognize(fileData, 'spa', {
         logger: m => console.log(m)
       });
 
@@ -259,8 +259,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Local fallback with Tesseract.js
-      const tesseract = await import('tesseract.js');
-      const { data: { text } } = await tesseract.recognize(fileData, 'eng', {
+      const Tesseract = await import('tesseract.js');
+      const { data: { text } } = await Tesseract.recognize(fileData, 'eng', {
         logger: m => console.log(m)
       });
 

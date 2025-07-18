@@ -20,7 +20,9 @@ The application follows a zero-cost, modern full-stack architecture optimized fo
   - **MRZ Parsing**: International passport processing
   - **Cost Optimization**: 256MB memory, 30s timeout, fits AWS free tier
   - **Processing**: <$0/month for 720 requests (24 users/day)
-  - **Status**: ACTIVE - Connected to frontend via VITE_LAMBDA_OCR_URL
+  - **Status**: PENDING API KEYS - Requires VITE_LAMBDA_OCR_URL configuration
+  - **SAM Template**: Updated template provided in `lambda-sam-template.yaml`
+  - **Code Structure**: Complete Lambda architecture documented in `lambda-code-structure.md`
 - **Secure Backend Services**: 
   - **Database Service**: Secure PostgreSQL operations with input validation
   - **Validation Service**: Document, email, and phone validation with rate limiting

@@ -81,11 +81,15 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     }
   };
 
-  // Handle OCR results
+  // Handle OCR results - NO VALIDATION ON UPLOAD
   const handleDocumentProcessed = (result: any) => {
     console.log('=== ZUSTAND OCR PROCESSING ===');
     console.log('Raw OCR result received:', result);
     setOcrProcessing(true);
+    
+    // Clear any existing validation when document is processed
+    setShowValidation(false);
+    setValidationErrors({});
     
     const { frontOCR: front, backOCR: back, documentType } = result;
     console.log('Front OCR data:', front);
@@ -163,17 +167,18 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     }
   };
 
-  // Submit form
+  // Submit form - ONLY VALIDATE ON FINAL SUBMIT
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submission attempted');
+    console.log('FINAL FORM SUBMISSION - Completar Registro clicked');
     
+    // Only now validate the form
     const validation = validateForm();
     setValidationErrors(validation.errors);
     setShowValidation(true);
     
     if (!validation.success) {
-      console.log('Form validation failed:', validation.errors);
+      console.log('Form validation failed on final submit:', validation.errors);
       toast({
         title: t('registration.validation_error'),
         description: t('registration.fix_errors'),
