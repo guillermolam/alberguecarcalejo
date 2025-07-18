@@ -35,9 +35,24 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
   const [selectedDocumentType, setSelectedDocumentType] = useState("");
   const [detectedCountryCode, setDetectedCountryCode] = useState("ESP");
   const [phoneFormat, setPhoneFormat] = useState("+34");
+  const [forceRerender, setForceRerender] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useI18n();
+
+  // Custom event listener for form updates
+  useEffect(() => {
+    const handleFormDataUpdate = (event: CustomEvent) => {
+      console.log('Custom form update event received:', event.detail);
+      setForceRerender(prev => prev + 1); // Force component re-render
+    };
+
+    document.addEventListener('formDataUpdate', handleFormDataUpdate as EventListener);
+    
+    return () => {
+      document.removeEventListener('formDataUpdate', handleFormDataUpdate as EventListener);
+    };
+  }, []);
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(createRegistrationSchema(selectedDocumentType, detectedCountryCode)),
@@ -102,7 +117,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
     }
   };
 
-  // Auto-fill form when comprehensive OCR data is available  
+  // Enhanced form population with custom event handling
   const fillFormFromOCR = (ocrData: any) => {
     if (ocrData && ocrData.success && ocrData.extractedData) {
       const data = ocrData.extractedData;
@@ -137,43 +152,83 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
       console.log('Processing OCR data for form filling:', data);
       console.log('Updates to apply:', updates);
 
-      // Apply all updates immediately with proper triggering
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value && typeof value === 'string' && value.trim() !== '') {
-          console.log(`Setting form field ${key} to:`, value);
-          // Use proper form.setValue with all options
-          form.setValue(key as keyof RegistrationFormData, value as any, { 
-            shouldValidate: false, 
-            shouldDirty: true,
-            shouldTouch: true 
-          });
-          // Force immediate UI update by directly updating DOM elements
-          const field = document.querySelector(`[name="${key}"]`) as HTMLInputElement;
-          if (field) {
-            field.value = value;
-            field.dispatchEvent(new Event('input', { bubbles: true }));
-            field.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        }
-      });
-      
-      // Delay validation to allow OCR processing to complete
-      requestAnimationFrame(() => {
-        // Update all fields without immediate validation
-        Object.entries(updates).forEach(([key, value]) => {
-          if (value && typeof value === 'string') {
-            form.setValue(key as keyof RegistrationFormData, value, { 
-              shouldValidate: false, // Don't validate immediately during OCR
+      // Enhanced form update strategy with custom action pattern
+      const performEnhancedUpdate = () => {
+        console.log('Performing enhanced form update with OCR data');
+        
+        // Step 1: Apply updates using multiple strategies
+        Object.entries(updates).forEach(([fieldName, value]) => {
+          if (value && typeof value === 'string' && value.trim() !== '') {
+            console.log(`Updating field ${fieldName} with value: ${value}`);
+            
+            // Strategy 1: React Hook Form update
+            form.setValue(fieldName as keyof RegistrationFormData, value as any, { 
+              shouldValidate: false, 
               shouldDirty: true,
-              shouldTouch: false  // Don't mark as touched to avoid red validation
+              shouldTouch: false 
             });
+            
+            // Strategy 2: Direct DOM manipulation with native events
+            const inputElement = document.querySelector(`[name="${fieldName}"]`) as HTMLInputElement;
+            if (inputElement) {
+              // Set value using native property descriptor
+              const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+              if (valueSetter) {
+                valueSetter.call(inputElement, value);
+              }
+              
+              // Dispatch comprehensive event sequence
+              inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+              inputElement.dispatchEvent(new Event('change', { bubbles: true }));
+              inputElement.dispatchEvent(new Event('blur', { bubbles: true }));
+            }
+            
+            // Strategy 3: Handle Select components specifically
+            const selectButton = document.querySelector(`button[aria-describedby*="${fieldName}"]`);
+            if (selectButton) {
+              // Trigger select update through React Hook Form
+              setTimeout(() => {
+                form.setValue(fieldName as keyof RegistrationFormData, value as any, { 
+                  shouldValidate: true, 
+                  shouldDirty: true,
+                  shouldTouch: true 
+                });
+                form.trigger(fieldName as keyof RegistrationFormData);
+              }, 100);
+            }
           }
         });
         
-        // Trigger validation only after all fields are set
+        // Step 2: Force complete form re-render with custom event and state update
+        setForceRerender(prev => prev + 1);
+        const customEvent = new CustomEvent('formDataUpdate', { 
+          detail: { updates, source: 'ocr' } 
+        });
+        document.dispatchEvent(customEvent);
+        
+        // Step 3: Multiple validation triggers with delays
+        setTimeout(() => form.trigger(), 200);
         setTimeout(() => {
+          // Final verification and re-application
+          Object.entries(updates).forEach(([key, value]) => {
+            if (value && form.getValues(key as keyof RegistrationFormData) !== value) {
+              console.log(`Re-applying ${key} = ${value}`);
+              form.setValue(key as keyof RegistrationFormData, value as any, { 
+                shouldValidate: false,
+                shouldDirty: true 
+              });
+            }
+          });
           form.trigger();
         }, 500);
+      };
+      
+      // Execute enhanced update immediately and with fallback
+      performEnhancedUpdate();
+      
+      // Fallback execution after DOM stabilizes
+      requestAnimationFrame(() => {
+        setTimeout(performEnhancedUpdate, 100);
       });
       
       setHasDocumentProcessed(true);
