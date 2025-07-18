@@ -63,13 +63,19 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
   const queryClient = useQueryClient();
   const { t } = useI18n();
 
-  // Update form field without validation
+  // Update form field without validation - ensures immediate re-render
   const updateField = (fieldName: keyof RegistrationFormData, value: any) => {
     console.log(`Updating field ${fieldName} with value:`, value);
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [fieldName]: value
+      };
+      console.log(`State updated for ${fieldName}:`, newData[fieldName]);
+      return newData;
+    });
+    // Force re-render to ensure UI updates immediately
+    setForceRerender(prev => prev + 1);
   };
 
   // Handle document type change
@@ -97,27 +103,36 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
       const data = { ...front?.extractedData, ...back?.extractedData };
       console.log('OCR extracted data:', JSON.stringify(data, null, 2));
 
-      // Update form fields directly without any validation
-      if (data.firstName) updateField('firstName', data.firstName.toUpperCase());
-      if (data.lastName1) updateField('lastName1', data.lastName1.toUpperCase());
-      if (data.lastName2) updateField('lastName2', data.lastName2.toUpperCase());
-      if (data.documentNumber) updateField('documentNumber', data.documentNumber);
+      // Batch update all form fields to trigger single re-render
+      const updates: Partial<RegistrationFormData> = {};
+      if (data.firstName) updates.firstName = data.firstName.toUpperCase();
+      if (data.lastName1) updates.lastName1 = data.lastName1.toUpperCase();
+      if (data.lastName2) updates.lastName2 = data.lastName2.toUpperCase();
+      if (data.documentNumber) updates.documentNumber = data.documentNumber;
       if (data.documentType) {
-        updateField('documentType', data.documentType);
+        updates.documentType = data.documentType;
         setSelectedDocumentType(data.documentType);
       }
-      if (data.documentSupport) updateField('documentSupport', data.documentSupport);
-      if (data.birthDate) updateField('birthDate', data.birthDate);
-      if (data.gender) updateField('gender', data.gender);
-      if (data.nationality) updateField('nationality', data.nationality);
-      if (data.addressStreet) updateField('addressStreet', data.addressStreet);
-      if (data.addressCity) updateField('addressCity', data.addressCity);
-      if (data.addressPostalCode) updateField('addressPostalCode', data.addressPostalCode);
+      if (data.documentSupport) updates.documentSupport = data.documentSupport;
+      if (data.birthDate) updates.birthDate = data.birthDate;
+      if (data.gender) updates.gender = data.gender;
+      if (data.nationality) updates.nationality = data.nationality;
+      if (data.addressStreet) updates.addressStreet = data.addressStreet;
+      if (data.addressCity) updates.addressCity = data.addressCity;
+      if (data.addressPostalCode) updates.addressPostalCode = data.addressPostalCode;
       if (data.addressCountry) {
-        updateField('addressCountry', data.addressCountry);
+        updates.addressCountry = data.addressCountry;
         const countryCode = getCountryCode(data.addressCountry);
         setDetectedCountryCode(countryCode);
       }
+
+      // Apply all updates in a single state change to trigger re-render
+      setFormData(prev => {
+        const newData = { ...prev, ...updates };
+        console.log('Batch OCR update applied:', updates);
+        console.log('New form state:', newData);
+        return newData;
+      });
 
       setHasDocumentProcessed(true);
       
@@ -306,7 +321,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
                   <div>
                     <label className="text-sm font-medium">{t('registration.first_name')} *</label>
                     <Input 
-                      value={formData.firstName}
+                      value={formData.firstName || ''}
                       onChange={(e) => updateField('firstName', e.target.value)}
                       maxLength={50}
                       className={showValidation && validationErrors.firstName ? 'border-red-500' : ''}
@@ -320,7 +335,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
                   <div>
                     <label className="text-sm font-medium">{t('registration.last_name_1')} *</label>
                     <Input 
-                      value={formData.lastName1}
+                      value={formData.lastName1 || ''}
                       onChange={(e) => updateField('lastName1', e.target.value)}
                       maxLength={50}
                       className={showValidation && validationErrors.lastName1 ? 'border-red-500' : ''}
@@ -334,7 +349,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
                   <div>
                     <label className="text-sm font-medium">{t('registration.last_name_2')}</label>
                     <Input 
-                      value={formData.lastName2}
+                      value={formData.lastName2 || ''}
                       onChange={(e) => updateField('lastName2', e.target.value)}
                       maxLength={50}
                       key={`lastName2-${forceRerender}`} // Force re-render for i18n
@@ -347,7 +362,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
                     <label className="text-sm font-medium">{t('registration.birth_date')} *</label>
                     <Input 
                       type="date"
-                      value={formData.birthDate}
+                      value={formData.birthDate || ''}
                       onChange={(e) => updateField('birthDate', e.target.value)}
                       className={showValidation && validationErrors.birthDate ? 'border-red-500' : ''}
                       key={`birthDate-${forceRerender}`} // Force re-render for i18n
@@ -360,7 +375,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
 
                   <div>
                     <label className="text-sm font-medium">{t('registration.gender')} *</label>
-                    <Select value={formData.gender} onValueChange={(value) => updateField('gender', value)}>
+                    <Select value={formData.gender || ''} onValueChange={(value) => updateField('gender', value)}>
                       <SelectTrigger className={showValidation && validationErrors.gender ? 'border-red-500' : ''}>
                         <SelectValue />
                       </SelectTrigger>
@@ -380,7 +395,7 @@ export function RegistrationFormNoValidation({ stayData, onBack, onSuccess }: Re
                   <div>
                     <label className="text-sm font-medium">{t('registration.nationality')} *</label>
                     <Input 
-                      value={formData.nationality}
+                      value={formData.nationality || ''}
                       onChange={(e) => updateField('nationality', e.target.value)}
                       maxLength={3}
                       className={showValidation && validationErrors.nationality ? 'border-red-500' : ''}
