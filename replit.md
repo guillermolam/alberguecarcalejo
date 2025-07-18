@@ -20,7 +20,7 @@ The application follows a zero-cost, modern full-stack architecture optimized fo
   - **MRZ Parsing**: International passport processing
   - **Cost Optimization**: 256MB memory, 30s timeout, fits AWS free tier
   - **Processing**: <$0/month for 720 requests (24 users/day)
-  - **Status**: PENDING API KEYS - Requires VITE_LAMBDA_OCR_URL configuration
+  - **Status**: CONFIGURED - VITE_LAMBDA_OCR_URL and VITE_GOOGLE_PLACES_API_KEY configured
   - **SAM Template**: Updated template provided in `lambda-sam-template.yaml`
   - **Code Structure**: Complete Lambda architecture documented in `lambda-code-structure.md`
 - **Secure Backend Services**: 
@@ -168,5 +168,6 @@ The database schema supports:
 - **Global Address Support**: Worldwide address autocomplete for international pilgrims
 - **Country Information Service**: RESTCountries API integration with local caching and fallback data
 - **Modern Google Places Integration**: PlaceAutocompleteElement (March 2025+ compliant) with legacy fallback
+- **Google Places API Integration**: BFF-integrated Google Places API with server-side key management and fallback support
 
 The application is designed as a self-contained kiosk system that can run on tablets or computers at the albergue entrance, allowing pilgrims to register themselves while ensuring compliance with Spanish hospitality regulations.

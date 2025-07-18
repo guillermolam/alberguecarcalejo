@@ -71,6 +71,68 @@ export async function getCountryInfo(countryName: string) {
   });
 }
 
+export async function getPlacesAutocomplete(query: string, sessionToken?: string) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+  
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/places/autocomplete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query,
+        session_token: sessionToken,
+        api_key: process.env.VITE_GOOGLE_PLACES_API_KEY,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Backend request failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error; // Re-throw to be caught by fallback logic
+  }
+}
+
+export async function getPlaceDetails(placeId: string, sessionToken?: string) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+  
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/places/details`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        place_id: placeId,
+        session_token: sessionToken,
+        api_key: process.env.VITE_GOOGLE_PLACES_API_KEY,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Backend request failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error; // Re-throw to be caught by fallback logic
+  }
+}
+
 export async function checkAvailability(checkInDate: string, checkOutDate: string, numberOfPersons: number) {
   // Set a shorter timeout to fail fast if backend is unavailable
   const controller = new AbortController();
