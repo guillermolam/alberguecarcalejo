@@ -32,7 +32,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
   const [frontOCR, setFrontOCR] = useState<ComprehensiveOCRResult | null>(null);
   const [backOCR, setBackOCR] = useState<ComprehensiveOCRResult | null>(null);
   const [hasDocumentProcessed, setHasDocumentProcessed] = useState(false);
-  const [selectedDocumentType, setSelectedDocumentType] = useState("");
+  const [selectedDocumentType, setSelectedDocumentType] = useState("NIF"); // Default to DNI/NIF
   const [detectedCountryCode, setDetectedCountryCode] = useState("ESP");
   const [phoneFormat, setPhoneFormat] = useState("+34");
   const [forceRerender, setForceRerender] = useState(0);
@@ -58,7 +58,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
       firstName: '',
       lastName1: '',
       lastName2: '',
-      documentType: 'DNI',
+      documentType: 'NIF',
       documentNumber: '',
       documentSupport: 'físico',
       gender: 'h',
@@ -81,7 +81,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
     setSelectedDocumentType(documentType);
     
     // Set defaults for Spanish documents
-    if (documentType === 'DNI' || documentType === 'NIE') {
+    if (documentType === 'NIF' || documentType === 'NIE') {
       setDetectedCountryCode("ESP");
       setPhoneFormat("+34");
       form.setValue('addressCountry', 'Spain');

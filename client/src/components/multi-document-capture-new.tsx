@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -24,7 +24,7 @@ interface MultiDocumentCaptureProps {
 }
 
 export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: MultiDocumentCaptureProps) {
-  const [selectedDocumentType, setSelectedDocumentType] = useState("");
+  const [selectedDocumentType, setSelectedDocumentType] = useState("NIF"); // Default to DNI/NIF
   const [frontImage, setFrontImage] = useState<string | null>(null);
   const [backImage, setBackImage] = useState<string | null>(null);
   const [frontOCR, setFrontOCR] = useState<OCRResponse | null>(null);
@@ -43,6 +43,11 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
   const requiresBothSides = (docType: string) => {
     return docType === 'NIF' || docType === 'NIE';
   };
+
+  // Initialize with default document type on mount
+  useEffect(() => {
+    onDocumentTypeChange?.("NIF"); // Propagate default to parent
+  }, [onDocumentTypeChange]);
 
   const handleDocumentTypeChange = (value: string) => {
     setSelectedDocumentType(value);
