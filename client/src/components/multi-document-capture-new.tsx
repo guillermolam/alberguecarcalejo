@@ -73,8 +73,16 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
   };
 
   const triggerFileUpload = (side: DocumentSide) => {
+    console.log('Triggering file upload for side:', side);
     setCurrentSide(side);
-    fileInputRef.current?.click();
+    
+    // Reset the file input value to allow re-upload of the same file
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    } else {
+      console.error('File input ref not found');
+    }
   };
 
   const stopCamera = () => {
@@ -105,15 +113,23 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File upload triggered:', event.target.files);
     const file = event.target.files?.[0];
     if (file) {
+      console.log('File selected:', file.name, file.type, file.size);
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageDataUrl = e.target?.result as string;
+        console.log('File read as data URL, length:', imageDataUrl.length);
         processImage(imageDataUrl);
       };
       reader.readAsDataURL(file);
+    } else {
+      console.log('No file selected');
     }
+    
+    // Reset the input value for next upload
+    event.target.value = '';
   };
 
   const processImage = async (imageDataUrl: string) => {
@@ -132,6 +148,8 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
         setProcessingProgress(prev => Math.min(prev + 10, 90));
       }, 100);
 
+      console.log('Starting OCR processing for document type:', selectedDocumentType, 'side:', currentSide);
+      
       const result = await ocrBFFClient.processDocumentWithImage(
         imageDataUrl,
         selectedDocumentType,
@@ -139,8 +157,12 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
       );
 
       clearInterval(progressInterval);
+      
+      console.log('OCR processing completed, result:', result);
+      console.log('OCR extracted data:', JSON.stringify(result.extractedData, null, 2));
 
       if (!result.success) {
+        console.error('OCR processing failed:', result.error);
         setError(result.error || 'Failed to process document');
         setIsProcessing(false);
         return;

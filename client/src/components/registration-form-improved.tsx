@@ -148,9 +148,11 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
         setDetectedCountryCode(countryCode);
       }
       
-      // Debug logging
-      console.log('Processing OCR data for form filling:', data);
+      // Enhanced debug logging for OCR data processing
+      console.log('=== OCR DATA RECEIVED FOR FORM POPULATION ===');
+      console.log('Raw OCR data:', JSON.stringify(data, null, 2));
       console.log('Updates to apply:', updates);
+      console.log('Current form values before update:', form.getValues());
 
       // Enhanced form update strategy with custom action pattern
       const performEnhancedUpdate = () => {
@@ -206,20 +208,31 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
         });
         document.dispatchEvent(customEvent);
         
-        // Step 3: Multiple validation triggers with delays
+        // Step 3: Multiple validation triggers with delays and verification
         setTimeout(() => form.trigger(), 200);
         setTimeout(() => {
           // Final verification and re-application
+          console.log('=== FINAL VERIFICATION AND FORM STATE CHECK ===');
+          const currentValues = form.getValues();
+          console.log('Current form values after update:', currentValues);
+          
           Object.entries(updates).forEach(([key, value]) => {
-            if (value && form.getValues(key as keyof RegistrationFormData) !== value) {
-              console.log(`Re-applying ${key} = ${value}`);
+            const currentValue = form.getValues(key as keyof RegistrationFormData);
+            if (value && currentValue !== value) {
+              console.log(`Re-applying ${key}: expected "${value}", current "${currentValue}"`);
               form.setValue(key as keyof RegistrationFormData, value as any, { 
                 shouldValidate: false,
                 shouldDirty: true 
               });
+            } else {
+              console.log(`✓ Field ${key} correctly set to: "${currentValue}"`);
             }
           });
           form.trigger();
+          
+          // Final state logging
+          console.log('Final form values after all updates:', form.getValues());
+          console.log('=== FORM POPULATION COMPLETE ===');
         }, 500);
       };
       

@@ -21,10 +21,7 @@ class CountryBFFClient {
     }
 
     try {
-      const response = await apiRequest('/api/country/info', {
-        method: 'POST',
-        body: { countryName }
-      });
+      const response = await apiRequest('POST', '/api/country/info', { countryName });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch country info: ${response.status}`);

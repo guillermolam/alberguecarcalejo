@@ -87,7 +87,7 @@ export function CountryPhoneInput({
                 <span className="text-xs text-gray-600">{countryInfo.country_code}</span>
               </div>
               <span className="text-sm font-medium text-gray-700">
-                {countryInfo.calling_code}
+                {countryInfo.dial_code}
               </span>
             </div>
           ) : (
