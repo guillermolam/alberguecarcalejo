@@ -88,18 +88,17 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
     setHasDocumentProcessed(true);
     setSelectedDocumentType(documentType);
     
-    // Merge data from both sides
-    const mergedOCR = {
-      extractedData: {
-        ...front?.extractedData,
-        ...back?.extractedData, // Back side data takes precedence for address info
-      },
-      detectedFields: [...(front?.detectedFields || []), ...(back?.detectedFields || [])],
-      success: (front?.success || false) || (back?.success || false)
-    };
+    // Process front side immediately for personal info
+    if (front && front.success) {
+      console.log('Processing front side OCR:', front);
+      fillFormFromOCR(front);
+    }
     
-    // Auto-fill the form
-    fillFormFromOCR(mergedOCR);
+    // Process back side for address info when available
+    if (back && back.success) {
+      console.log('Processing back side OCR:', back);
+      fillFormFromOCR(back);
+    }
   };
 
   // Auto-fill form when comprehensive OCR data is available  
@@ -137,16 +136,22 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
       console.log('Processing OCR data for form filling:', data);
       console.log('Updates to apply:', updates);
 
-      // Apply all updates immediately
+      // Apply all updates immediately with proper triggering
       Object.entries(updates).forEach(([key, value]) => {
         if (value && typeof value === 'string' && value.trim() !== '') {
           console.log(`Setting form field ${key} to:`, value);
-          form.setValue(key as keyof RegistrationFormData, value as any);
+          form.setValue(key as keyof RegistrationFormData, value as any, { 
+            shouldValidate: true, 
+            shouldDirty: true,
+            shouldTouch: true 
+          });
         }
       });
       
-      // Force form validation and re-render
-      form.trigger();
+      // Force complete form re-render
+      setTimeout(() => {
+        form.trigger();
+      }, 100);
       
       setHasDocumentProcessed(true);
     }
@@ -586,7 +591,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
                             onLocalPhoneChange={field.onChange}
                             label={t('registration.phone')}
                             required={true}
-                            placeholder={t('registration.phone_local_placeholder')}
+                            placeholder=""
                           />
                         )}
                       />

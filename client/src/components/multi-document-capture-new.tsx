@@ -281,7 +281,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                           disabled={isProcessing}
                         >
                           <Upload className="w-4 h-4" />
-                          Upload File
+                          {t('document.upload')}
                         </Button>
                         <Button
                           onClick={() => startCameraForSide('front')}
@@ -290,7 +290,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                           disabled={isProcessing}
                         >
                           <Camera className="w-4 h-4" />
-                          Take Photo
+                          {t('document.take_photo')}
                         </Button>
                       </div>
                       <p className="text-xs text-gray-500">
@@ -355,7 +355,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                         </Button>
                       </div>
                       <p className="text-xs text-gray-500">
-                        Expected: Name, ID number, photo, validity date
+{t('document.expected_front')}
                       </p>
                     </div>
                   )}
@@ -388,7 +388,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                           className="w-full"
                         >
                           <X className="w-4 h-4 mr-2" />
-                          Remove
+{t('document.remove')}
                         </Button>
                       </div>
                     ) : (
@@ -401,7 +401,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                             disabled={isProcessing}
                           >
                             <Camera className="w-4 h-4" />
-                            Take Photo
+                            {t('document.take_photo')}
                           </Button>
                           <Button
                             onClick={() => triggerFileUpload('back')}
@@ -410,11 +410,11 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                             disabled={isProcessing}
                           >
                             <Upload className="w-4 h-4" />
-                            Upload File
+                            {t('document.upload')}
                           </Button>
                         </div>
                         <p className="text-xs text-gray-500">
-                          Expected: Address, postal code, additional details
+{t('document.expected_back')}
                         </p>
                       </div>
                     )}
