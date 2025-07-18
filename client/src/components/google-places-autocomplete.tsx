@@ -1,9 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 
 declare global {
   interface Window {
     google: any;
+  }
+  
+  namespace google.maps.places {
+    class PlaceAutocompleteElement extends HTMLElement {
+      constructor(options?: {
+        componentRestrictions?: { country: string[] };
+        fields?: string[];
+        types?: string[];
+      });
+      placeholder: string;
+      addEventListener(type: 'gmp-placeselect', listener: (event: any) => void): void;
+    }
   }
 }
 
@@ -22,95 +34,145 @@ export function GooglePlacesAutocomplete({
   placeholder = "Enter an address",
   className
 }: GooglePlacesAutocompleteProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const fallbackInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteElementRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
+  const [useFallback, setUseFallback] = useState(true);
 
   useEffect(() => {
-    let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
-    
-    const initializeAutocomplete = () => {
-      if (window.google && window.google.maps && inputRef.current) {
-        autocompleteRef.current = new window.google.maps.places.Autocomplete(
-          inputRef.current,
-          {
-            types: ['address'],
-            // Allow worldwide addresses - pilgrims come from everywhere
-            fields: ['address_components', 'formatted_address', 'geometry', 'place_id']
-          }
-        );
+    const initializeModernAutocomplete = async () => {
+      try {
+        if (!window.google?.maps) {
+          throw new Error('Google Maps not loaded');
+        }
 
-        const handlePlaceChanged = () => {
+        // Import the Places library
+        await google.maps.importLibrary("places");
+        
+        if (!google.maps.places.PlaceAutocompleteElement) {
+          throw new Error('PlaceAutocompleteElement not available');
+        }
+
+        // Create the new PlaceAutocompleteElement
+        const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({
+          componentRestrictions: { country: [] }, // Allow all countries
+          fields: ['address_components', 'formatted_address', 'geometry', 'place_id'],
+          types: ['address']
+        });
+
+        // Style the element to match our design
+        autocompleteElement.style.width = '100%';
+        autocompleteElement.style.height = '40px';
+        autocompleteElement.style.border = '1px solid hsl(var(--border))';
+        autocompleteElement.style.borderRadius = 'calc(var(--radius) - 2px)';
+        autocompleteElement.style.padding = '8px 12px';
+        autocompleteElement.style.fontSize = '14px';
+        autocompleteElement.style.backgroundColor = 'hsl(var(--background))';
+        autocompleteElement.style.color = 'hsl(var(--foreground))';
+        autocompleteElement.style.fontFamily = 'inherit';
+
+        // Set placeholder
+        autocompleteElement.placeholder = placeholder;
+
+        // Add event listener for place selection
+        autocompleteElement.addEventListener('gmp-placeselect', (event: any) => {
           try {
-            const place = autocompleteRef.current.getPlace();
-            if (place && place.address_components) {
-              // Update the input value
-              if (place.formatted_address) {
-                onChange(place.formatted_address);
-              }
-              // Trigger place selection callback with comprehensive data
+            const place = event.place;
+            if (place?.formattedAddress) {
+              onChange(place.formattedAddress);
               onPlaceSelected?.(place);
             }
           } catch (error) {
             console.error('Error processing place selection:', error);
           }
-        };
+        });
 
-        autocompleteRef.current.addListener('place_changed', handlePlaceChanged);
-        
-        // Handle keyboard events for better UX
-        keydownHandler = (e: KeyboardEvent) => {
-          if (e.key === 'Tab' || e.key === 'Enter') {
-            // Small delay to allow autocomplete to process
-            setTimeout(() => {
-              try {
-                if (autocompleteRef.current) {
-                  const place = autocompleteRef.current.getPlace();
-                  if (place && place.address_components) {
-                    handlePlaceChanged();
-                  }
-                }
-              } catch (error) {
-                console.error('Error handling keyboard selection:', error);
-              }
-            }, 100);
-          }
-        };
-
-        if (inputRef.current && keydownHandler) {
-          inputRef.current.addEventListener('keydown', keydownHandler);
+        // Clear container and append the new element
+        if (containerRef.current) {
+          containerRef.current.innerHTML = '';
+          containerRef.current.appendChild(autocompleteElement);
+          autocompleteElementRef.current = autocompleteElement;
+          setUseFallback(false);
         }
+      } catch (error) {
+        console.error('Error initializing modern Google Places:', error);
+        // Keep using fallback
+        setUseFallback(true);
+      }
+    };
+
+    const initializeLegacyAutocomplete = () => {
+      try {
+        if (window.google?.maps?.places?.Autocomplete && fallbackInputRef.current) {
+          const autocomplete = new window.google.maps.places.Autocomplete(
+            fallbackInputRef.current,
+            {
+              types: ['address'],
+              fields: ['address_components', 'formatted_address', 'geometry', 'place_id']
+            }
+          );
+
+          const handlePlaceChanged = () => {
+            try {
+              const place = autocomplete.getPlace();
+              if (place && place.address_components) {
+                if (place.formatted_address) {
+                  onChange(place.formatted_address);
+                }
+                onPlaceSelected?.(place);
+              }
+            } catch (error) {
+              console.error('Error processing legacy place selection:', error);
+            }
+          };
+
+          autocomplete.addListener('place_changed', handlePlaceChanged);
+        }
+      } catch (error) {
+        console.error('Error initializing legacy Google Places:', error);
       }
     };
 
     // Load Google Maps API if not already loaded
     if (!window.google) {
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBhfWQngB6-nBsCfcjROUyl203icnmn0sQ&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBhfWQngB6-nBsCfcjROUyl203icnmn0sQ&libraries=places&loading=async`;
       script.async = true;
       script.defer = true;
-      script.onload = initializeAutocomplete;
+      script.onload = () => {
+        // Try modern API first, fallback to legacy
+        initializeModernAutocomplete().catch(() => {
+          initializeLegacyAutocomplete();
+        });
+      };
       document.head.appendChild(script);
     } else {
-      initializeAutocomplete();
+      // Try modern API first, fallback to legacy
+      initializeModernAutocomplete().catch(() => {
+        initializeLegacyAutocomplete();
+      });
     }
 
     return () => {
-      if (autocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
-      }
-      if (inputRef.current && keydownHandler) {
-        inputRef.current.removeEventListener('keydown', keydownHandler);
+      if (autocompleteElementRef.current && containerRef.current) {
+        containerRef.current.innerHTML = '';
       }
     };
   }, []);
 
+  if (useFallback) {
+    return (
+      <Input
+        ref={fallbackInputRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={className}
+      />
+    );
+  }
+
   return (
-    <Input
-      ref={inputRef}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={className}
-    />
+    <div ref={containerRef} className={className} />
   );
 }

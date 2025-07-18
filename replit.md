@@ -134,5 +134,6 @@ The database schema supports:
 - **Enhanced Phone Input**: Country-aware phone validation with flag display and separated local/country code input
 - **Global Address Support**: Worldwide address autocomplete for international pilgrims
 - **Country Information Service**: Rust-WASM microservice providing real-time country flags, calling codes via RESTCountries API
+- **Modern Google Places Integration**: Migrated to PlaceAutocompleteElement (March 2025+ compliant) with legacy fallback
 
 The application is designed as a self-contained kiosk system that can run on tablets or computers at the albergue entrance, allowing pilgrims to register themselves while ensuring compliance with Spanish hospitality regulations.
