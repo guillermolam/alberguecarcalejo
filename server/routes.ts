@@ -70,34 +70,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Email validation endpoint - proxied to Rust WASM backend
+  // Email validation endpoint - with fallback to local validation
   app.post("/api/validate/email", async (req, res) => {
     try {
       const { email } = req.body;
-      const result = await wasmProxy.validateEmail(email);
-      res.json(result);
+      
+      // Try Rust backend first, fallback to local validation
+      try {
+        const result = await wasmProxy.validateEmail(email);
+        res.json(result);
+        return;
+      } catch (backendError) {
+        console.warn("Backend unavailable for email validation, using fallback");
+      }
+
+      // Fallback to basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const isValid = emailRegex.test(email);
+      
+      res.json({
+        success: true,
+        data: { 
+          valid: isValid, 
+          message: isValid ? "Email format is valid" : "Invalid email format" 
+        },
+        rate_limited: false
+      });
+      
     } catch (error) {
       res.status(400).json({ error: "Validation failed" });
     }
   });
 
-  // Phone validation endpoint - proxied to Rust WASM backend
+  // Phone validation endpoint - with fallback to local validation
   app.post("/api/validate/phone", async (req, res) => {
     try {
       const { phone, countryCode } = req.body;
-      const result = await wasmProxy.validatePhone(phone, countryCode);
-      res.json(result);
+      
+      // Try Rust backend first, fallback to local validation
+      try {
+        const result = await wasmProxy.validatePhone(phone, countryCode);
+        res.json(result);
+        return;
+      } catch (backendError) {
+        console.warn("Backend unavailable for phone validation, using fallback");
+      }
+
+      // Fallback to basic phone validation
+      const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+      const phoneRegex = /^[\+]?[0-9]{7,15}$/;
+      const isValid = phoneRegex.test(cleanPhone);
+      
+      res.json({
+        success: true,
+        data: { 
+          valid: isValid, 
+          message: isValid ? "Phone format is valid" : "Invalid phone format" 
+        },
+        rate_limited: false
+      });
+      
     } catch (error) {
       res.status(400).json({ error: "Validation failed" });
     }
   });
 
-  // Country information endpoint - proxied to Rust WASM backend
+  // Country information endpoint - with fallback to local data
   app.post("/api/country/info", async (req, res) => {
     try {
       const { countryName } = req.body;
-      const result = await wasmProxy.getCountryInfo(countryName);
-      res.json(result);
+      
+      // Try Rust backend first, fallback to local data
+      try {
+        const result = await wasmProxy.getCountryInfo(countryName);
+        res.json(result);
+        return;
+      } catch (backendError) {
+        console.warn("Backend unavailable for country info, using fallback");
+      }
+
+      // Fallback to basic country data (limited set for common countries)
+      const countryData: Record<string, any> = {
+        "spain": { name: "Spain", code: "ES", dialCode: "+34" },
+        "france": { name: "France", code: "FR", dialCode: "+33" },
+        "portugal": { name: "Portugal", code: "PT", dialCode: "+351" },
+        "italy": { name: "Italy", code: "IT", dialCode: "+39" },
+        "germany": { name: "Germany", code: "DE", dialCode: "+49" },
+        "united kingdom": { name: "United Kingdom", code: "GB", dialCode: "+44" },
+        "united states": { name: "United States", code: "US", dialCode: "+1" }
+      };
+
+      const country = countryData[countryName.toLowerCase()];
+      if (country) {
+        res.json({
+          success: true,
+          data: country,
+          rate_limited: false
+        });
+      } else {
+        res.status(404).json({ error: "Country not found" });
+      }
+      
     } catch (error) {
       res.status(404).json({ error: "Country not found" });
     }
@@ -174,12 +247,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Complete registration endpoint - proxied to Rust WASM backend
+  // Complete registration endpoint - with fallback to local logic
   app.post("/api/register", async (req, res) => {
     try {
       const { pilgrim, booking, payment } = completeRegistrationSchema.parse(req.body);
-      const result = await wasmProxy.registerPilgrim(pilgrim, booking, payment);
-      res.json(result);
+      
+      // Try Rust backend first, fallback to local logic
+      try {
+        const result = await wasmProxy.registerPilgrim(pilgrim, booking, payment);
+        res.json(result);
+        return;
+      } catch (backendError) {
+        console.warn("Backend unavailable for registration, using fallback");
+      }
+
+      // Fallback to legacy registration logic
+      // Check if pilgrim already exists
+      const existingPilgrim = await storage.getPilgrimByDocument(
+        pilgrim.documentType,
+        pilgrim.documentNumber
+      );
+
+      let pilgrimRecord;
+      if (existingPilgrim) {
+        pilgrimRecord = existingPilgrim;
+      } else {
+        pilgrimRecord = await storage.createPilgrim(pilgrim);
+      }
+
+      // Generate unique reference number
+      const referenceNumber = `ALB-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Create booking
+      const bookingRecord = await storage.createBooking({
+        ...booking,
+        pilgrimId: pilgrimRecord.id,
+        referenceNumber
+      });
+
+      // Create payment record
+      const paymentRecord = await storage.createPayment({
+        ...payment,
+        bookingId: bookingRecord.id,
+        receiptNumber: `REC-${bookingRecord.id}-${Date.now()}`
+      });
+
+      res.json({
+        success: true,
+        data: {
+          pilgrim: pilgrimRecord,
+          booking: bookingRecord,
+          payment: paymentRecord,
+          referenceNumber
+        }
+      });
+      
     } catch (error) {
       res.status(400).json({ 
         error: "Registration failed", 
