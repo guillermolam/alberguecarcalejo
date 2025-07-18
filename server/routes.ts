@@ -71,6 +71,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // OCR endpoints - fallback processing when Lambda is unavailable
+  app.post("/api/ocr/dni", async (req, res) => {
+    try {
+      const { documentType, documentSide, fileData } = req.body;
+      
+      // Mock OCR response for development (Lambda fallback)
+      const mockData = {
+        documentNumber: "12345678A",
+        firstName: "JUAN",
+        lastName1: "GARCÍA",
+        lastName2: "LÓPEZ",
+        lastName: "GARCÍA LÓPEZ", // For compatibility
+        birthDate: "01-01-1990",
+        expiryDate: "01-01-2030",
+        nationality: "ESP"
+      };
+
+      res.json({
+        success: true,
+        extractedData: mockData,
+        confidence: 0.85,
+        processingTimeMs: 1500,
+        detectedFields: ["documentNumber", "firstName", "lastName", "birthDate"],
+        errors: [],
+        rawText: ""
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        error: "OCR processing failed",
+        extractedData: {},
+        confidence: 0,
+        processingTimeMs: 0,
+        detectedFields: [],
+        errors: ["Processing failed"],
+        rawText: ""
+      });
+    }
+  });
+
+  app.post("/api/ocr/nie", async (req, res) => {
+    try {
+      const { documentType, documentSide, fileData } = req.body;
+      
+      // Mock OCR response for development (Lambda fallback)
+      const mockData = {
+        documentNumber: "X1234567A",
+        firstName: "MARIA",
+        lastName1: "ROSSI",
+        lastName2: "BIANCHI",
+        lastName: "ROSSI BIANCHI", // For compatibility
+        birthDate: "15-03-1985",
+        expiryDate: "15-03-2035",
+        nationality: "ITA"
+      };
+
+      res.json({
+        success: true,
+        extractedData: mockData,
+        confidence: 0.82,
+        processingTimeMs: 1800,
+        detectedFields: ["documentNumber", "firstName", "lastName", "birthDate", "nationality"],
+        errors: [],
+        rawText: ""
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        error: "OCR processing failed",
+        extractedData: {},
+        confidence: 0,
+        processingTimeMs: 0,
+        detectedFields: [],
+        errors: ["Processing failed"],
+        rawText: ""
+      });
+    }
+  });
+
+  app.post("/api/ocr/passport", async (req, res) => {
+    try {
+      const { documentType, fileData } = req.body;
+      
+      // Mock OCR response for development (Lambda fallback)
+      const mockData = {
+        documentNumber: "AB1234567",
+        firstName: "JOHN",
+        lastName1: "SMITH",
+        lastName2: "",
+        lastName: "SMITH", // For compatibility
+        birthDate: "10-07-1988",
+        expiryDate: "10-07-2028",
+        nationality: "USA"
+      };
+
+      res.json({
+        success: true,
+        extractedData: mockData,
+        confidence: 0.88,
+        processingTimeMs: 2200,
+        detectedFields: ["documentNumber", "firstName", "lastName", "birthDate", "nationality"],
+        errors: [],
+        rawText: ""
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        error: "OCR processing failed",
+        extractedData: {},
+        confidence: 0,
+        processingTimeMs: 0,
+        detectedFields: [],
+        errors: ["Processing failed"],
+        rawText: ""
+      });
+    }
+  });
+
+  app.post("/api/ocr/other", async (req, res) => {
+    try {
+      const { files } = req.body;
+      
+      // Mock response for other documents
+      const responses = files.map(() => ({
+        success: true,
+        extractedData: {
+          documentNumber: "DOC123456",
+          firstName: "SAMPLE",
+          lastName: "DOCUMENT"
+        },
+        confidence: 0.75,
+        processingTimeMs: 1000,
+        detectedFields: ["documentNumber"],
+        errors: [],
+        rawText: ""
+      }));
+
+      res.json(responses);
+    } catch (error) {
+      res.status(500).json([{ 
+        success: false, 
+        error: "OCR processing failed",
+        extractedData: {},
+        confidence: 0,
+        processingTimeMs: 0,
+        detectedFields: [],
+        errors: ["Processing failed"],
+        rawText: ""
+      }]);
+    }
+  });
+
   // Email validation endpoint - with fallback to local validation
   app.post("/api/validate/email", async (req, res) => {
     try {

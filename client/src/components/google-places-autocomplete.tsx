@@ -49,16 +49,12 @@ export function GooglePlacesAutocomplete({
         // Import the Places library
         await google.maps.importLibrary("places");
         
-        if (!google.maps.places.PlaceAutocompleteElement) {
+        if (!google.maps.places?.PlaceAutocompleteElement) {
           throw new Error('PlaceAutocompleteElement not available');
         }
 
         // Create the new PlaceAutocompleteElement
-        const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({
-          componentRestrictions: { country: [] }, // Allow all countries
-          fields: ['address_components', 'formatted_address', 'geometry', 'place_id'],
-          types: ['address']
-        });
+        const autocompleteElement = new google.maps.places.PlaceAutocompleteElement();
 
         // Style the element to match our design
         autocompleteElement.style.width = '100%';
@@ -136,7 +132,7 @@ export function GooglePlacesAutocomplete({
     // Load Google Maps API if not already loaded
     if (!window.google) {
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBhfWQngB6-nBsCfcjROUyl203icnmn0sQ&libraries=places&loading=async`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY || 'AIzaSyBhfWQngB6-nBsCfcjROUyl203icnmn0sQ'}&libraries=places&loading=async`;
       script.async = true;
       script.defer = true;
       script.onload = () => {

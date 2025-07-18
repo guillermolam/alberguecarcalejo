@@ -244,7 +244,7 @@ class OCRBFFClient {
     const extractedData: ExtractedDocumentData = {
       documentNumber: data.document_number,
       firstName: data.first_name,
-      lastName: data.last_names,
+      lastName: data.last_names || data.lastName, // Support both formats
       birthDate: data.birth_date,
       expiryDate: data.expiry_date,
       nationality: data.nationality,
