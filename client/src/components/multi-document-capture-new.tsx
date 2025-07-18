@@ -227,25 +227,6 @@ function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange }: Mul
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Document Type Selection - Always First */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            {t('document.type_required')}
-          </label>
-          <Select value={selectedDocumentType} onValueChange={handleDocumentTypeChange}>
-            <SelectTrigger>
-              <SelectValue placeholder={t('document.select_first')} />
-            </SelectTrigger>
-            <SelectContent>
-              {DOCUMENT_TYPES.map((type) => (
-                <SelectItem key={type.code} value={type.code}>
-                  {t(`document.${type.code.toLowerCase()}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {selectedDocumentType && (
           <>
             {error && (
