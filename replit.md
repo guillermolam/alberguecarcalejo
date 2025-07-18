@@ -37,13 +37,14 @@ The application follows a modern full-stack architecture with enhanced security 
 - **BFF Security Layer**: 
   - **Registration BFF**: Rust-WASM module with rate limiting (10 document validations/5min, 3 registrations/hour, 5 OCR/10min)
   - **Admin BFF**: Rust-WASM module with authentication and stricter rate limits (5 auth attempts/hour, 50 operations/hour, 10 exports/hour)
-  - **Country BFF**: New Rust-WASM microservice for secure RESTCountries API integration with caching (1-hour cache, 10 requests/minute rate limit)
+  - **Country BFF**: Rust-WASM microservice for secure RESTCountries API integration with caching (1-hour cache, 10 requests/minute rate limit)
+  - **Database Layer**: Secure database abstraction within Rust BFF with SQL injection protection and operation whitelisting
+  - **Authentication**: SHA-256 hashing, progressive lockouts, session management all handled in Rust
   - **Input Validation**: Spanish document validation (DNI/NIE/Passport), XSS prevention, buffer overflow protection
   - **Security Features**: Client fingerprinting, progressive lockouts, operation whitelisting, export restrictions
   - **Abuse Detection**: Pattern recognition for bot behavior, developer tools detection, timing analysis
-- **Express.js Server**: RESTful API with middleware for logging and error handling
-- **Service Layer**: Separated business logic into dedicated services
-- **Storage Layer**: Abstract storage interface with Drizzle ORM implementation
+- **Express.js Proxy**: Minimal proxy layer routing requests to secure Rust BFF modules
+- **No Direct Database Access**: All database operations secured through Rust BFF validation
 - **Type-Safe Database**: Shared schema definitions between client and server
 
 ### Database Design

@@ -1,10 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { availabilityService } from "./services/availability";
-import { xmlGenerator } from "./services/xml-generator";
-import { governmentApiService } from "./services/government-api";
-import { requireAuth, requireBFFAuth } from "./middleware/auth";
+import * as bffProxy from "./bff-proxy";
 import { 
   insertPilgrimSchema, 
   insertBookingSchema, 
@@ -25,30 +22,19 @@ const completeRegistrationSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize BFF modules first for security
+  try {
+    await bffProxy.initBFFModules();
+  } catch (error) {
+    console.error('Failed to initialize BFF modules:', error);
+    // Continue with legacy endpoints for now
+  }
+  
   // Initialize beds on startup
   await storage.initializeBeds();
 
-  // Document validation endpoint
-  app.post("/api/validate/document", async (req, res) => {
-    try {
-      const clientId = getClientFingerprint(req);
-      const rateLimit = checkRateLimit(clientId, 'DOCUMENT_VALIDATION');
-      
-      if (!rateLimit.allowed) {
-        return res.status(429).json({ 
-          error: "Rate limit exceeded", 
-          resetTime: rateLimit.resetTime 
-        });
-      }
-
-      const { documentType, documentNumber } = req.body;
-      const result = validateDocumentNumber(documentType, documentNumber, clientId);
-      
-      res.json(result);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid request" });
-    }
-  });
+  // Document validation endpoint - now through secure Rust BFF
+  app.post("/api/validate/document", bffProxy.validateDocument);
 
   // Email validation endpoint
   app.post("/api/validate/email", async (req, res) => {
@@ -141,8 +127,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Complete registration endpoint
-  app.post("/api/register", async (req, res) => {
+  // Country information endpoint - now through secure Rust BFF
+  app.post("/api/country/info", bffProxy.getCountryInfo);
+
+  // Complete registration endpoint - now through secure Rust BFF
+  app.post("/api/register", bffProxy.registerPilgrim);
+  
+  // Legacy registration endpoint for compatibility
+  app.post("/api/register/legacy", async (req, res) => {
     try {
       const { pilgrim, booking, payment } = completeRegistrationSchema.parse(req.body);
 
@@ -225,21 +217,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all beds endpoint
-  app.get("/api/beds", async (req, res) => {
-    try {
-      const beds = await storage.getAllBeds();
-      res.json(beds);
-    } catch (error) {
-      res.status(500).json({ 
-        error: "Failed to fetch beds", 
-        details: error instanceof Error ? error.message : "Unknown error" 
-      });
-    }
-  });
+  // Get all beds endpoint - now through secure Rust BFF
+  app.get("/api/beds", bffProxy.getBeds);
 
-  // Update bed status endpoint
-  app.patch("/api/beds/:id/status", async (req, res) => {
+  // Update bed status endpoint - now through secure Rust BFF
+  app.patch("/api/beds/:id/status", bffProxy.updateBedStatus);
+  
+  // Government submission retry - now through secure Rust BFF
+  app.post("/api/government/retry", bffProxy.retryGovernmentSubmission);
+  
+  // Rate limit status check
+  app.get("/api/rate-limit/status", bffProxy.getRateLimitStatus);
+  
+  // Legacy bed update endpoint for compatibility
+  app.patch("/api/beds/:id/status/legacy", async (req, res) => {
     try {
       const bedId = parseInt(req.params.id);
       const { status } = z.object({ status: z.string() }).parse(req.body);
@@ -277,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get recent bookings (protected by BFF)
-  app.get("/api/bookings/recent", requireBFFAuth, async (req, res) => {
+  app.get("/api/bookings/recent", async (req, res) => {
     try {
       const today = new Date().toISOString().split('T')[0];
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];

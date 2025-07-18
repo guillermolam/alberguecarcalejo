@@ -1,6 +1,7 @@
 mod rate_limiter;
 mod auth;
 mod orchestrator;
+mod database;
 
 use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -67,9 +68,10 @@ pub struct GovernmentSubmissionRequest {
 pub fn init() {
     console_log!("Admin BFF initialized");
     
-    // Initialize rate limiter and auth
+    // Initialize rate limiter, auth, and database
     rate_limiter::init();
     auth::init();
+    database::init_database();
 }
 
 /// Admin authentication with rate limiting
