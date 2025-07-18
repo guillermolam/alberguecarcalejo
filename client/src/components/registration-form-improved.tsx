@@ -51,6 +51,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(createRegistrationSchema(selectedDocumentType, detectedCountryCode)),
     mode: 'onSubmit', // Only validate on submit
+    reValidateMode: 'onSubmit', // Also only re-validate on submit
     defaultValues: {
       language: 'es',
       paymentType: "EFECT", // Default to cash
@@ -161,14 +162,14 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
           shouldTouch: false 
         });
         
-        // Also set DOM value for immediate visual feedback
+        // Also set DOM value for immediate visual feedback WITHOUT triggering validation
         const inputElement = document.querySelector(`[name="${fieldName}"]`) as HTMLInputElement;
         if (inputElement && inputElement.type !== 'hidden') {
           const descriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value");
           if (descriptor?.set) {
             descriptor.set.call(inputElement, value);
           }
-          inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+          // DO NOT dispatch events that could trigger validation
         }
       };
       
