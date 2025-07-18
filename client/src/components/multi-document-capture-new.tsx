@@ -41,7 +41,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const requiresBothSides = (docType: string) => {
-    return docType === 'DNI' || docType === 'NIE' || docType === 'OTHER';
+    return docType === 'NIF' || docType === 'NIE' || docType === 'OTRO';
   };
 
   const handleDocumentTypeChange = (value: string) => {
@@ -196,7 +196,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
 
   const getSideTitle = (side: DocumentSide) => {
     if (side === 'front') {
-      return selectedDocumentType === 'PASSPORT' ? 'Photo Page' : 'Front Side';
+      return selectedDocumentType === 'PAS' ? 'Photo Page' : 'Front Side';
     }
     return 'Back Side';
   };
@@ -251,6 +251,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
 
             {/* Independent Upload Areas for Front and Back */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
               {/* Front Side Upload */}
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 space-y-4">
                 <h3 className="font-medium text-lg flex items-center gap-2">
@@ -309,7 +310,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
                 )}
               </div>
 
-              {/* Back Side Upload (only if required) */}
+              {/* Back Side Upload - ALWAYS show for DNI/NIE/OTHER */}
               {requiresBothSides(selectedDocumentType) && (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 space-y-4">
                   <h3 className="font-medium text-lg flex items-center gap-2">

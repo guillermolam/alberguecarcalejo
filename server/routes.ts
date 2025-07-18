@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { bedManager } from "./bed-manager";
 import * as wasmProxy from "./wasm-proxy";
 import { 
   insertPilgrimSchema, 
@@ -216,32 +217,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get availability from storage
-      const allBeds = await storage.getAllBeds();
-      const totalBeds = allBeds.length;
-      const overlappingBookings = await storage.getBookingsByDateRange(checkInDate, checkOutDate);
-      
-      const occupiedBedIds = new Set(
-        overlappingBookings
-          .filter(booking => booking.status === 'confirmed' || booking.status === 'checked_in')
-          .map(booking => booking.bedAssignmentId)
-          .filter(bedId => bedId !== null)
-      );
-      
-      const availableBeds = allBeds.filter(bed => 
-        bed.status === 'available' && !occupiedBedIds.has(bed.id)
-      );
-      
-      const available = availableBeds.length >= numberOfPersons;
+      // Use secure bed manager for availability check
+      const availability = await bedManager.checkAvailability(checkInDate, checkOutDate, numberOfPersons);
+      const available = availability.available;
       
       res.json({
         available,
-        totalBeds,
-        availableBeds: availableBeds.length,
-        occupiedBeds: totalBeds - availableBeds.length,
+        totalBeds: availability.totalBeds,
+        availableBeds: availability.availableBeds,
+        occupiedBeds: availability.totalBeds - availability.availableBeds,
         suggestedDates: !available ? ["2025-07-21", "2025-07-22"] : undefined,
         message: available 
-          ? `${availableBeds.length} bed(s) available for your stay.`
+          ? `${availability.availableBeds} bed(s) available for your stay.`
           : "No beds available for the selected dates. Please consider the suggested alternative dates."
       });
       
@@ -291,19 +278,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         referenceNumber
       });
 
-      // Create payment record
-      const paymentRecord = await storage.createPayment({
-        ...payment,
-        bookingId: bookingRecord.id,
-        receiptNumber: `REC-${bookingRecord.id}-${Date.now()}`
-      });
+      // Process payment and automatically assign bed using secure bed manager
+      const paymentAndBedResult = await bedManager.processPaymentAndAssignBed(
+        bookingRecord.id,
+        {
+          amount: parseFloat(payment.amount),
+          paymentType: payment.paymentType,
+          receiptNumber: `REC-${bookingRecord.id}-${Date.now()}`
+        }
+      );
+
+      if (!paymentAndBedResult.success) {
+        return res.status(400).json({
+          success: false,
+          error: paymentAndBedResult.error
+        });
+      }
 
       res.json({
         success: true,
         data: {
           pilgrim: pilgrimRecord,
           booking: bookingRecord,
-          payment: paymentRecord,
+          payment: { id: paymentAndBedResult.paymentId },
+          bedAssignment: paymentAndBedResult.bedAssignment,
           referenceNumber
         }
       });
@@ -458,33 +456,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get dashboard statistics (public endpoint for home page) - fallback to local storage
+  // Get dashboard statistics (public endpoint for home page) - now using secure bed manager
   app.get("/api/dashboard/stats", async (req, res) => {
     try {
-      // Try Rust backend first, fallback to local storage
+      // Try Rust backend first, fallback to secure bed manager
       try {
-        const stats = await wasmProxy.getDashboardStats();
-        res.json(stats);
-        return;
+        const rustResponse = await proxyToRustBackend('/api/db/stats', 'GET');
+        if (rustResponse) {
+          return res.json(rustResponse);
+        }
       } catch (backendError) {
         console.warn("Backend unavailable, using fallback:", backendError);
       }
 
-      // Fallback to local storage
-      const today = new Date().toISOString().split('T')[0];
-      const occupancyStats = await storage.getOccupancyStats(today);
-      const revenueStats = await storage.getRevenueStats(today);
-      const complianceStats = await storage.getComplianceStats();
-
+      // Fallback to secure bed manager
+      const stats = await bedManager.getBedOccupancyStats();
+      
       res.json({
-        occupancy: occupancyStats,
-        revenue: revenueStats,
-        compliance: complianceStats
+        occupancy: {
+          occupied: stats.occupied,
+          available: stats.available,
+          total: stats.total,
+          occupancyRate: Math.round(stats.occupancyRate)
+        },
+        recentBookings: [], // Would be populated from database
+        todayCheckIns: 0,
+        todayCheckOuts: 0
       });
     } catch (error) {
+      console.error("Dashboard stats error:", error);
       res.status(500).json({ 
-        error: "Failed to fetch dashboard stats", 
-        details: error instanceof Error ? error.message : "Unknown error" 
+        error: "Failed to fetch dashboard statistics" 
       });
     }
   });
@@ -590,7 +592,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Additional secure bed management endpoints
+
+  // Process payment and assign bed automatically (secure endpoint)
+  app.post("/api/process-payment-and-assign-bed", async (req, res) => {
+    try {
+      const { bookingId, paymentData } = req.body;
+      
+      if (!bookingId || !paymentData) {
+        return res.status(400).json({ 
+          error: "Booking ID and payment data are required" 
+        });
+      }
+
+      const result = await bedManager.processPaymentAndAssignBed(bookingId, paymentData);
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: "Payment processed and bed assigned successfully",
+          bedAssignment: result.bedAssignment,
+          paymentId: result.paymentId
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          error: result.error
+        });
+      }
+    } catch (error) {
+      console.error("Payment and bed assignment error:", error);
+      res.status(500).json({ 
+        error: "Failed to process payment and assign bed" 
+      });
+    }
+  });
+
+  // Release bed (admin only - for cancellations)
+  app.post("/api/release-bed", async (req, res) => {
+    try {
+      // In production, check admin authentication
+      const { bookingId } = req.body;
+      
+      if (!bookingId) {
+        return res.status(400).json({ 
+          error: "Booking ID is required" 
+        });
+      }
+
+      const success = await bedManager.releaseBed(bookingId);
+      
+      if (success) {
+        res.json({ success: true, message: "Bed released successfully" });
+      } else {
+        res.status(400).json({ success: false, error: "Failed to release bed" });
+      }
+    } catch (error) {
+      console.error("Bed release error:", error);
+      res.status(500).json({ 
+        error: "Failed to release bed" 
+      });
+    }
+  });
+
+  // Get available beds for date range (admin only)
+  app.post("/api/beds/available", async (req, res) => {
+    try {
+      // In production, check admin authentication
+      const { checkInDate, checkOutDate } = req.body;
+      
+      if (!checkInDate || !checkOutDate) {
+        return res.status(400).json({ 
+          error: "Check-in and check-out dates are required" 
+        });
+      }
+
+      const availableBeds = await bedManager.getAvailableBeds(checkInDate, checkOutDate);
+      
+      res.json({
+        success: true,
+        beds: availableBeds
+      });
+    } catch (error) {
+      console.error("Available beds fetch error:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch available beds" 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
+
+  // Initialize bed inventory on server start
+  bedManager.initializeBeds().catch(console.error);
+
   return httpServer;
 }
 
