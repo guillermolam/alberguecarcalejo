@@ -48,8 +48,10 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
     }
   }, [ocrDataReceived]);
 
+  const [isOcrProcessing, setIsOcrProcessing] = useState(false);
+  
   const form = useForm<RegistrationFormData>({
-    resolver: zodResolver(createRegistrationSchema(selectedDocumentType, detectedCountryCode)),
+    resolver: isOcrProcessing ? undefined : zodResolver(createRegistrationSchema(selectedDocumentType, detectedCountryCode)),
     mode: 'onSubmit', // Only validate on submit
     reValidateMode: 'onSubmit', // Also only re-validate on submit
     defaultValues: {
@@ -92,6 +94,9 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
 
   // Handle multi-document capture results
   const handleDocumentProcessed = (result: any) => {
+    console.log('=== STARTING OCR PROCESSING - DISABLING VALIDATION ===');
+    setIsOcrProcessing(true); // Disable form validation during OCR
+    
     const { frontOCR: front, backOCR: back, documentType } = result;
     
     setFrontOCR(front);
@@ -155,10 +160,10 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
         
         console.log(`Setting up field watcher for ${fieldName} with value: ${value}`);
         
-        // Set the value immediately without validation
+        // Set the value immediately without ANY validation or events
         form.setValue(fieldName as keyof RegistrationFormData, value, { 
           shouldValidate: false,
-          shouldDirty: true,
+          shouldDirty: false,  // Don't mark as dirty to prevent validation
           shouldTouch: false 
         });
         
@@ -195,7 +200,7 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
             console.log(`Re-applying missing field ${fieldName}: "${value}"`);
             form.setValue(fieldName as keyof RegistrationFormData, value, { 
               shouldValidate: false,
-              shouldDirty: true,
+              shouldDirty: false,  // Don't mark as dirty
               shouldTouch: false
             });
           } else if (value) {
@@ -203,7 +208,8 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
           }
         });
         
-        console.log('=== OCR POPULATION COMPLETE - NO VALIDATION TRIGGERED ===');
+        console.log('=== OCR POPULATION COMPLETE - RE-ENABLING VALIDATION ===');
+        setIsOcrProcessing(false); // Re-enable validation after OCR is complete
       }, 300);
       
       setHasDocumentProcessed(true);
