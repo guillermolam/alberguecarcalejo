@@ -7,21 +7,24 @@ mod rate_limiter;
 mod country_api;
 mod security;
 mod types;
+mod ocr_service;
 
 use database_service::DatabaseService;
 use validation::ValidationService;
 use rate_limiter::RateLimiter;
 use country_api::CountryService;
 use security::SecurityService;
+use ocr_service::OCRService;
 
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     // Initialize services
     let db_service = DatabaseService::new(&env).await?;
     let validation_service = ValidationService::new();
-    let rate_limiter = RateLimiter::new();
+    let mut rate_limiter = RateLimiter::new();
     let country_service = CountryService::new();
     let security_service = SecurityService::new();
+    let mut ocr_service = OCRService::new();
 
     // Parse the request path
     let url = req.url()?;
@@ -59,6 +62,20 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         // Admin authentication
         (Method::Post, "/api/admin/auth") => {
             security_service.authenticate_admin(req, &rate_limiter).await
+        },
+        
+        // OCR Services
+        (Method::Post, "/api/ocr/dni") => {
+            ocr_service.process_dni_nif(req, &mut rate_limiter).await
+        },
+        (Method::Post, "/api/ocr/nie") => {
+            ocr_service.process_nie(req, &mut rate_limiter).await
+        },
+        (Method::Post, "/api/ocr/passport") => {
+            ocr_service.process_passport(req, &mut rate_limiter).await
+        },
+        (Method::Post, "/api/ocr/other") => {
+            ocr_service.process_other_document(req, &mut rate_limiter).await
         },
         
         // Health check

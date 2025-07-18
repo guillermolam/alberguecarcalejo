@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Camera, Upload, X, CheckCircle, AlertCircle, FileText, FlipHorizontal } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { enhancedOCRService, type ComprehensiveOCRResult } from "@/lib/enhanced-ocr";
+import { ocrBFFClient, type OCRResponse, type ExtractedDocumentData } from "@/lib/ocr-bff-client";
 import { useI18n } from "@/contexts/i18n-context";
 import { DOCUMENT_TYPES } from "@/lib/constants";
 
@@ -13,8 +13,8 @@ type DocumentSide = 'front' | 'back';
 
 interface DocumentCaptureResult {
   documentType: string;
-  frontOCR: ComprehensiveOCRResult | null;
-  backOCR: ComprehensiveOCRResult | null;
+  frontOCR: OCRResponse | null;
+  backOCR: OCRResponse | null;
   isComplete: boolean;
 }
 
@@ -28,8 +28,8 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
   const [currentSide, setCurrentSide] = useState<DocumentSide>('front');
   const [frontImage, setFrontImage] = useState<string | null>(null);
   const [backImage, setBackImage] = useState<string | null>(null);
-  const [frontOCR, setFrontOCR] = useState<ComprehensiveOCRResult | null>(null);
-  const [backOCR, setBackOCR] = useState<ComprehensiveOCRResult | null>(null);
+  const [frontOCR, setFrontOCR] = useState<OCRResponse | null>(null);
+  const [backOCR, setBackOCR] = useState<OCRResponse | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processingProgress, setProcessingProgress] = useState(0);
@@ -130,16 +130,19 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
 
       setProcessingProgress(40);
 
-      // Process with enhanced OCR with document side context
-      const result = await enhancedOCRService.processDocument(file, {
-        documentType: selectedDocumentType,
-        documentSide: currentSide
-      });
+      // Process with OCR BFF client based on document type
+      const results = await ocrBFFClient.processDocument(
+        selectedDocumentType,
+        currentSide === 'front' ? file : undefined,
+        currentSide === 'back' ? file : undefined
+      );
+      
+      const result = currentSide === 'front' ? results.frontOCR : results.backOCR;
 
       setProcessingProgress(80);
 
-      if (!result.isValid) {
-        setError(t('errors.ocr_no_data') + ': ' + result.errors.join(', '));
+      if (!result || !result.success) {
+        setError(t('errors.ocr_no_data') + ': ' + (result?.errors.join(', ') || 'Unknown error'));
         setIsProcessing(false);
         return;
       }

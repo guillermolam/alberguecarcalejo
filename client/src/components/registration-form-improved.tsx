@@ -89,44 +89,47 @@ export function RegistrationForm({ stayData, onBack, onSuccess }: RegistrationFo
     setSelectedDocumentType(documentType);
     
     // Merge data from both sides
-    const mergedOCR: Partial<ComprehensiveOCRResult> = {
-      ...front,
-      ...back, // Back side data takes precedence for address info
+    const mergedOCR = {
+      extractedData: {
+        ...front?.extractedData,
+        ...back?.extractedData, // Back side data takes precedence for address info
+      },
       detectedFields: [...(front?.detectedFields || []), ...(back?.detectedFields || [])],
-      isValid: (front?.isValid || false) || (back?.isValid || false)
+      success: (front?.success || false) || (back?.success || false)
     };
     
     // Auto-fill the form
     fillFormFromOCR(mergedOCR);
   };
 
-  // Auto-fill form when comprehensive OCR data is available
-  const fillFormFromOCR = (ocrData: Partial<ComprehensiveOCRResult>) => {
-    if (ocrData && ocrData.isValid) {
+  // Auto-fill form when comprehensive OCR data is available  
+  const fillFormFromOCR = (ocrData: any) => {
+    if (ocrData && ocrData.success && ocrData.extractedData) {
+      const data = ocrData.extractedData;
       const updates: Partial<RegistrationFormData> = {};
       
       // Personal information
-      if (ocrData.firstName) updates.firstName = ocrData.firstName;
-      if (ocrData.lastName1) updates.lastName1 = ocrData.lastName1;
-      if (ocrData.lastName2) updates.lastName2 = ocrData.lastName2;
-      if (ocrData.documentNumber) updates.documentNumber = ocrData.documentNumber;
-      if (ocrData.documentType) {
-        updates.documentType = ocrData.documentType;
-        setSelectedDocumentType(ocrData.documentType);
+      if (data.firstName) updates.firstName = data.firstName;
+      if (data.lastName1) updates.lastName1 = data.lastName1;
+      if (data.lastName2) updates.lastName2 = data.lastName2;
+      if (data.documentNumber) updates.documentNumber = data.documentNumber;
+      if (data.documentType) {
+        updates.documentType = data.documentType;
+        setSelectedDocumentType(data.documentType);
       }
-      if (ocrData.documentSupport) updates.documentSupport = ocrData.documentSupport;
-      if (ocrData.birthDate) updates.birthDate = ocrData.birthDate;
-      if (ocrData.gender) updates.gender = ocrData.gender;
-      if (ocrData.nationality) updates.nationality = ocrData.nationality;
+      if (data.documentSupport) updates.documentSupport = data.documentSupport;
+      if (data.birthDate) updates.birthDate = data.birthDate;
+      if (data.gender) updates.gender = data.gender;
+      if (data.nationality) updates.nationality = data.nationality;
       
       // Address information (if available)
-      if (ocrData.addressStreet) updates.addressStreet = ocrData.addressStreet;
-      if (ocrData.addressCity) updates.addressCity = ocrData.addressCity;
-      if (ocrData.addressPostalCode) updates.addressPostalCode = ocrData.addressPostalCode;
-      if (ocrData.addressCountry) {
-        updates.addressCountry = ocrData.addressCountry;
+      if (data.addressStreet) updates.addressStreet = data.addressStreet;
+      if (data.addressCity) updates.addressCity = data.addressCity;
+      if (data.addressPostalCode) updates.addressPostalCode = data.addressPostalCode;
+      if (data.addressCountry) {
+        updates.addressCountry = data.addressCountry;
         // Update country code for phone validation
-        const countryCode = getCountryCode(ocrData.addressCountry);
+        const countryCode = getCountryCode(data.addressCountry);
         setDetectedCountryCode(countryCode);
       }
       
