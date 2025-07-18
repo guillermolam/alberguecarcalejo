@@ -42,9 +42,12 @@ export interface MultiFileOCRRequest {
 
 class OCRBFFClient {
   private baseUrl: string;
+  private lambdaUrl: string;
 
   constructor() {
     this.baseUrl = import.meta.env.VITE_API_URL || '';
+    // AWS Lambda URL for zero-cost OCR processing
+    this.lambdaUrl = import.meta.env.VITE_LAMBDA_OCR_URL || '';
   }
 
   // DNI/NIF OCR Processing
@@ -141,6 +144,123 @@ class OCRBFFClient {
       console.error('Other documents OCR processing error:', error);
       return [this.createErrorResponse('Failed to process other documents')];
     }
+  }
+
+  // Process document with image data URL for zero-cost Lambda OCR
+  async processDocumentWithImage(
+    imageDataUrl: string,
+    documentType: string,
+    documentSide?: 'front' | 'back'
+  ): Promise<OCRResponse> {
+    try {
+      // Use AWS Lambda if configured, fallback to local BFF
+      if (this.lambdaUrl) {
+        return await this.processWithLambda(imageDataUrl, documentType, documentSide);
+      } else {
+        return await this.processWithBFF(imageDataUrl, documentType, documentSide);
+      }
+    } catch (error) {
+      console.error('Document processing error:', error);
+      return this.createErrorResponse('Failed to process document');
+    }
+  }
+
+  // AWS Lambda OCR processing (zero-cost)
+  private async processWithLambda(
+    imageDataUrl: string,
+    documentType: string,
+    documentSide?: 'front' | 'back'
+  ): Promise<OCRResponse> {
+    const request = {
+      image_base64: imageDataUrl,
+      document_type: documentType.toUpperCase(),
+      side: documentSide || 'front'
+    };
+
+    const response = await fetch(this.lambdaUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Lambda OCR failed: ${response.status} ${response.statusText}`);
+    }
+
+    const lambdaResult = await response.json();
+
+    // Convert Lambda response to our OCRResponse format
+    return this.convertLambdaResponse(lambdaResult);
+  }
+
+  // BFF OCR processing (fallback)
+  private async processWithBFF(
+    imageDataUrl: string,
+    documentType: string,
+    documentSide?: 'front' | 'back'
+  ): Promise<OCRResponse> {
+    const request: OCRRequest = {
+      documentType,
+      documentSide,
+      fileData: imageDataUrl,
+      fileName: `document.jpg`,
+      mimeType: 'image/jpeg',
+    };
+
+    // Route to specific endpoint based on document type
+    let endpoint = '/api/ocr/process';
+    switch (documentType.toUpperCase()) {
+      case 'DNI':
+      case 'NIF':
+        endpoint = '/api/ocr/dni';
+        break;
+      case 'NIE':
+        endpoint = '/api/ocr/nie';
+        break;
+      case 'PASSPORT':
+      case 'PAS':
+        endpoint = '/api/ocr/passport';
+        break;
+      case 'OTHER':
+      case 'OTRO':
+        endpoint = '/api/ocr/other';
+        break;
+    }
+
+    return await this.makeRequest(endpoint, request);
+  }
+
+  // Convert AWS Lambda response format to our OCRResponse format
+  private convertLambdaResponse(lambdaResult: any): OCRResponse {
+    if (!lambdaResult.success) {
+      return this.createErrorResponse(lambdaResult.error || 'Lambda processing failed');
+    }
+
+    const data = lambdaResult.data || {};
+    
+    // Convert Lambda data format to our ExtractedDocumentData format
+    const extractedData: ExtractedDocumentData = {
+      documentNumber: data.document_number,
+      firstName: data.first_name,
+      lastName: data.last_names,
+      birthDate: data.birth_date,
+      expiryDate: data.expiry_date,
+      nationality: data.nationality,
+      address: data.address,
+      postalCode: data.postal_code,
+    };
+
+    return {
+      success: true,
+      extractedData,
+      confidence: data.confidence_score || 0,
+      processingTimeMs: lambdaResult.processing_time_ms || 0,
+      detectedFields: this.getDetectedFields(extractedData),
+      errors: [],
+      rawText: '',
+    };
   }
 
   // Process document based on type (main entry point)

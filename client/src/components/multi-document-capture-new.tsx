@@ -132,7 +132,7 @@ export function MultiDocumentCapture({ onDocumentProcessed, onDocumentTypeChange
         setProcessingProgress(prev => Math.min(prev + 10, 90));
       }, 100);
 
-      const result = await ocrBFFClient.processDocument(
+      const result = await ocrBFFClient.processDocumentWithImage(
         imageDataUrl,
         selectedDocumentType,
         currentSide

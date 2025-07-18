@@ -10,18 +10,23 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-The application follows a modern full-stack architecture with complete migration to secure Rust-WASM backend services:
+The application follows a zero-cost, modern full-stack architecture optimized for low volume (24 users/day):
 
 - **Frontend**: React with TypeScript, using Vite for development and build
-- **Rust WASM Backend**: 
+- **Zero-Cost OCR Service**: 
+  - **AWS Lambda Function**: Rust-based Spanish document OCR service
+  - **Tesseract Integration**: Spanish DNI/NIE validation with checksum verification
+  - **MRZ Parsing**: International passport processing
+  - **Cost Optimization**: 256MB memory, 30s timeout, fits AWS free tier
+  - **Processing**: <$0/month for 720 requests (24 users/day)
+- **Secure Backend Services**: 
   - **Database Service**: Secure PostgreSQL operations with input validation
   - **Validation Service**: Document, email, and phone validation with rate limiting
   - **Country Service**: RESTCountries API integration with caching
   - **Security Service**: Admin authentication with SHA-256 hashing
   - **Rate Limiter**: Granular rate limiting per operation type
-  - **Deployed on Cloudflare Workers**: Zero-cost, globally-distributed WASM deployment
-- **Backend Proxy**: Minimal Express.js proxy layer routing to Rust WASM services
-- **Database**: PostgreSQL with Drizzle ORM, accessed securely through Rust layer
+- **Backend Proxy**: Express.js proxy layer with bed management and payment processing
+- **Database**: PostgreSQL with Drizzle ORM
 - **UI Framework**: Shadcn/ui with Tailwind CSS
 - **State Management**: TanStack React Query for server state
 - **Routing**: Wouter for client-side routing
@@ -135,18 +140,22 @@ The database schema supports:
 - Replit-specific optimizations for cloud deployment
 
 ### Key Features
+- **Zero-Cost OCR Processing**: AWS Lambda function for Spanish DNI/NIE and passport processing (<$0/month for 24 users/day)
+- **Advanced Document Validation**: Checksum verification for DNI/NIE using mod-23 algorithm
+- **International Passport Support**: MRZ (Machine Readable Zone) parsing for worldwide passports
+- **Intelligent Document Classification**: Automatic document type detection and routing
 - **Secure Bed Management**: Backend service automatically assigns beds after payment confirmation
 - **Automatic Bed Initialization**: Sets up 25-bed inventory (Dormitorios A/B, Private rooms) on first run
 - **Payment-to-Bed Integration**: Atomic transactions ensuring payment success before bed assignment
 - **Government Compliance**: Automated XML submission to Spanish authorities
-- **Independent Document Upload**: Separate front/back upload areas for DNI/NIE processing
-- **Enhanced OCR Integration**: Spanish document parsing with document support number extraction
+- **Independent Document Upload**: Separate front/back upload areas for DNI/NIE processing with responsive layout
+- **Multi-Document Support**: Handles DNI, NIE, Passport, and Other Documents with file type validation
 - **Multi-language Support**: Interface available in 10+ languages with localized date formats
 - **Real-time Availability**: Secure bed availability checking via backend service
-- **Mobile Optimized**: Touch-friendly interface for tablet/phone use
+- **Mobile Optimized**: Touch-friendly interface for tablet/phone use with side-by-side desktop layout
 - **Enhanced Phone Input**: Country-aware phone validation with flag display and separated local/country code input
 - **Global Address Support**: Worldwide address autocomplete for international pilgrims
-- **Country Information Service**: Rust-WASM microservice providing real-time country flags, calling codes via RESTCountries API
-- **Modern Google Places Integration**: Migrated to PlaceAutocompleteElement (March 2025+ compliant) with legacy fallback
+- **Country Information Service**: RESTCountries API integration with local caching and fallback data
+- **Modern Google Places Integration**: PlaceAutocompleteElement (March 2025+ compliant) with legacy fallback
 
 The application is designed as a self-contained kiosk system that can run on tablets or computers at the albergue entrance, allowing pilgrims to register themselves while ensuring compliance with Spanish hospitality regulations.
