@@ -27,6 +27,12 @@ import {
 import { useI18n } from "@/contexts/i18n-context";
 import { DOCUMENT_TYPES } from "@/lib/constants";
 
+// Import custom document type icons
+import DniFrontIcon from "@assets/custom-icons/dni/front.svg";
+import DniBackIcon from "@assets/custom-icons/dni/back.svg";
+import PassportIcon from "@assets/custom-icons/passport/passport.svg";
+import OtherIcon from "@assets/custom-icons/other/other_documents.svg";
+
 type DocumentSide = "front" | "back";
 
 interface DocumentCaptureResult {
@@ -39,13 +45,15 @@ interface DocumentCaptureResult {
 interface MultiDocumentCaptureProps {
   onDocumentProcessed: (result: DocumentCaptureResult) => void;
   onDocumentTypeChange?: (documentType: string) => void;
+  selectedDocumentType?: string;
 }
 
 function MultiDocumentCapture({
   onDocumentProcessed,
   onDocumentTypeChange,
+  selectedDocumentType: propDocumentType,
 }: MultiDocumentCaptureProps) {
-  const [selectedDocumentType, setSelectedDocumentType] = useState("NIF"); // Default to DNI/NIF
+  const [selectedDocumentType, setSelectedDocumentType] = useState(propDocumentType || "NIF"); // Default to DNI/NIF
   const [frontImage, setFrontImage] = useState<string | null>(null);
   const [backImage, setBackImage] = useState<string | null>(null);
   const [frontOCR, setFrontOCR] = useState<OCRResponse | null>(null);
@@ -64,11 +72,28 @@ function MultiDocumentCapture({
   const requiresBothSides = (docType: string) => {
     return docType === "NIF" || docType === "NIE";
   };
-
-  // Initialize with default document type on mount
+  
+  // Update internal state when prop changes
   useEffect(() => {
-    onDocumentTypeChange?.("NIF"); // Propagate default to parent
-  }, [onDocumentTypeChange]);
+    if (propDocumentType && propDocumentType !== selectedDocumentType) {
+      setSelectedDocumentType(propDocumentType);
+      // Reset everything when document type changes via prop
+      setFrontImage(null);
+      setBackImage(null);
+      setFrontOCR(null);
+      setBackOCR(null);
+      setError(null);
+      setProcessingProgress(0);
+      setCurrentSide("front");
+    }
+  }, [propDocumentType]); // Only depend on prop changes
+
+  // Initialize with default document type on mount (only if no prop provided)
+  useEffect(() => {
+    if (!propDocumentType) {
+      onDocumentTypeChange?.("NIF"); // Propagate default to parent
+    }
+  }, [onDocumentTypeChange, propDocumentType]);
 
   const handleDocumentTypeChange = (value: string) => {
     setSelectedDocumentType(value);
@@ -200,8 +225,8 @@ function MultiDocumentCapture({
       );
 
       if (!result.success) {
-        console.error("OCR processing failed:", result.error);
-        setError(result.error || "Failed to process document");
+        console.error("OCR processing failed:", result.errors);
+        setError(result.errors?.[0] || "Failed to process document");
         setIsProcessing(false);
         return;
       }
@@ -256,6 +281,13 @@ function MultiDocumentCapture({
     return "Back Side";
   };
 
+  const getDocumentIcon = (docType: string, side: DocumentSide) => {
+    if (docType === "PAS") return PassportIcon;
+    if (docType === "OTRO") return OtherIcon;
+    if (side === "front") return DniFrontIcon;
+    return DniBackIcon;
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -286,13 +318,13 @@ function MultiDocumentCapture({
             )}
 
             {/* Upload Areas - Layout depends on document type */}
-            {selectedDocumentType === "OTRO" ? (
-              // Single upload area for Other Documents
+            {selectedDocumentType === "OTRO" || selectedDocumentType === "PAS" ? (
+              // Single upload area for Other Documents and Passports
               <div className="max-w-md mx-auto">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 space-y-4">
                   <h3 className="font-medium text-lg flex items-center gap-2">
                     <IdCard className="w-5 h-5" />
-                    Upload Document
+                    {selectedDocumentType === "PAS" ? "Upload Passport" : "Upload Document"}
                     {frontOCR && (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     )}
@@ -362,7 +394,10 @@ function MultiDocumentCapture({
                         </Button>
                       </div>
                       <p className="text-xs text-gray-500">
-                        Accepted files: DOC, DOCX, PDF, ODT, OTT, RTF
+                        {selectedDocumentType === "PAS" 
+                          ? "Accepted files: JPG, PNG, PDF, DOCX"
+                          : "Accepted files: DOC, DOCX, PDF, ODT, OTT, RTF"
+                        }
                       </p>
                     </div>
                   )}
@@ -596,6 +631,8 @@ function MultiDocumentCapture({
               accept={
                 selectedDocumentType === "OTRO"
                   ? ".doc,.docx,.pdf,.odt,.ott,.rtf,image/*"
+                  : selectedDocumentType === "PAS"
+                  ? "image/*,.pdf,.docx"
                   : "image/*,.pdf,.docx"
               }
               onChange={handleFileUpload}

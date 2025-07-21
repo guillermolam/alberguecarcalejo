@@ -479,7 +479,11 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
 
           {/* Document Capture */}
           <Suspense fallback={<Alert><AlertDescription>{t('loading.processing')}</AlertDescription></Alert>}>
-            <MultiDocumentCapture onDocumentProcessed={handleDocumentProcessed} />
+            <MultiDocumentCapture 
+              onDocumentProcessed={handleDocumentProcessed} 
+              onDocumentTypeChange={handleDocumentTypeChange}
+              selectedDocumentType={selectedDocumentType}
+            />
           </Suspense>
           
           {hasDocumentProcessed && (
