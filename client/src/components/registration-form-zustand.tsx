@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Lock, Unlock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Lock, Unlock, CheckCircle, AlertTriangle, User, MapPin, Phone, CreditCard } from 'lucide-react';
 import { GENDER_OPTIONS, DOCUMENT_TYPES, PAYMENT_TYPES } from '@/lib/constants';
 
 // Import constants for country code lookup
@@ -319,7 +319,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
         description: t('registration.success_description'),
       });
       
-      queryClient.invalidateQueries(['api/dashboard']);
+      queryClient.invalidateQueries({ queryKey: ['api/dashboard'] });
       onSuccess();
     } catch (error: any) {
       console.error('Registration submission error:', error);
@@ -362,12 +362,14 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
           )}
 
           {/* Personal Information */}
-          <Collapsible open={!personalInfoCollapsed} onOpenChange={setPersonalInfoCollapsed}>
-            <Card>
+          {hasDocumentProcessed && (
+            <Collapsible open={!personalInfoCollapsed} onOpenChange={setPersonalInfoCollapsed}>
+              <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-gray-50">
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      <User className="w-5 h-5 text-blue-600" />
                       {hasDocumentProcessed && getCardIcon(ocrConfidence)}
                       {t('registration.personal_info')}
                     </div>
@@ -468,15 +470,18 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 </CardContent>
               </CollapsibleContent>
             </Card>
-          </Collapsible>
+            </Collapsible>
+          )}
 
           {/* Address Information */}
-          <Collapsible open={!addressInfoCollapsed} onOpenChange={setAddressInfoCollapsed}>
-            <Card>
+          {hasDocumentProcessed && (
+            <Collapsible open={!addressInfoCollapsed} onOpenChange={setAddressInfoCollapsed}>
+              <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-gray-50">
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-green-600" />
                       {hasDocumentProcessed && getCardIcon(ocrConfidence)}
                       {t('registration.address_info')}
                     </div>
@@ -523,7 +528,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                       }
                     }}
                     placeholder={t('registration.address')}
-                    disabled={isFieldReadOnly('addressStreet')}
+
                   />
                 </LockableInput>
 
@@ -552,13 +557,18 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 </CardContent>
               </CollapsibleContent>
             </Card>
-          </Collapsible>
+            </Collapsible>
+          )}
 
           {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('registration.contact_info')}</CardTitle>
-            </CardHeader>
+          {hasDocumentProcessed && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Phone className="w-5 h-5 text-orange-600" />
+                  {t('registration.contact_info')}
+                </CardTitle>
+              </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -586,12 +596,16 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 </div>
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          )}
 
           {/* Payment Information */}
           <Card>
             <CardHeader>
-              <CardTitle>{t('registration.payment_info')}</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-purple-600" />
+                {t('registration.payment_info')}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -611,7 +625,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               </div>
 
               <div className="text-sm text-gray-600">
-                <p>{t('pricing.total')}: €{(stayData.nights * (stayData.roomType === 'private' ? 35 : 15)).toFixed(2)}</p>
+                <p>{t('pricing.total')}: €{(stayData.nights * (stayData.bedType === 'private' ? 35 : 15)).toFixed(2)}</p>
                 <p>{t('pricing.payment_due')}</p>
               </div>
             </CardContent>
