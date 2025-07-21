@@ -170,5 +170,13 @@ The database schema supports:
 - **Country Information Service**: RESTCountries API integration with local caching and fallback data
 - **Modern Google Places Integration**: PlaceAutocompleteElement (March 2025+ compliant) with legacy fallback
 - **Google Places API Integration**: BFF-integrated Google Places API with server-side key management and fallback support
+- **Collapsible Smart Cards**: Progressive form disclosure with OCR confidence-based card states
+  - **Personal Information Card**: User icon, confidence-based collapse behavior (≥90% = collapsed with checkmark)
+  - **Address Information Card**: Map pin icon, Google Places autocomplete integration
+  - **Contact Information Card**: Phone icon, split country code/phone number fields
+  - **Payment Information Card**: Credit card icon, always visible for checkout flow
+- **Field-Level Security**: Individual padlock controls for OCR-populated fields with manual override capability
+- **Intelligent Birth Date Processing**: Automatic DD/MM/YYYY to YYYY-MM-DD conversion for date inputs
+- **Advanced Form Validation**: Email validation, phone validation with country codes, file size limits
 
 The application is designed as a self-contained kiosk system that can run on tablets or computers at the albergue entrance, allowing pilgrims to register themselves while ensuring compliance with Spanish hospitality regulations.

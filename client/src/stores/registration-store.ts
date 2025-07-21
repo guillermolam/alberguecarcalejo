@@ -154,8 +154,17 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       console.log('Setting documentType:', updates.documentType);
     }
     if (ocrData.birthDate) {
-      updates.birthDate = ocrData.birthDate;
-      console.log('Setting birthDate:', updates.birthDate);
+      // Convert DD/MM/YYYY to YYYY-MM-DD for date input
+      const dateParts = ocrData.birthDate.split('/');
+      if (dateParts.length === 3) {
+        const [day, month, year] = dateParts;
+        const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        updates.birthDate = formattedDate;
+        console.log('Converting birth date from', ocrData.birthDate, 'to', formattedDate);
+      } else {
+        updates.birthDate = ocrData.birthDate;
+        console.log('Setting birthDate as-is:', updates.birthDate);
+      }
     }
     if (ocrData.gender) {
       updates.gender = ocrData.gender;

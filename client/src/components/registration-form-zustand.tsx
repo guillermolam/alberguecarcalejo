@@ -217,7 +217,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
       // Use Zustand's populateFromOCR function
       populateFromOCR(data);
       
-      // Update card collapse states based on confidence
+      // Update card collapse states based on confidence - collapse when confidence is HIGH
       const shouldCollapse = shouldCollapseCard(avgConfidence);
       setPersonalInfoCollapsed(shouldCollapse);
       setAddressInfoCollapsed(shouldCollapse);
@@ -363,7 +363,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
 
           {/* Personal Information */}
           {hasDocumentProcessed && (
-            <Collapsible open={!personalInfoCollapsed} onOpenChange={setPersonalInfoCollapsed}>
+            <Collapsible open={!personalInfoCollapsed} onOpenChange={(open) => setPersonalInfoCollapsed(!open)}>
               <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-gray-50">
@@ -475,7 +475,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
 
           {/* Address Information */}
           {hasDocumentProcessed && (
-            <Collapsible open={!addressInfoCollapsed} onOpenChange={setAddressInfoCollapsed}>
+            <Collapsible open={!addressInfoCollapsed} onOpenChange={(open) => setAddressInfoCollapsed(!open)}>
               <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-gray-50">
@@ -570,30 +570,38 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 </CardTitle>
               </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">{t('registration.phone')} *</label>
-                  <Input 
-                    type="tel"
-                    value={formData.phone || ''}
-                    onChange={(e) => updateField('phone', e.target.value)}
-                    placeholder="+34 600 123 456"
-                    className={showValidation && validationErrors.phone ? 'border-red-500' : ''}
-                  />
-                  {showValidation && validationErrors.phone && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
-                  )}
+              <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-5 gap-2">
+                  <div className="col-span-2">
+                    <label className="text-sm font-medium">{t('registration.country_code')} *</label>
+                    <Input 
+                      value={phoneFormat}
+                      onChange={(e) => setPhoneFormat(e.target.value)}
+                      placeholder="+34"
+                      className="text-center"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <label className="text-sm font-medium">{t('registration.phone')} *</label>
+                    <Input 
+                      value={formData.phone || ''}
+                      onChange={(e) => updateField('phone', e.target.value)}
+                      type="tel"
+                      placeholder="123 456 789"
+                      className={showValidation && validationErrors.phone ? 'border-red-500' : ''}
+                    />
+                    {showValidation && validationErrors.phone && (
+                      <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium">{t('registration.email')}</label>
-                  <Input 
-                    type="email"
-                    value={formData.email || ''}
-                    onChange={(e) => updateField('email', e.target.value)}
-                    maxLength={100}
-                  />
-                </div>
+                <LockableInput
+                  fieldName="email"
+                  label={t('registration.email')}
+                  type="email"
+                  maxLength={100}
+                />
               </div>
             </CardContent>
             </Card>
