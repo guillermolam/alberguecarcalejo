@@ -435,7 +435,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                     <SelectContent>
                       {DOCUMENT_TYPES.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
-                          {type.label}
+                          {t(type.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>

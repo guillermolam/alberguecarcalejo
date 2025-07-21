@@ -184,6 +184,8 @@ export const translations: Record<string, Translations> = {
     "documents.other": "Beste dokumentu bat",
     
     // Registration
+    "registration.document_type": "Dokumentu mota",
+    "registration.select_document_type": "Hautatu dokumentu mota",
     "registration.document_info_title": "Dokumentu informazioa",
     "registration.document_info_text": "Hautatu zure dokumentu mota eta igo argazkiak prozesatzeko",
     
@@ -204,6 +206,8 @@ export const translations: Record<string, Translations> = {
     "documents.other": "Altre document",
     
     // Registration
+    "registration.document_type": "Tipus de document",
+    "registration.select_document_type": "Selecciona tipus de document",
     "registration.document_info_title": "Informació del document",
     "registration.document_info_text": "Selecciona el teu tipus de document i puja fotos per processar",
     
@@ -224,6 +228,8 @@ export const translations: Record<string, Translations> = {
     "documents.other": "Altre document",
     
     // Registration
+    "registration.document_type": "Tipus de document",
+    "registration.select_document_type": "Selecciona tipus de document",
     "registration.document_info_title": "Informació del document",
     "registration.document_info_text": "Selecciona el teu tipus de document i puja fotos per processar",
     
@@ -244,6 +250,8 @@ export const translations: Record<string, Translations> = {
     "documents.other": "Outro documento",
     
     // Registration
+    "registration.document_type": "Tipo de documento",
+    "registration.select_document_type": "Selecciona tipo de documento",
     "registration.document_info_title": "Información do documento",
     "registration.document_info_text": "Selecciona o teu tipo de documento e sube fotos para procesar",
     
@@ -264,6 +272,8 @@ export const translations: Record<string, Translations> = {
     "documents.other": "其他证件",
     
     // Registration
+    "registration.document_type": "证件类型",
+    "registration.select_document_type": "选择证件类型",
     "registration.document_info_title": "证件信息",
     "registration.document_info_text": "选择您的证件类型并上传照片进行处理",
     
@@ -432,7 +442,6 @@ export const translations: Record<string, Translations> = {
     // General
     "general.locale_code": "en-US",
   },
-  // Additional languages would be added here...
   fr: {
     "nav.title": "Albergue Del Carrascalejo",
     "nav.admin": "Administration",
