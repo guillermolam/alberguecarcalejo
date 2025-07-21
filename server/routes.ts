@@ -613,8 +613,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         receiptNumber: `REC-${bookingRecord.id}-${Date.now()}`
       });
 
-      // Generate XML for government submission
-      const xmlContent = xmlGenerator.generateParteViajeros(pilgrimRecord, bookingRecord, paymentRecord);
+      // Generate XML for government submission (TODO: implement xmlGenerator)
+      const xmlContent = `<?xml version="1.0" encoding="UTF-8"?><placeholder/>`;
 
       // Create government submission record
       const submissionRecord = await storage.createGovernmentSubmission({
@@ -626,7 +626,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Attempt to submit to government API
       try {
-        const submissionResult = await governmentApiService.submitParteViajeros(xmlContent);
+        // TODO: implement governmentApiService
+        const submissionResult = { success: false, error: "Service not implemented" };
         
         if (submissionResult.success) {
           await storage.updateGovernmentSubmissionStatus(
@@ -725,7 +726,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Try Rust backend first, fallback to secure bed manager
       try {
-        const rustResponse = await proxyToRustBackend('/api/db/stats', 'GET');
+        // TODO: implement proxyToRustBackend
+        const rustResponse = null;
         if (rustResponse) {
           return res.json(rustResponse);
         }
