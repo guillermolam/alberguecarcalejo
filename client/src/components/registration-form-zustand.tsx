@@ -128,11 +128,26 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     const isReadOnly = isFieldReadOnly(fieldName);
     const isEmpty = isFieldEmpty(fieldName);
     const isLocked = fieldLocks[fieldName];
+    const hasError = showValidation && validationErrors[fieldName];
+    const isLowConfidence = hasDocumentProcessed && ocrConfidence < 0.9 && !isEmpty;
+    
+    // Determine label and border color based on field state
+    const getLabelColor = () => {
+      if (hasError) return 'text-red-600'; // Missing/invalid field = red
+      if (isLowConfidence) return 'text-orange-600'; // Low confidence = orange
+      return 'text-gray-900'; // Normal = dark gray
+    };
+    
+    const getBorderColor = () => {
+      if (hasError) return 'border-red-500'; // Missing/invalid field = red border
+      if (isLowConfidence) return 'border-orange-400'; // Low confidence = orange border
+      return ''; // Normal border
+    };
     
     return (
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="text-sm font-medium">
+          <label className={`text-sm font-medium ${getLabelColor()}`}>
             {label} {required && '*'}
           </label>
           {hasDocumentProcessed && !isEmpty && (
@@ -160,14 +175,15 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
             onChange={(e) => updateField(fieldName, e.target.value)}
             maxLength={maxLength}
             readOnly={isReadOnly}
-            className={`${className} ${isReadOnly ? 'bg-gray-50 text-gray-700' : ''} ${
-              showValidation && validationErrors[fieldName] ? 'border-red-500' : ''
-            }`}
+            className={`${className} ${isReadOnly ? 'bg-gray-50 text-gray-700' : ''} ${getBorderColor()}`}
             lang={type === 'date' ? t('general.locale_code') : undefined}
           />
         )}
-        {showValidation && validationErrors[fieldName] && (
+        {hasError && (
           <p className="text-red-500 text-xs mt-1">{validationErrors[fieldName]}</p>
+        )}
+        {!hasError && isLowConfidence && (
+          <p className="text-orange-600 text-xs mt-1">Low confidence - please verify</p>
         )}
       </div>
     );
@@ -254,10 +270,16 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
       'lastName1': t('validation.last_name_required'),
       'birthDate': t('validation.birth_date_required'),
       'documentNumber': t('validation.document_number_required'),
+      'documentType': t('validation.document_type_required'),
       'gender': t('validation.gender_required'),
       'nationality': t('validation.nationality_required'),
       'phone': t('validation.phone_required'),
-      'addressCountry': t('validation.country_required')
+      'email': t('validation.email_invalid'),
+      'addressCountry': t('validation.country_required'),
+      'addressStreet': t('validation.address_required'),
+      'addressCity': t('validation.city_required'),
+      'addressPostalCode': t('validation.postal_code_required'),
+      'paymentType': t('validation.payment_type_required')
     };
     
     return errorMap[field] || message;
@@ -298,9 +320,15 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     
     if (!validation.success) {
       console.log('Form validation failed on final submit:', validation.errors);
+      
+      // Create detailed error list
+      const errorList = Object.entries(validation.errors)
+        .map(([field, message]) => `• ${message}`)
+        .join('\n');
+      
       toast({
         title: t('registration.validation_error'),
-        description: t('registration.fix_errors'),
+        description: `${t('registration.fix_errors')}\n${errorList}`,
         variant: 'destructive',
       });
       return;
