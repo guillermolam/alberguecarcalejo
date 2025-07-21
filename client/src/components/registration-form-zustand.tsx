@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Lock, Unlock, CheckCircle, AlertTriangle, User, MapPin, Phone, CreditCard } from 'lucide-react';
+import { ChevronDown, ChevronUp, Lock, Unlock, CheckCircle, AlertTriangle, User, MapPin, Phone, CreditCard, Pencil } from 'lucide-react';
 import { GENDER_OPTIONS, DOCUMENT_TYPES, PAYMENT_TYPES } from '@/lib/constants';
 
 // Import constants for country code lookup
@@ -131,7 +131,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     setFocusedFields(prev => new Set(Array.from(prev).concat([fieldName])));
   };
 
-  // Component for input fields with lock/unlock functionality
+  // Component for input fields with embedded edit button
   const LockableInput = ({ 
     fieldName, 
     label, 
@@ -171,45 +171,41 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     
     return (
       <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className={`text-sm font-medium ${getLabelColor()}`}>
-            {label} {required && '*'}
-          </label>
-          {hasDocumentProcessed && !isEmpty && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                toggleFieldLock(fieldName);
-                handleFieldFocus(fieldName);
-              }}
-              onMouseEnter={() => handleFieldFocus(fieldName)}
-              className="h-6 w-6 p-0 hover:bg-gray-100"
-            >
-              {isReadOnly ? (
-                <Lock className="w-3 h-3 text-orange-600" />
-              ) : (
-                <Unlock className="w-3 h-3 text-blue-600" />
-              )}
-            </Button>
-          )}
-        </div>
+        <label className={`text-sm font-medium ${getLabelColor()} block mb-1`}>
+          {label} {required && '*'}
+        </label>
         {children ? (
           children
         ) : (
-          <Input
-            type={type}
-            value={formData[fieldName as keyof RegistrationFormData] || ''}
-            onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
-            onFocus={() => handleFieldFocus(fieldName)}
-            onMouseEnter={() => handleFieldFocus(fieldName)}
-            onClick={() => handleFieldFocus(fieldName)}
-            maxLength={maxLength}
-            readOnly={isReadOnly}
-            className={`${className} ${isReadOnly ? 'bg-gray-50 text-gray-700' : ''} ${getBorderColor()}`}
-            lang={type === 'date' ? t('general.locale_code') : undefined}
-          />
+          <div className="relative">
+            <Input
+              type={type}
+              value={formData[fieldName as keyof RegistrationFormData] || ''}
+              onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
+              onFocus={() => handleFieldFocus(fieldName)}
+              onMouseEnter={() => handleFieldFocus(fieldName)}
+              onClick={() => handleFieldFocus(fieldName)}
+              maxLength={maxLength}
+              readOnly={false}
+              className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''}`}
+              lang={type === 'date' ? t('general.locale_code') : undefined}
+            />
+            {hasDocumentProcessed && !isEmpty && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  toggleFieldLock(fieldName);
+                  handleFieldFocus(fieldName);
+                }}
+                onMouseEnter={() => handleFieldFocus(fieldName)}
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100 rounded-md"
+              >
+                <Pencil className="w-4 h-4 text-gray-500 hover:text-blue-600" />
+              </Button>
+            )}
+          </div>
         )}
         {hasError && (
           <p className="text-red-500 text-xs mt-1">{validationErrors[fieldName]}</p>
