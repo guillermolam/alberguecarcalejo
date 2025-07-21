@@ -78,6 +78,10 @@ function MultiDocumentCapture({
     setFrontOCR(null);
     setBackOCR(null);
     setError(null);
+    setProcessingProgress(0);
+    setCurrentSide("front");
+    
+    // Notify parent component
     onDocumentTypeChange?.(value);
   };
 

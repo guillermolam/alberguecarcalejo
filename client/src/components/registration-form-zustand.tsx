@@ -722,9 +722,13 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                     <label className="text-sm font-medium">{t('registration.phone')} *</label>
                     <Input 
                       value={formData.phone || ''}
-                      onChange={(e) => updateField('phone', e.target.value)}
+                      onChange={(e) => {
+                        // Only allow numerical characters
+                        const numericValue = e.target.value.replace(/\D/g, '');
+                        updateField('phone', numericValue);
+                      }}
                       type="tel"
-                      placeholder="123 456 789"
+                      placeholder="123456789"
                       className={showValidation && validationErrors.phone ? 'border-red-500' : ''}
                     />
                     {showValidation && validationErrors.phone && (
