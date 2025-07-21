@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { Loader } from '@googlemaps/js-api-loader';
 
 declare global {
   interface Window {
@@ -47,12 +48,9 @@ export function GooglePlacesAutocomplete({
         }
 
         // Check if the new API is available (requires newer Maps API version)
-        if (typeof google.maps.importLibrary !== 'function') {
+        if (!window.google?.maps?.places) {
           throw new Error('Modern Places API not available');
         }
-
-        // Import the Places library
-        await google.maps.importLibrary("places");
         
         if (!google.maps.places?.PlaceAutocompleteElement) {
           throw new Error('PlaceAutocompleteElement not available');
@@ -134,19 +132,40 @@ export function GooglePlacesAutocomplete({
       }
     };
 
-    // Load Google Maps API if not already loaded
-    if (!window.google) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY || 'AIzaSyBhfWQngB6-nBsCfcjROUyl203icnmn0sQ'}&libraries=places&v=weekly`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
+    let mounted = true;
+
+    const loadGoogleMapsAPI = async () => {
+      try {
+        const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || 'AIzaSyBhfWQngB6-nBsCfcjROUyl203icnmn0sQ';
+        
+        const loader = new Loader({
+          apiKey: apiKey,
+          version: "weekly",
+          libraries: ["places"],
+          loading: "async"
+        });
+
+        await loader.load();
+
+        if (!mounted) return;
+
         // Try modern API first, fallback to legacy
         initializeModernAutocomplete().catch(() => {
-          initializeLegacyAutocomplete();
+          if (mounted) {
+            initializeLegacyAutocomplete();
+          }
         });
-      };
-      document.head.appendChild(script);
+      } catch (error) {
+        console.warn('Google Maps API loading failed, using fallback input:', error);
+        if (mounted) {
+          setUseFallback(true);
+        }
+      }
+    };
+
+    // Load Google Maps API if not already loaded
+    if (!window.google?.maps) {
+      loadGoogleMapsAPI();
     } else {
       // Try modern API first, fallback to legacy
       initializeModernAutocomplete().catch(() => {
@@ -155,6 +174,7 @@ export function GooglePlacesAutocomplete({
     }
 
     return () => {
+      mounted = false;
       if (autocompleteElementRef.current && containerRef.current) {
         containerRef.current.innerHTML = '';
       }
