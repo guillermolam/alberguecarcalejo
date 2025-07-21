@@ -11,6 +11,7 @@ import { RegistrationStepper } from './registration-stepper';
 import MultiDocumentCapture from './multi-document-capture-new';
 import { CountryPhoneInput } from './country-phone-input';
 import { GooglePlacesAutocomplete } from './google-places-autocomplete';
+import { CountrySelector } from './country-selector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -631,7 +632,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                       }
                       // Extract address components
                       if (place.addressComponents) {
-                        place.addressComponents.forEach((component) => {
+                        place.addressComponents.forEach((component: any) => {
                           if (component.types.includes('locality')) {
                             updateField('addressCity', component.longName);
                           }
@@ -692,6 +693,20 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="text-sm font-medium">{t('registration.country')} *</label>
+                  <CountrySelector
+                    value={detectedCountryCode}
+                    onCountryChange={(country) => {
+                      setDetectedCountryCode(country.code);
+                      setPhoneFormat(country.phoneCode);
+                      updateField('addressCountry', country.name);
+                      updateField('nationality', country.code);
+                    }}
+                    placeholder={t('registration.select_country')}
+                  />
+                </div>
+                
                 <div className="grid grid-cols-5 gap-2">
                   <div className="col-span-2">
                     <label className="text-sm font-medium">{t('registration.country_code')} *</label>
@@ -700,6 +715,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                       onChange={(e) => setPhoneFormat(e.target.value)}
                       placeholder="+34"
                       className="text-center"
+                      readOnly
                     />
                   </div>
                   <div className="col-span-3">
@@ -721,6 +737,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   fieldName="email"
                   label={t('registration.email')}
                   type="email"
+                  required={true}
                   maxLength={100}
                 />
               </div>

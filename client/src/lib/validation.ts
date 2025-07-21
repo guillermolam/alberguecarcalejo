@@ -77,13 +77,13 @@ const PHONE_PATTERNS = {
   'DEFAULT': /^(\+\d{1,4})?[\s\-]?\d{7,15}$/
 };
 
-// Enhanced email validation using backend API
+// Enhanced email validation using backend API - MANDATORY FIELD
 const emailSchema = z.string()
+  .min(1, 'Email is required')
   .max(100, 'Email must be less than 100 characters')
-  .optional()
-  .or(z.literal(''))
+  .email('Please enter a valid email address')
   .refine(async (email) => {
-    if (!email) return true; // Optional field
+    if (!email) return false; // Required field
     const result = await validateEmailAPI(email);
     return result.isValid;
   }, 'Please enter a valid email address');
@@ -253,7 +253,7 @@ export const createRegistrationSchema = (documentType?: string, countryCode?: st
       // Local phone validation (without country code)
       return phone.length >= 6 && phone.length <= 12 && /^\d+$/.test(phone);
     }, "Invalid local phone number format"),
-    email: emailSchema.optional().or(z.literal('')),
+    email: emailSchema,
     paymentType: z.string().min(1, 'Payment type is required'),
     language: z.string().default('es'),
     documentSupport: z.string().max(9).optional().or(z.literal(''))

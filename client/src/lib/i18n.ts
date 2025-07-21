@@ -106,7 +106,8 @@ export const translations: Record<string, Translations> = {
     "registration.nationality": "Nacionalidad",
 
     "registration.upload_file": "Subir archivo",
-    "registration.country": "País de residencia",
+    "registration.country": "País",
+    "registration.select_country": "Seleccionar país",
     "registration.address": "Dirección",
     "registration.address_2": "Dirección adicional",
     "registration.city": "Ciudad",
