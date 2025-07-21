@@ -189,6 +189,12 @@ export const translations: Record<string, Translations> = {
     "registration.document_info_title": "Dokumentu informazioa",
     "registration.document_info_text": "Hautatu zure dokumentu mota eta igo argazkiak prozesatzeko",
     
+    // Payment
+    "payment.cash": "Dirua",
+    "payment.card": "Txartela",
+    "payment.bizum": "Bizum",
+    "payment.transfer": "Transferentzia",
+    
     "general.locale_code": "eu-ES",
   },
   ca: {
@@ -210,6 +216,12 @@ export const translations: Record<string, Translations> = {
     "registration.select_document_type": "Selecciona tipus de document",
     "registration.document_info_title": "Informació del document",
     "registration.document_info_text": "Selecciona el teu tipus de document i puja fotos per processar",
+    
+    // Payment
+    "payment.cash": "Efectiu",
+    "payment.card": "Targeta",
+    "payment.bizum": "Bizum",
+    "payment.transfer": "Transferència",
     
     "general.locale_code": "ca-ES",
   },
@@ -233,6 +245,12 @@ export const translations: Record<string, Translations> = {
     "registration.document_info_title": "Informació del document",
     "registration.document_info_text": "Selecciona el teu tipus de document i puja fotos per processar",
     
+    // Payment
+    "payment.cash": "Efectiu",
+    "payment.card": "Targeta",
+    "payment.bizum": "Bizum",
+    "payment.transfer": "Transferència",
+    
     "general.locale_code": "val-ES",
   },
   gl: {
@@ -255,6 +273,12 @@ export const translations: Record<string, Translations> = {
     "registration.document_info_title": "Información do documento",
     "registration.document_info_text": "Selecciona o teu tipo de documento e sube fotos para procesar",
     
+    // Payment
+    "payment.cash": "Efectivo",
+    "payment.card": "Tarxeta",
+    "payment.bizum": "Bizum",
+    "payment.transfer": "Transferencia",
+    
     "general.locale_code": "gl-ES",
   },
   zh: {
@@ -276,6 +300,12 @@ export const translations: Record<string, Translations> = {
     "registration.select_document_type": "选择证件类型",
     "registration.document_info_title": "证件信息",
     "registration.document_info_text": "选择您的证件类型并上传照片进行处理",
+    
+    // Payment
+    "payment.cash": "现金",
+    "payment.card": "银行卡",
+    "payment.bizum": "Bizum",
+    "payment.transfer": "转账",
     
     "general.locale_code": "zh-CN",
   },
