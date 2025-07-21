@@ -7,6 +7,7 @@ export interface RegistrationFormData {
   documentNumber?: string;
   documentType?: string;
   documentSupport?: string;
+  expiryDate?: string;
   birthDate?: string;
   gender?: string;
   nationality?: string;
@@ -47,6 +48,7 @@ const initialState: RegistrationFormData = {
   documentNumber: '',
   documentType: 'NIF',
   documentSupport: '',
+  expiryDate: '',
   birthDate: '',
   gender: '',
   nationality: '',
@@ -152,6 +154,14 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     if (ocrData.documentType) {
       updates.documentType = ocrData.documentType;
       console.log('Setting documentType:', updates.documentType);
+    }
+    if (ocrData.documentSupport) {
+      updates.documentSupport = ocrData.documentSupport;
+      console.log('Setting documentSupport:', updates.documentSupport);
+    }
+    if (ocrData.expiryDate) {
+      updates.expiryDate = ocrData.expiryDate;
+      console.log('Setting expiryDate:', updates.expiryDate);
     }
     if (ocrData.birthDate) {
       // Convert DD/MM/YYYY to YYYY-MM-DD for date input

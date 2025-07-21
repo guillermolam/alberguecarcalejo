@@ -261,6 +261,30 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
       console.log('=== MERGED OCR EXTRACTED DATA ===');
       console.log('Combined OCR data:', JSON.stringify(data, null, 2));
 
+      // Check for document expiry before populating form
+      if (data.expiryDate) {
+        // Parse the date - OCR typically returns DD/MM/YYYY format
+        let expiryDate: Date;
+        if (data.expiryDate.includes('/')) {
+          const [day, month, year] = data.expiryDate.split('/');
+          expiryDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        } else {
+          expiryDate = new Date(data.expiryDate);
+        }
+        
+        const today = new Date();
+        
+        if (expiryDate < today) {
+          toast({
+            title: t('validation.document_expired'),
+            description: t('validation.document_expired_desc'),
+            variant: "destructive",
+          });
+          setOcrProcessing(false);
+          return; // Don't populate the form if document is expired
+        }
+      }
+
       // Use Zustand's populateFromOCR function
       populateFromOCR(data);
       
@@ -551,33 +575,16 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <LockableInput
-                  fieldName="documentType"
-                  label={t('registration.document_type')}
-                  required={true}
-                >
-                  <Select value={selectedDocumentType} onValueChange={handleDocumentTypeChange} disabled={isFieldReadOnly('documentType')}>
-                    <SelectTrigger 
-                      className={`${isFieldReadOnly('documentType') ? 'bg-gray-50 text-gray-700' : ''}`}
-                      onFocus={() => handleFieldFocus('documentType')}
-                      onMouseEnter={() => handleFieldFocus('documentType')}
-                      onClick={() => handleFieldFocus('documentType')}
-                    >
-                      <SelectValue placeholder="Seleccionar tipo de documento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DOCUMENT_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {t(type.label)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </LockableInput>
-
-                <LockableInput
                   fieldName="documentNumber"
                   label={t('registration.document_number')}
                   required={true}
+                  maxLength={20}
+                />
+
+                <LockableInput
+                  fieldName="documentSupport"
+                  label={t('registration.document_support')}
+                  required={false}
                   maxLength={20}
                 />
               </div>

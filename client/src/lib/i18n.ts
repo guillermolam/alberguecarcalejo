@@ -42,6 +42,10 @@ export const translations: Record<string, Translations> = {
       "Tome una foto clara de su DNI, NIE o pasaporte",
     "registration.processing_ocr": "Procesando documento...",
     "registration.ocr_success": "Documento procesado correctamente",
+    "registration.document_type": "Tipo de documento",
+    "registration.select_document_type": "Seleccionar tipo de documento",
+    "registration.document_info_title": "Información del documento",
+    "registration.document_info_text": "Selecciona el tipo de documento y sube fotos para procesar",
     "registration.personal_info": "Información personal",
     "registration.address_info": "Dirección",
     "registration.contact_info": "Contacto",
@@ -95,8 +99,9 @@ export const translations: Record<string, Translations> = {
     "registration.last_name_1": "Primer apellido",
     "registration.last_name_2": "Segundo apellido",
     "registration.birth_date": "Fecha de nacimiento",
-    "registration.document_type": "Tipo de documento",
     "registration.document_number": "Número de documento",
+    "registration.document_support": "Número de soporte",
+    "registration.expiry_date": "Fecha de vencimiento",
     "registration.gender": "Sexo",
     "registration.nationality": "Nacionalidad",
 
@@ -116,6 +121,8 @@ export const translations: Record<string, Translations> = {
       "Tus datos serán transmitidos automáticamente a las autoridades españolas según el Real Decreto 933/2021 sobre obligaciones de registro en hospedajes.",
     "registration.back": "Volver",
     "registration.submit": "Completar registro",
+    "validation.document_expired": "Documento caducado",
+    "validation.document_expired_desc": "El documento ha caducado. Por favor, utilice un documento vigente.",
     "loading.processing": "Procesando...",
     "common.cancel": "Cancelar",
     "admin.title": "Panel de Administración",
@@ -195,6 +202,10 @@ export const translations: Record<string, Translations> = {
     "payment.bizum": "Bizum",
     "payment.transfer": "Transferentzia",
     
+    // Validation
+    "validation.document_expired": "Dokumentu iraungita",
+    "validation.document_expired_desc": "Dokumentua iraungita dago. Mesedez, erabili indarreko dokumentu bat.",
+    
     "general.locale_code": "eu-ES",
   },
   ca: {
@@ -222,6 +233,10 @@ export const translations: Record<string, Translations> = {
     "payment.card": "Targeta",
     "payment.bizum": "Bizum",
     "payment.transfer": "Transferència",
+    
+    // Validation
+    "validation.document_expired": "Document caducat",
+    "validation.document_expired_desc": "El document ha caducat. Si us plau, utilitzeu un document vigent.",
     
     "general.locale_code": "ca-ES",
   },
@@ -251,6 +266,10 @@ export const translations: Record<string, Translations> = {
     "payment.bizum": "Bizum",
     "payment.transfer": "Transferència",
     
+    // Validation
+    "validation.document_expired": "Document caducat",
+    "validation.document_expired_desc": "El document ha caducat. Si us plau, utilitzeu un document vigent.",
+    
     "general.locale_code": "val-ES",
   },
   gl: {
@@ -279,6 +298,10 @@ export const translations: Record<string, Translations> = {
     "payment.bizum": "Bizum",
     "payment.transfer": "Transferencia",
     
+    // Validation
+    "validation.document_expired": "Documento caducado",
+    "validation.document_expired_desc": "O documento caducou. Por favor, usa un documento vixente.",
+    
     "general.locale_code": "gl-ES",
   },
   zh: {
@@ -306,6 +329,10 @@ export const translations: Record<string, Translations> = {
     "payment.card": "银行卡",
     "payment.bizum": "Bizum",
     "payment.transfer": "转账",
+    
+    // Validation
+    "validation.document_expired": "证件过期",
+    "validation.document_expired_desc": "证件已过期，请使用有效证件。",
     
     "general.locale_code": "zh-CN",
   },
