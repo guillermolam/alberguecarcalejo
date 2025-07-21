@@ -166,14 +166,53 @@ export const translations: Record<string, Translations> = {
     "validation.phone_required": "El teléfono es obligatorio",
     "validation.country_required": "El país es obligatorio",
 
-    // Documents
-    "documents.dni": "DNI",
-    "documents.nie": "NIE",
-    "documents.passport": "Pasaporte", 
-    "documents.other": "Otro Documento",
-
     // General
     "general.locale_code": "es-ES",
+  },
+  eu: {
+    "nav.title": "Carrascalejoko Aterpetxea",
+    "nav.admin": "Administrazioa",
+    "hero.welcome": "Ongi etorri Zirimiri",
+    "hero.subtitle": "Erregistroa azkarra eta segurua Bidean egonaldiarentzat",
+    "hero.beds_available": "Ohe eskuragarriak",
+    "hero.price_per_night": "Pertsonako/gaua",
+    "general.locale_code": "eu-ES",
+  },
+  ca: {
+    "nav.title": "Alberg Del Carrascalejo",
+    "nav.admin": "Administració",
+    "hero.welcome": "Benvingut Pelegrí",
+    "hero.subtitle": "Registre ràpid i segur per a la teva estada al Camí",
+    "hero.beds_available": "Llits disponibles",
+    "hero.price_per_night": "Per persona/nit",
+    "general.locale_code": "ca-ES",
+  },
+  val: {
+    "nav.title": "Alberg Del Carrascalejo",
+    "nav.admin": "Administració",
+    "hero.welcome": "Benvingut Pelegrí",
+    "hero.subtitle": "Registre ràpid i segur per a la teua estada al Camí",
+    "hero.beds_available": "Llits disponibles",
+    "hero.price_per_night": "Per persona/nit",
+    "general.locale_code": "val-ES",
+  },
+  gl: {
+    "nav.title": "Albergue Del Carrascalejo",
+    "nav.admin": "Administración",
+    "hero.welcome": "Benvido Peregrino",
+    "hero.subtitle": "Rexistro rápido e seguro para a túa estadía no Camiño",
+    "hero.beds_available": "Camas dispoñibles",
+    "hero.price_per_night": "Por persoa/noite",
+    "general.locale_code": "gl-ES",
+  },
+  zh: {
+    "nav.title": "卡拉斯卡莱霍朝圣者旅馆",
+    "nav.admin": "管理",
+    "hero.welcome": "欢迎朝圣者",
+    "hero.subtitle": "朝圣之路住宿的快速安全注册",
+    "hero.beds_available": "可用床位",
+    "hero.price_per_night": "每人/每晚",
+    "general.locale_code": "zh-CN",
   },
   en: {
     "nav.title": "Albergue Del Carrascalejo",
@@ -334,12 +373,6 @@ export const translations: Record<string, Translations> = {
     "validation.nationality_required": "Nationality is required",
     "validation.phone_required": "Phone number is required",
     "validation.country_required": "Country is required",
-
-    // Documents
-    "documents.dni": "DNI",
-    "documents.nie": "NIE", 
-    "documents.passport": "Passport",
-    "documents.other": "Other Document",
 
     // General
     "general.locale_code": "en-US",

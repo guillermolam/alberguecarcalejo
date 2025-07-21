@@ -98,14 +98,16 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
   };
 
   const isFieldReadOnly = (fieldName: string): boolean => {
-    // Field is read-only if OCR confidence is high AND field has value AND not manually unlocked
-    const hasValue = Boolean(formData[fieldName as keyof RegistrationFormData]);
+    // Field is read-only if it has meaningful content (>3 chars) AND not manually unlocked
+    const fieldValue = formData[fieldName as keyof RegistrationFormData] || '';
+    const hasSignificantValue = fieldValue.toString().length >= 3;
     const isUnlocked = fieldLocks[fieldName];
-    return hasDocumentProcessed && ocrConfidence >= 0.9 && hasValue && !isUnlocked;
+    return hasDocumentProcessed && hasSignificantValue && !isUnlocked;
   };
 
   const isFieldEmpty = (fieldName: string): boolean => {
-    return !formData[fieldName as keyof RegistrationFormData];
+    const fieldValue = formData[fieldName as keyof RegistrationFormData] || '';
+    return fieldValue.toString().length < 3;
   };
 
   const getCardIcon = (confidence: number) => {
@@ -177,13 +179,17 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => toggleFieldLock(fieldName)}
+              onClick={() => {
+                toggleFieldLock(fieldName);
+                handleFieldFocus(fieldName);
+              }}
+              onMouseEnter={() => handleFieldFocus(fieldName)}
               className="h-6 w-6 p-0 hover:bg-gray-100"
             >
-              {isLocked ? (
-                <Unlock className="w-3 h-3 text-blue-600" />
+              {isReadOnly ? (
+                <Lock className="w-3 h-3 text-orange-600" />
               ) : (
-                <Lock className="w-3 h-3 text-gray-600" />
+                <Unlock className="w-3 h-3 text-blue-600" />
               )}
             </Button>
           )}
@@ -196,6 +202,8 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
             value={formData[fieldName as keyof RegistrationFormData] || ''}
             onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
             onFocus={() => handleFieldFocus(fieldName)}
+            onMouseEnter={() => handleFieldFocus(fieldName)}
+            onClick={() => handleFieldFocus(fieldName)}
             maxLength={maxLength}
             readOnly={isReadOnly}
             className={`${className} ${isReadOnly ? 'bg-gray-50 text-gray-700' : ''} ${getBorderColor()}`}
@@ -515,7 +523,12 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   required={true}
                 >
                   <Select value={formData.gender || ''} onValueChange={(value) => updateField('gender', value)} disabled={isFieldReadOnly('gender')}>
-                    <SelectTrigger className={`${isFieldReadOnly('gender') ? 'bg-gray-50 text-gray-700' : ''} ${showValidation && validationErrors.gender ? 'border-red-500' : ''}`}>
+                    <SelectTrigger 
+                      className={`${isFieldReadOnly('gender') ? 'bg-gray-50 text-gray-700' : ''} ${showValidation && validationErrors.gender ? 'border-red-500' : ''}`}
+                      onFocus={() => handleFieldFocus('gender')}
+                      onMouseEnter={() => handleFieldFocus('gender')}
+                      onClick={() => handleFieldFocus('gender')}
+                    >
                       <SelectValue placeholder="Seleccionar género" />
                     </SelectTrigger>
                     <SelectContent>
@@ -543,7 +556,12 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   required={true}
                 >
                   <Select value={selectedDocumentType} onValueChange={handleDocumentTypeChange} disabled={isFieldReadOnly('documentType')}>
-                    <SelectTrigger className={`${isFieldReadOnly('documentType') ? 'bg-gray-50 text-gray-700' : ''}`}>
+                    <SelectTrigger 
+                      className={`${isFieldReadOnly('documentType') ? 'bg-gray-50 text-gray-700' : ''}`}
+                      onFocus={() => handleFieldFocus('documentType')}
+                      onMouseEnter={() => handleFieldFocus('documentType')}
+                      onClick={() => handleFieldFocus('documentType')}
+                    >
                       <SelectValue placeholder="Seleccionar tipo de documento" />
                     </SelectTrigger>
                     <SelectContent>
@@ -715,7 +733,11 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               <div>
                 <label className="text-sm font-medium">{t('registration.payment_type')} *</label>
                 <Select value={formData.paymentType || 'efect'} onValueChange={(value) => updateField('paymentType', value)}>
-                  <SelectTrigger>
+                  <SelectTrigger
+                    onFocus={() => handleFieldFocus('paymentType')}
+                    onMouseEnter={() => handleFieldFocus('paymentType')}
+                    onClick={() => handleFieldFocus('paymentType')}
+                  >
                     <SelectValue placeholder="Seleccionar tipo de pago" />
                   </SelectTrigger>
                   <SelectContent>
@@ -729,7 +751,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               </div>
 
               <div className="text-sm text-gray-600">
-                <p>{t('pricing.total')}: €{(stayData.nights * (stayData.bedType === 'private' ? 35 : 15)).toFixed(2)}</p>
+                <p>{t('pricing.total')}: €{(stayData.nights * 15).toFixed(2)}</p>
                 <p>{t('pricing.payment_due')}</p>
               </div>
             </CardContent>
