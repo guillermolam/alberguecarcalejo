@@ -712,16 +712,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 </div>
                 
                 <div className="grid grid-cols-5 gap-2">
-                  <div className="col-span-2">
-                    <label className="text-sm font-medium">{t('registration.country_code')} *</label>
-                    <Input 
-                      value={phoneFormat}
-                      onChange={(e) => setPhoneFormat(e.target.value)}
-                      placeholder="+34"
-                      className="text-center"
-                      readOnly
-                    />
-                  </div>
+                  
                   <div className="col-span-3">
                     <label className="text-sm font-medium">{t('registration.phone')} *</label>
                     <Input 
