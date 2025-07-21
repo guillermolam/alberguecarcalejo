@@ -180,9 +180,11 @@ export function GooglePlacesAutocomplete({
       loadGoogleMapsAPI();
     } else {
       // Try modern API first, fallback to legacy
-      initializeModernAutocomplete().catch(() => {
+      try {
+        initializeModernAutocomplete();
+      } catch (error) {
         initializeLegacyAutocomplete();
-      });
+      }
     }
 
     return () => {
