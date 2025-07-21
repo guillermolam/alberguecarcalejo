@@ -371,6 +371,13 @@ function MultiDocumentCapture({
                     </div>
                   ) : (
                     <div className="space-y-3">
+                      <div className="text-center mb-4">
+                        <img 
+                          src={getDocumentIcon(selectedDocumentType, "front")} 
+                          alt="Document type icon" 
+                          className="w-16 h-16 mx-auto opacity-60 mb-2"
+                        />
+                      </div>
                       <div className="grid grid-cols-1 gap-2">
                         <Button
                           type="button"
@@ -459,6 +466,13 @@ function MultiDocumentCapture({
                     </div>
                   ) : (
                     <div className="space-y-3">
+                      <div className="text-center mb-4">
+                        <img 
+                          src={getDocumentIcon(selectedDocumentType, "front")} 
+                          alt="Document front side icon" 
+                          className="w-16 h-16 mx-auto opacity-60 mb-2"
+                        />
+                      </div>
                       <div className="grid grid-cols-1 gap-2">
                         <Button
                           type="button"
@@ -541,6 +555,13 @@ function MultiDocumentCapture({
                       </div>
                     ) : (
                       <div className="space-y-3">
+                        <div className="text-center mb-4">
+                          <img 
+                            src={getDocumentIcon(selectedDocumentType, "back")} 
+                            alt="Document back side icon" 
+                            className="w-16 h-16 mx-auto opacity-60 mb-2"
+                          />
+                        </div>
                         <div className="grid grid-cols-1 gap-2">
                           <Button
                             type="button"
