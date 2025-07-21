@@ -176,6 +176,17 @@ export const translations: Record<string, Translations> = {
     "hero.subtitle": "Erregistroa azkarra eta segurua Bidean egonaldiarentzat",
     "hero.beds_available": "Ohe eskuragarriak",
     "hero.price_per_night": "Pertsonako/gaua",
+    
+    // Documents
+    "documents.dni": "DNI",
+    "documents.nie": "NIE",
+    "documents.passport": "Pasaportea",
+    "documents.other": "Beste dokumentu bat",
+    
+    // Registration
+    "registration.document_info_title": "Dokumentu informazioa",
+    "registration.document_info_text": "Hautatu zure dokumentu mota eta igo argazkiak prozesatzeko",
+    
     "general.locale_code": "eu-ES",
   },
   ca: {
@@ -185,6 +196,17 @@ export const translations: Record<string, Translations> = {
     "hero.subtitle": "Registre ràpid i segur per a la teva estada al Camí",
     "hero.beds_available": "Llits disponibles",
     "hero.price_per_night": "Per persona/nit",
+    
+    // Documents
+    "documents.dni": "DNI",
+    "documents.nie": "NIE",
+    "documents.passport": "Passaport",
+    "documents.other": "Altre document",
+    
+    // Registration
+    "registration.document_info_title": "Informació del document",
+    "registration.document_info_text": "Selecciona el teu tipus de document i puja fotos per processar",
+    
     "general.locale_code": "ca-ES",
   },
   val: {
@@ -194,6 +216,17 @@ export const translations: Record<string, Translations> = {
     "hero.subtitle": "Registre ràpid i segur per a la teua estada al Camí",
     "hero.beds_available": "Llits disponibles",
     "hero.price_per_night": "Per persona/nit",
+    
+    // Documents
+    "documents.dni": "DNI",
+    "documents.nie": "NIE",
+    "documents.passport": "Passaport",
+    "documents.other": "Altre document",
+    
+    // Registration
+    "registration.document_info_title": "Informació del document",
+    "registration.document_info_text": "Selecciona el teu tipus de document i puja fotos per processar",
+    
     "general.locale_code": "val-ES",
   },
   gl: {
@@ -203,6 +236,17 @@ export const translations: Record<string, Translations> = {
     "hero.subtitle": "Rexistro rápido e seguro para a túa estadía no Camiño",
     "hero.beds_available": "Camas dispoñibles",
     "hero.price_per_night": "Por persoa/noite",
+    
+    // Documents
+    "documents.dni": "DNI",
+    "documents.nie": "NIE",
+    "documents.passport": "Pasaporte",
+    "documents.other": "Outro documento",
+    
+    // Registration
+    "registration.document_info_title": "Información do documento",
+    "registration.document_info_text": "Selecciona o teu tipo de documento e sube fotos para procesar",
+    
     "general.locale_code": "gl-ES",
   },
   zh: {
@@ -212,6 +256,17 @@ export const translations: Record<string, Translations> = {
     "hero.subtitle": "朝圣之路住宿的快速安全注册",
     "hero.beds_available": "可用床位",
     "hero.price_per_night": "每人/每晚",
+    
+    // Documents
+    "documents.dni": "身份证",
+    "documents.nie": "外国人身份证",
+    "documents.passport": "护照",
+    "documents.other": "其他证件",
+    
+    // Registration
+    "registration.document_info_title": "证件信息",
+    "registration.document_info_text": "选择您的证件类型并上传照片进行处理",
+    
     "general.locale_code": "zh-CN",
   },
   en: {
