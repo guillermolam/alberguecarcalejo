@@ -712,18 +712,25 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 </div>
                 
                 <div className="grid grid-cols-5 gap-2">
-                  
+                  <div className="col-span-2">
+                    <label className="text-sm font-medium">{t('registration.country_code')} *</label>
+                    <div className="flex items-center border rounded-md px-3 py-2 bg-gray-50">
+                      <span className="text-sm font-medium">{phoneFormat}</span>
+                    </div>
+                  </div>
                   <div className="col-span-3">
                     <label className="text-sm font-medium">{t('registration.phone')} *</label>
                     <Input 
                       value={formData.phone || ''}
                       onChange={(e) => {
                         // Only allow numerical characters
-                        const numericValue = e.target.value.replace(/\D/g, '');
+                        const numericValue = e.target.value.replace(/[^0-9]/g, '');
                         updateField('phone', numericValue);
                       }}
                       type="tel"
                       placeholder="123456789"
+                      pattern="[0-9]*"
+                      inputMode="numeric"
                       className={showValidation && validationErrors.phone ? 'border-red-500' : ''}
                     />
                     {showValidation && validationErrors.phone && (

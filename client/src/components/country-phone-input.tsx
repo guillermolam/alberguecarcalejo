@@ -34,7 +34,7 @@ export function CountryPhoneInput({
       setCountryInfo({
         country_name: 'Spain',
         country_code: 'ESP',
-        dial_code: '+34',
+        calling_code: '+34',
         flag_url: 'https://flagcdn.com/w320/es.png'
       });
     }
@@ -87,7 +87,7 @@ export function CountryPhoneInput({
                 <span className="text-xs text-gray-600">{countryInfo.country_code}</span>
               </div>
               <span className="text-sm font-medium text-gray-700">
-                {countryInfo.dial_code}
+                {countryInfo.calling_code}
               </span>
             </div>
           ) : (
