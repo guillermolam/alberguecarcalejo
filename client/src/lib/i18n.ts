@@ -115,6 +115,9 @@ export const translations: Record<string, Translations> = {
     "registration.compliance_text":
       "Tus datos serán transmitidos automáticamente a las autoridades españolas según el Real Decreto 933/2021 sobre obligaciones de registro en hospedajes.",
     "registration.back": "Volver",
+    "registration.select_document_type": "Seleccionar tipo de documento",
+    "registration.document_info_title": "Información del Documento",
+    "registration.document_info_text": "Elige primero tu tipo de documento. Esto determina cuántas fotos son necesarias y qué tipos de archivos se aceptan.",
     "registration.submit": "Completar registro",
     "loading.processing": "Procesando...",
     "common.cancel": "Cancelar",
@@ -337,6 +340,9 @@ export const translations: Record<string, Translations> = {
     "registration.validation_error": "Form validation errors",
     "registration.fix_errors": "Please fix the following errors before submitting:",
     "registration.country_code": "Country Code",
+    "registration.select_document_type": "Select document type",
+    "registration.document_info_title": "Document Information",
+    "registration.document_info_text": "Choose your document type first. This determines how many photos are needed and which file types are accepted.",
 
     // General
     "general.locale_code": "en-US",

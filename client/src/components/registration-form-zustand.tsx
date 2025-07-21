@@ -76,6 +76,19 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Set default document type based on browser language
+  useEffect(() => {
+    const browserLang = navigator.language || navigator.languages?.[0] || 'en';
+    const isSpanish = browserLang.toLowerCase().startsWith('es');
+    const defaultDocType = isSpanish ? 'NIF' : 'Passport';
+    
+    if (!formData.documentType) {
+      console.log('Setting default document type based on browser language:', browserLang, '->', defaultDocType);
+      updateField('documentType', defaultDocType);
+      setSelectedDocumentType(defaultDocType);
+    }
+  }, [formData.documentType, updateField, setSelectedDocumentType]);
+
   // Helper functions for field management
   const toggleFieldLock = (fieldName: string) => {
     setFieldLocks(prev => ({
@@ -107,6 +120,14 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     return hasDocumentProcessed && confidence >= 0.9;
   };
 
+  // Track which fields have been focused to clear low confidence warnings
+  const [focusedFields, setFocusedFields] = useState<Set<string>>(new Set());
+
+  // Clear low confidence warning when field is focused
+  const handleFieldFocus = (fieldName: string) => {
+    setFocusedFields(prev => new Set(Array.from(prev).concat([fieldName])));
+  };
+
   // Component for input fields with lock/unlock functionality
   const LockableInput = ({ 
     fieldName, 
@@ -129,7 +150,8 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     const isEmpty = isFieldEmpty(fieldName);
     const isLocked = fieldLocks[fieldName];
     const hasError = showValidation && validationErrors[fieldName];
-    const isLowConfidence = hasDocumentProcessed && ocrConfidence < 0.9 && !isEmpty;
+    const hasBeenFocused = focusedFields.has(fieldName);
+    const isLowConfidence = hasDocumentProcessed && ocrConfidence < 0.9 && !isEmpty && !hasBeenFocused;
     
     // Determine label and border color based on field state
     const getLabelColor = () => {
@@ -172,7 +194,8 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
           <Input
             type={type}
             value={formData[fieldName as keyof RegistrationFormData] || ''}
-            onChange={(e) => updateField(fieldName, e.target.value)}
+            onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
+            onFocus={() => handleFieldFocus(fieldName)}
             maxLength={maxLength}
             readOnly={isReadOnly}
             className={`${className} ${isReadOnly ? 'bg-gray-50 text-gray-700' : ''} ${getBorderColor()}`}
@@ -376,6 +399,51 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
         <RegistrationStepper currentStep={2} />
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+          {/* Document Type Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-blue-600" />
+                {t('registration.document_type')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-2 block">
+                    {t('registration.document_type')} *
+                  </label>
+                  <Select 
+                    value={formData.documentType || ''} 
+                    onValueChange={(value) => {
+                      updateField('documentType', value);
+                      setSelectedDocumentType(value);
+                      handleFieldFocus('documentType');
+                    }}
+                  >
+                    <SelectTrigger className={`${showValidation && validationErrors.documentType ? 'border-red-500' : ''}`}>
+                      <SelectValue placeholder={t('registration.select_document_type')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DOCUMENT_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {showValidation && validationErrors.documentType && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.documentType}</p>
+                  )}
+                </div>
+                <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                  <p className="font-medium mb-1">{t('registration.document_info_title')}</p>
+                  <p>{t('registration.document_info_text')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Document Capture */}
           <Suspense fallback={<Alert><AlertDescription>{t('loading.processing')}</AlertDescription></Alert>}>
             <MultiDocumentCapture onDocumentProcessed={handleDocumentProcessed} />
