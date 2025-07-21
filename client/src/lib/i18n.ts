@@ -1003,7 +1003,6 @@ export const translations: Record<string, Translations> = {
     "registration.photo_instructions": "请清晰拍摄您的身份证、NIE或护照",
     "registration.processing_ocr": "处理证件中...",
     "registration.ocr_success": "证件处理成功",
-    "registration.document_type": "证件类型",
     "registration.select_document_type": "选择证件类型",
     "registration.document_info_title": "证件信息",
     "registration.document_info_text": "选择您的证件类型并上传照片进行处理",

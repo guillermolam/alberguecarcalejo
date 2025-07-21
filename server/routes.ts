@@ -136,12 +136,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('OCR processing error:', error);
       res.status(500).json({ 
         success: false, 
-        error: "OCR processing failed: " + error.message,
+        error: "OCR processing failed: " + (error as Error).message,
         extractedData: {},
         confidence: 0,
         processingTimeMs: 0,
         detectedFields: [],
-        errors: [error.message],
+        errors: [(error as Error).message],
         rawText: ""
       });
     }
@@ -218,12 +218,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('OCR processing error:', error);
       res.status(500).json({ 
         success: false, 
-        error: "OCR processing failed: " + error.message,
+        error: "OCR processing failed: " + (error as Error).message,
         extractedData: {},
         confidence: 0,
         processingTimeMs: 0,
         detectedFields: [],
-        errors: [error.message],
+        errors: [(error as Error).message],
         rawText: ""
       });
     }
@@ -290,12 +290,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('OCR processing error:', error);
       res.status(500).json({ 
         success: false, 
-        error: "OCR processing failed: " + error.message,
+        error: "OCR processing failed: " + (error as Error).message,
         extractedData: {},
         confidence: 0,
         processingTimeMs: 0,
         detectedFields: [],
-        errors: [error.message],
+        errors: [(error as Error).message],
         rawText: ""
       });
     }
@@ -633,7 +633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateGovernmentSubmissionStatus(
             submissionRecord.id,
             "success",
-            submissionResult.response
+            (submissionResult as any).response
           );
         } else {
           await storage.updateGovernmentSubmissionStatus(
