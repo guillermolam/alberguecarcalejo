@@ -1,4 +1,4 @@
-import React, { Suspense, memo, useState } from 'react';
+import React, { Suspense, memo, useState, useEffect } from 'react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useRegistrationStore, type RegistrationFormData } from '@/stores/registration-store';
 import { StayData } from './stay-info-form';
@@ -16,6 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, ChevronUp, Lock, Unlock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { GENDER_OPTIONS, DOCUMENT_TYPES, PAYMENT_TYPES } from '@/lib/constants';
 
 // Import constants for country code lookup
@@ -62,9 +64,114 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
   const [showValidation, setShowValidation] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State for collapsible cards and OCR confidence
+  const [ocrConfidence, setOcrConfidence] = useState(0);
+  const [personalInfoCollapsed, setPersonalInfoCollapsed] = useState(false);
+  const [addressInfoCollapsed, setAddressInfoCollapsed] = useState(false);
+  
+  // State for field locks (individual field overrides)
+  const [fieldLocks, setFieldLocks] = useState<Record<string, boolean>>({});
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Helper functions for field management
+  const toggleFieldLock = (fieldName: string) => {
+    setFieldLocks(prev => ({
+      ...prev,
+      [fieldName]: !prev[fieldName]
+    }));
+  };
+
+  const isFieldReadOnly = (fieldName: string): boolean => {
+    // Field is read-only if OCR confidence is high AND field has value AND not manually unlocked
+    const hasValue = Boolean(formData[fieldName as keyof RegistrationFormData]);
+    const isUnlocked = fieldLocks[fieldName];
+    return hasDocumentProcessed && ocrConfidence >= 0.9 && hasValue && !isUnlocked;
+  };
+
+  const isFieldEmpty = (fieldName: string): boolean => {
+    return !formData[fieldName as keyof RegistrationFormData];
+  };
+
+  const getCardIcon = (confidence: number) => {
+    if (confidence >= 0.9) {
+      return <CheckCircle className="w-5 h-5 text-green-600" />;
+    } else {
+      return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+    }
+  };
+
+  const shouldCollapseCard = (confidence: number): boolean => {
+    return hasDocumentProcessed && confidence >= 0.9;
+  };
+
+  // Component for input fields with lock/unlock functionality
+  const LockableInput = ({ 
+    fieldName, 
+    label, 
+    type = "text",
+    required = false,
+    maxLength,
+    className = "",
+    children
+  }: {
+    fieldName: string;
+    label: string;
+    type?: string;
+    required?: boolean;
+    maxLength?: number;
+    className?: string;
+    children?: React.ReactNode;
+  }) => {
+    const isReadOnly = isFieldReadOnly(fieldName);
+    const isEmpty = isFieldEmpty(fieldName);
+    const isLocked = fieldLocks[fieldName];
+    
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-sm font-medium">
+            {label} {required && '*'}
+          </label>
+          {hasDocumentProcessed && !isEmpty && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => toggleFieldLock(fieldName)}
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+            >
+              {isLocked ? (
+                <Unlock className="w-3 h-3 text-blue-600" />
+              ) : (
+                <Lock className="w-3 h-3 text-gray-600" />
+              )}
+            </Button>
+          )}
+        </div>
+        {children ? (
+          children
+        ) : (
+          <Input
+            type={type}
+            value={formData[fieldName as keyof RegistrationFormData] || ''}
+            onChange={(e) => updateField(fieldName, e.target.value)}
+            maxLength={maxLength}
+            readOnly={isReadOnly}
+            className={`${className} ${isReadOnly ? 'bg-gray-50 text-gray-700' : ''} ${
+              showValidation && validationErrors[fieldName] ? 'border-red-500' : ''
+            }`}
+            lang={type === 'date' ? t('general.locale_code') : undefined}
+          />
+        )}
+        {showValidation && validationErrors[fieldName] && (
+          <p className="text-red-500 text-xs mt-1">{validationErrors[fieldName]}</p>
+        )}
+      </div>
+    );
+  };
 
   // Handle document type change
   const handleDocumentTypeChange = (documentType: string) => {
@@ -94,6 +201,13 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     const { frontOCR: front, backOCR: back, documentType } = result;
     console.log('Front OCR data:', front);
     console.log('Back OCR data:', back);
+    
+    // Calculate average confidence from available OCR results
+    const confidences = [];
+    if (front?.confidence) confidences.push(front.confidence);
+    if (back?.confidence) confidences.push(back.confidence);
+    const avgConfidence = confidences.length > 0 ? confidences.reduce((a, b) => a + b, 0) / confidences.length : 0;
+    setOcrConfidence(avgConfidence);
 
     if (front?.extractedData || back?.extractedData) {
       const data = { ...front?.extractedData, ...back?.extractedData };
@@ -102,6 +216,11 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
 
       // Use Zustand's populateFromOCR function
       populateFromOCR(data);
+      
+      // Update card collapse states based on confidence
+      const shouldCollapse = shouldCollapseCard(avgConfidence);
+      setPersonalInfoCollapsed(shouldCollapse);
+      setAddressInfoCollapsed(shouldCollapse);
 
       // Handle country code detection
       if (data.addressCountry) {
@@ -243,67 +362,62 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
           )}
 
           {/* Personal Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('registration.personal_info')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <Collapsible open={!personalInfoCollapsed} onOpenChange={setPersonalInfoCollapsed}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-gray-50">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {hasDocumentProcessed && getCardIcon(ocrConfidence)}
+                      {t('registration.personal_info')}
+                    </div>
+                    {personalInfoCollapsed ? (
+                      <ChevronDown className="w-5 h-5" />
+                    ) : (
+                      <ChevronUp className="w-5 h-5" />
+                    )}
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-medium">{t('registration.first_name')} *</label>
-                  <Input 
-                    value={formData.firstName || ''}
-                    onChange={(e) => updateField('firstName', e.target.value)}
-                    maxLength={50}
-                    className={showValidation && validationErrors.firstName ? 'border-red-500' : ''}
-                  />
-                  {showValidation && validationErrors.firstName && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.firstName}</p>
-                  )}
-                </div>
+                <LockableInput
+                  fieldName="firstName"
+                  label={t('registration.first_name')}
+                  required={true}
+                  maxLength={50}
+                />
                 
-                <div>
-                  <label className="text-sm font-medium">{t('registration.last_name_1')} *</label>
-                  <Input 
-                    value={formData.lastName1 || ''}
-                    onChange={(e) => updateField('lastName1', e.target.value)}
-                    maxLength={50}
-                    className={showValidation && validationErrors.lastName1 ? 'border-red-500' : ''}
-                  />
-                  {showValidation && validationErrors.lastName1 && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.lastName1}</p>
-                  )}
-                </div>
+                <LockableInput
+                  fieldName="lastName1"
+                  label={t('registration.last_name_1')}
+                  required={true}
+                  maxLength={50}
+                />
                 
-                <div>
-                  <label className="text-sm font-medium">{t('registration.last_name_2')}</label>
-                  <Input 
-                    value={formData.lastName2 || ''}
-                    onChange={(e) => updateField('lastName2', e.target.value)}
-                    maxLength={50}
-                  />
-                </div>
+                <LockableInput
+                  fieldName="lastName2"
+                  label={t('registration.last_name_2')}
+                  maxLength={50}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-medium">{t('registration.birth_date')} *</label>
-                  <Input 
-                    type="date"
-                    value={formData.birthDate || ''}
-                    onChange={(e) => updateField('birthDate', e.target.value)}
-                    className={showValidation && validationErrors.birthDate ? 'border-red-500' : ''}
-                    lang={t('general.locale_code')} // Set language for date picker
-                  />
-                  {showValidation && validationErrors.birthDate && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.birthDate}</p>
-                  )}
-                </div>
+                <LockableInput
+                  fieldName="birthDate"
+                  label={t('registration.birth_date')}
+                  type="date"
+                  required={true}
+                />
 
-                <div>
-                  <label className="text-sm font-medium">{t('registration.gender')} *</label>
-                  <Select value={formData.gender || ''} onValueChange={(value) => updateField('gender', value)}>
-                    <SelectTrigger className={showValidation && validationErrors.gender ? 'border-red-500' : ''}>
+                <LockableInput
+                  fieldName="gender"
+                  label={t('registration.gender')}
+                  required={true}
+                >
+                  <Select value={formData.gender || ''} onValueChange={(value) => updateField('gender', value)} disabled={isFieldReadOnly('gender')}>
+                    <SelectTrigger className={`${isFieldReadOnly('gender') ? 'bg-gray-50 text-gray-700' : ''} ${showValidation && validationErrors.gender ? 'border-red-500' : ''}`}>
                       <SelectValue placeholder="Seleccionar género" />
                     </SelectTrigger>
                     <SelectContent>
@@ -314,30 +428,24 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                       ))}
                     </SelectContent>
                   </Select>
-                  {showValidation && validationErrors.gender && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.gender}</p>
-                  )}
-                </div>
+                </LockableInput>
 
-                <div>
-                  <label className="text-sm font-medium">{t('registration.nationality')} *</label>
-                  <Input 
-                    value={formData.nationality || ''}
-                    onChange={(e) => updateField('nationality', e.target.value)}
-                    maxLength={3}
-                    className={showValidation && validationErrors.nationality ? 'border-red-500' : ''}
-                  />
-                  {showValidation && validationErrors.nationality && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.nationality}</p>
-                  )}
-                </div>
+                <LockableInput
+                  fieldName="nationality"
+                  label={t('registration.nationality')}
+                  required={true}
+                  maxLength={3}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">{t('registration.document_type')} *</label>
-                  <Select value={selectedDocumentType} onValueChange={handleDocumentTypeChange}>
-                    <SelectTrigger>
+                <LockableInput
+                  fieldName="documentType"
+                  label={t('registration.document_type')}
+                  required={true}
+                >
+                  <Select value={selectedDocumentType} onValueChange={handleDocumentTypeChange} disabled={isFieldReadOnly('documentType')}>
+                    <SelectTrigger className={`${isFieldReadOnly('documentType') ? 'bg-gray-50 text-gray-700' : ''}`}>
                       <SelectValue placeholder="Seleccionar tipo de documento" />
                     </SelectTrigger>
                     <SelectContent>
@@ -348,33 +456,46 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
+                </LockableInput>
 
-                <div>
-                  <label className="text-sm font-medium">{t('registration.document_number')} *</label>
-                  <Input 
-                    value={formData.documentNumber || ''}
-                    onChange={(e) => updateField('documentNumber', e.target.value)}
-                    maxLength={20}
-                    className={showValidation && validationErrors.documentNumber ? 'border-red-500' : ''}
-                  />
-                  {showValidation && validationErrors.documentNumber && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.documentNumber}</p>
-                  )}
-                </div>
+                <LockableInput
+                  fieldName="documentNumber"
+                  label={t('registration.document_number')}
+                  required={true}
+                  maxLength={20}
+                />
               </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
           {/* Address Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('registration.address_info')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <Collapsible open={!addressInfoCollapsed} onOpenChange={setAddressInfoCollapsed}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-gray-50">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {hasDocumentProcessed && getCardIcon(ocrConfidence)}
+                      {t('registration.address_info')}
+                    </div>
+                    {addressInfoCollapsed ? (
+                      <ChevronDown className="w-5 h-5" />
+                    ) : (
+                      <ChevronUp className="w-5 h-5" />
+                    )}
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">{t('registration.address')} *</label>
+                <LockableInput
+                  fieldName="addressStreet"
+                  label={t('registration.address')}
+                  required={true}
+                >
                   <GooglePlacesAutocomplete
                     value={formData.addressStreet || ''}
                     onChange={(address) => updateField('addressStreet', address)}
@@ -402,44 +523,36 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                       }
                     }}
                     placeholder={t('registration.address')}
+                    disabled={isFieldReadOnly('addressStreet')}
                   />
-                </div>
+                </LockableInput>
 
-                <div>
-                  <label className="text-sm font-medium">{t('registration.city')} *</label>
-                  <Input 
-                    value={formData.addressCity || ''}
-                    onChange={(e) => updateField('addressCity', e.target.value)}
-                    maxLength={100}
-                  />
-                </div>
+                <LockableInput
+                  fieldName="addressCity"
+                  label={t('registration.city')}
+                  required={true}
+                  maxLength={100}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">{t('registration.postal_code')}</label>
-                  <Input 
-                    value={formData.addressPostalCode || ''}
-                    onChange={(e) => updateField('addressPostalCode', e.target.value)}
-                    maxLength={10}
-                  />
-                </div>
+                <LockableInput
+                  fieldName="addressPostalCode"
+                  label={t('registration.postal_code')}
+                  maxLength={10}
+                />
 
-                <div>
-                  <label className="text-sm font-medium">{t('registration.country')} *</label>
-                  <Input 
-                    value={formData.addressCountry || ''}
-                    onChange={(e) => updateField('addressCountry', e.target.value)}
-                    maxLength={100}
-                    className={showValidation && validationErrors.addressCountry ? 'border-red-500' : ''}
-                  />
-                  {showValidation && validationErrors.addressCountry && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.addressCountry}</p>
-                  )}
-                </div>
+                <LockableInput
+                  fieldName="addressCountry"
+                  label={t('registration.country')}
+                  required={true}
+                  maxLength={100}
+                />
               </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
           {/* Contact Information */}
           <Card>
