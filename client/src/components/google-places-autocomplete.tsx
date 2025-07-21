@@ -41,7 +41,7 @@ export function GooglePlacesAutocomplete({
   const [useFallback, setUseFallback] = useState(true);
 
   useEffect(() => {
-    const initializeModernAutocomplete = async () => {
+    const initializeModernAutocomplete = () => {
       try {
         if (!window.google?.maps) {
           throw new Error('Google Maps not loaded');
@@ -136,27 +136,39 @@ export function GooglePlacesAutocomplete({
 
     const loadGoogleMapsAPI = async () => {
       try {
-        const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || 'AIzaSyBhfWQngB6-nBsCfcjROUyl203icnmn0sQ';
+        const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+        
+        if (!apiKey) {
+          console.warn('No Google Places API key configured, using fallback input');
+          setUseFallback(true);
+          return;
+        }
+        
+        console.log('Loading Google Maps API with Places library...');
         
         const loader = new Loader({
           apiKey: apiKey,
           version: "weekly",
-          libraries: ["places"],
-          loading: "async"
+          libraries: ["places"]
         });
 
         await loader.load();
+        console.log('Google Maps API loaded successfully');
 
         if (!mounted) return;
 
         // Try modern API first, fallback to legacy
-        initializeModernAutocomplete().catch(() => {
+        try {
+          initializeModernAutocomplete();
+        } catch (modernError) {
+          console.log('Modern API failed, trying legacy:', modernError);
           if (mounted) {
             initializeLegacyAutocomplete();
           }
-        });
+        }
       } catch (error) {
-        console.warn('Google Maps API loading failed, using fallback input:', error);
+        console.warn('Google Maps API loading failed:', error);
+        console.warn('Using fallback input');
         if (mounted) {
           setUseFallback(true);
         }
