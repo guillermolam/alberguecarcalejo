@@ -112,7 +112,16 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     const fieldValue = formData[fieldName as keyof RegistrationFormData] || '';
     const hasSignificantValue = fieldValue.toString().length >= 3;
     const isUnlocked = fieldLocks[fieldName];
-    return hasDocumentProcessed && hasSignificantValue && !isUnlocked;
+    const readOnly = hasDocumentProcessed && hasSignificantValue && !isUnlocked;
+    
+    console.log(`=== isFieldReadOnly(${fieldName}) ===`);
+    console.log('fieldValue:', fieldValue);
+    console.log('hasSignificantValue:', hasSignificantValue);
+    console.log('isUnlocked:', isUnlocked);
+    console.log('hasDocumentProcessed:', hasDocumentProcessed);
+    console.log('final readOnly:', readOnly);
+    
+    return readOnly;
   };
 
   const isFieldEmpty = (fieldName: string): boolean => {
@@ -194,15 +203,19 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               value={formData[fieldName as keyof RegistrationFormData] || ''}
               onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
               onFocus={() => {
+                console.log(`=== onFocus(${fieldName}) ===`);
                 handleFieldFocus(fieldName);
                 if (isReadOnly) {
+                  console.log('Field is readonly, toggling lock');
                   toggleFieldLock(fieldName);
                 }
               }}
               onMouseEnter={() => handleFieldFocus(fieldName)}
               onClick={() => {
+                console.log(`=== onClick(${fieldName}) ===`);
                 handleFieldFocus(fieldName);
                 if (isReadOnly) {
+                  console.log('Field is readonly, toggling lock');
                   toggleFieldLock(fieldName);
                 }
               }}

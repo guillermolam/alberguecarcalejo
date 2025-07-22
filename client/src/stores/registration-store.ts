@@ -183,6 +183,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
             // Handle 4-digit years like "1951" which should be truncated to last 2 digits for day
             if (part3.length === 4) {
               day = part3.slice(-2); // Take last 2 digits as day
+              console.log('Truncated 4-digit day part from', part3, 'to', day);
             }
             
             // Handle 2-digit years
