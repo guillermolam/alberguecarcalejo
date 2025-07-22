@@ -188,13 +188,22 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     useEffect(() => {
       if (justUnlockedField === fieldName && !isReadOnly && inputRef.current) {
         console.log(`=== FOCUSING UNLOCKED FIELD: ${fieldName} ===`);
+        console.log('isReadOnly at focus time:', isReadOnly);
+        console.log('inputRef.current.readOnly:', inputRef.current.readOnly);
+        console.log('inputRef.current.disabled:', inputRef.current.disabled);
+        
+        // Force remove readOnly and disabled attributes
+        inputRef.current.readOnly = false;
+        inputRef.current.disabled = false;
+        
         setTimeout(() => {
           if (inputRef.current) {
             inputRef.current.focus();
+            inputRef.current.click(); // Try clicking to trigger mobile keyboard
             inputRef.current.setSelectionRange(inputRef.current.value.length, inputRef.current.value.length);
             console.log(`Field ${fieldName} focused and cursor positioned`);
           }
-        }, 100);
+        }, 150);
         setJustUnlockedField(null); // Clear the flag
       }
     }, [justUnlockedField, fieldName, isReadOnly]);
@@ -228,6 +237,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
               onFocus={() => {
                 console.log(`=== onFocus(${fieldName}) ===`);
+                console.log('isReadOnly:', isReadOnly);
                 handleFieldFocus(fieldName);
                 if (isReadOnly) {
                   console.log('Field is readonly, toggling lock');
@@ -251,7 +261,8 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               }}
               maxLength={maxLength}
               readOnly={isReadOnly}
-              className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''} ${isReadOnly ? 'bg-gray-50 text-gray-700 cursor-pointer' : ''}`}
+              disabled={isReadOnly}
+              className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''} ${isReadOnly ? 'bg-gray-50 text-gray-700 cursor-pointer' : 'bg-white text-black'}`}
               lang={type === 'date' ? t('general.locale_code') : undefined}
             />
             {hasDocumentProcessed && !isEmpty && (
