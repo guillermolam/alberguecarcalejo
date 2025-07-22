@@ -109,7 +109,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
       
       // If we're unlocking the field, mark it for focus
       if (!prev[fieldName]) {
-        setJustUnlockedField(fieldName);
+        setTimeout(() => setJustUnlockedField(fieldName), 0);
       }
       
       return newLocks;
@@ -186,27 +186,19 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     
     // Effect to focus field when it gets unlocked
     useEffect(() => {
-      if (justUnlockedField === fieldName && !isReadOnly && inputRef.current) {
+      if (justUnlockedField === fieldName && inputRef.current) {
         console.log(`=== FOCUSING UNLOCKED FIELD: ${fieldName} ===`);
-        console.log('isReadOnly at focus time:', isReadOnly);
-        console.log('inputRef.current.readOnly:', inputRef.current.readOnly);
-        console.log('inputRef.current.disabled:', inputRef.current.disabled);
-        
-        // Force remove readOnly and disabled attributes
-        inputRef.current.readOnly = false;
-        inputRef.current.disabled = false;
         
         setTimeout(() => {
           if (inputRef.current) {
             inputRef.current.focus();
-            inputRef.current.click(); // Try clicking to trigger mobile keyboard
             inputRef.current.setSelectionRange(inputRef.current.value.length, inputRef.current.value.length);
             console.log(`Field ${fieldName} focused and cursor positioned`);
           }
-        }, 150);
+        }, 100);
         setJustUnlockedField(null); // Clear the flag
       }
-    }, [justUnlockedField, fieldName, isReadOnly]);
+    }, [justUnlockedField, fieldName]); // Remove isReadOnly from dependency array
     
     // Determine label and border color based on field state
     const getLabelColor = () => {
@@ -256,6 +248,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''} bg-white text-black`}
                 lang={type === 'date' ? t('general.locale_code') : undefined}
                 autoFocus={justUnlockedField === fieldName}
+                inputMode={type === 'date' ? 'numeric' : 'text'}
               />
             )}
             {hasDocumentProcessed && !isEmpty && (

@@ -199,8 +199,11 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
             const dayNum = parseInt(day);
             const monthNum = parseInt(month);
             
+            console.log('YY/MM/DD parsing result:', { year, month, day, dayNum, monthNum });
+            
             if (dayNum >= 1 && dayNum <= 31 && monthNum >= 1 && monthNum <= 12) {
               formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+              console.log('Formatted YY/MM/DD date:', formattedDate);
             }
           } else {
             // Assume DD/MM/YYYY or DD/MM/YY format
