@@ -230,41 +230,34 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
           children
         ) : (
           <div className="relative">
-            <Input
-              ref={inputRef}
-              type={type}
-              value={formData[fieldName as keyof RegistrationFormData] || ''}
-              onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
-              onFocus={() => {
-                console.log(`=== onFocus(${fieldName}) ===`);
-                console.log('isReadOnly:', isReadOnly);
-                handleFieldFocus(fieldName);
-                if (isReadOnly) {
-                  console.log('Field is readonly, toggling lock');
+            {isReadOnly ? (
+              // Read-only display mode - completely separate from Input
+              <div
+                className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''} bg-gray-50 text-gray-700 cursor-pointer flex items-center min-h-10 px-3 py-2 rounded-md border border-input`}
+                onClick={() => {
+                  console.log(`=== Clicking to unlock ${fieldName} ===`);
                   toggleFieldLock(fieldName);
-                }
-              }}
-              onMouseEnter={() => handleFieldFocus(fieldName)}
-              onClick={(e) => {
-                console.log(`=== onClick(${fieldName}) ===`);
-                e.preventDefault(); // Prevent default behavior
-                handleFieldFocus(fieldName);
-                if (isReadOnly) {
-                  console.log('Field is readonly, toggling lock');
-                  toggleFieldLock(fieldName);
-                } else {
-                  // If field is already unlocked, focus it immediately
-                  if (inputRef.current) {
-                    inputRef.current.focus();
-                  }
-                }
-              }}
-              maxLength={maxLength}
-              readOnly={isReadOnly}
-              disabled={isReadOnly}
-              className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''} ${isReadOnly ? 'bg-gray-50 text-gray-700 cursor-pointer' : 'bg-white text-black'}`}
-              lang={type === 'date' ? t('general.locale_code') : undefined}
-            />
+                }}
+              >
+                {formData[fieldName as keyof RegistrationFormData] || ''}
+              </div>
+            ) : (
+              // Fully editable Input mode - no readOnly attributes at all
+              <Input
+                ref={inputRef}
+                type={type}
+                value={formData[fieldName as keyof RegistrationFormData] || ''}
+                onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
+                onFocus={() => {
+                  console.log(`=== onFocus EDITABLE ${fieldName} ===`);
+                  handleFieldFocus(fieldName);
+                }}
+                maxLength={maxLength}
+                className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''} bg-white text-black`}
+                lang={type === 'date' ? t('general.locale_code') : undefined}
+                autoFocus={justUnlockedField === fieldName}
+              />
+            )}
             {hasDocumentProcessed && !isEmpty && (
               <Button
                 type="button"
