@@ -184,10 +184,15 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
               onFocus={() => handleFieldFocus(fieldName)}
               onMouseEnter={() => handleFieldFocus(fieldName)}
-              onClick={() => handleFieldFocus(fieldName)}
+              onClick={() => {
+                handleFieldFocus(fieldName);
+                if (isReadOnly) {
+                  toggleFieldLock(fieldName);
+                }
+              }}
               maxLength={maxLength}
-              readOnly={false}
-              className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''}`}
+              readOnly={isReadOnly}
+              className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''} ${isReadOnly ? 'bg-gray-50 text-gray-700 cursor-pointer' : ''}`}
               lang={type === 'date' ? t('general.locale_code') : undefined}
             />
             {hasDocumentProcessed && !isEmpty && (
@@ -201,8 +206,9 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 }}
                 onMouseEnter={() => handleFieldFocus(fieldName)}
                 className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100 rounded-md"
+                title={isReadOnly ? "Click to edit this field" : "Field is editable"}
               >
-                <Pencil className="w-4 h-4 text-gray-500 hover:text-blue-600" />
+                <Pencil className={`w-4 h-4 ${isReadOnly ? 'text-blue-600' : 'text-green-600'}`} />
               </Button>
             )}
           </div>
