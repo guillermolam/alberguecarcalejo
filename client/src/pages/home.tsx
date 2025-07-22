@@ -63,31 +63,41 @@ export default function Home() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink min-w-0">
+              <div className="flex items-center space-x-1 sm:space-x-2 min-w-0">
                 <img 
                   src="https://le-de.cdn-website.com/4e684d9f728943a6941686bc89abe581/dms3rep/multi/opt/logoalbergue__msi___jpeg-1920w.jpeg"
                   alt="Albergue Del Carrascalejo"
-                  className="h-10 w-auto"
+                  className="h-8 sm:h-10 w-auto flex-shrink-0"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
                 />
-                <h1 className="text-xl font-semibold text-gray-900 font-title">
-                  {t('nav.title')}
+                <h1 className="text-sm sm:text-lg md:text-xl font-semibold text-gray-900 font-title truncate min-w-0">
+                  <span className="hidden sm:inline">{t('nav.title')}</span>
+                  <span className="sm:hidden">Albergue Del Carrascalejo</span>
                 </h1>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <LanguageSelector />
               <Button
                 onClick={handleAdminLogin}
                 variant="outline"
                 size="sm"
+                className="hidden sm:flex"
               >
                 <ShieldQuestion className="w-4 h-4 mr-2" />
                 {t('nav.admin')}
+              </Button>
+              <Button
+                onClick={handleAdminLogin}
+                variant="outline"
+                size="sm"
+                className="sm:hidden p-2"
+              >
+                <ShieldQuestion className="w-4 h-4" />
               </Button>
             </div>
           </div>
