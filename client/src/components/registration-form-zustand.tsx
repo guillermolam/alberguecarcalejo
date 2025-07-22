@@ -92,10 +92,19 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
 
   // Helper functions for field management
   const toggleFieldLock = (fieldName: string) => {
-    setFieldLocks(prev => ({
-      ...prev,
-      [fieldName]: !prev[fieldName]
-    }));
+    console.log('=== TOGGLE FIELD LOCK ===');
+    console.log('Field:', fieldName);
+    console.log('Current locks:', fieldLocks);
+    console.log('Current lock state for field:', fieldLocks[fieldName]);
+    
+    setFieldLocks(prev => {
+      const newLocks = {
+        ...prev,
+        [fieldName]: !prev[fieldName]
+      };
+      console.log('New locks state:', newLocks);
+      return newLocks;
+    });
   };
 
   const isFieldReadOnly = (fieldName: string): boolean => {

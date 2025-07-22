@@ -164,36 +164,70 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       console.log('Setting expiryDate:', updates.expiryDate);
     }
     if (ocrData.birthDate) {
-      // Convert DD/MM/YYYY or DD/MM/YY to YYYY-MM-DD for date input
-      const dateParts = ocrData.birthDate.split('/');
-      if (dateParts.length === 3) {
-        let [day, month, year] = dateParts;
-        
-        // Handle 2-digit years (assume 20th century if >50, 21st century if <=50)
-        if (year.length === 2) {
-          const yearNum = parseInt(year);
-          if (yearNum <= 50) {
-            year = `20${year}`;
+      // Handle different birth date formats from OCR
+      let formattedDate = '';
+      
+      // Check if it looks like DD/MM/YYYY or DD/MM/YY
+      if (ocrData.birthDate.includes('/')) {
+        const dateParts = ocrData.birthDate.split('/');
+        if (dateParts.length === 3) {
+          let [part1, part2, part3] = dateParts;
+          
+          // If first part is > 31, it might be YY/MM/DD format
+          if (parseInt(part1) > 31) {
+            // Assume YY/MM/DD format (like 76/10/19 for October 19, 1976)
+            let year = part1;
+            let month = part2;
+            let day = part3;
+            
+            // Handle 2-digit years
+            if (year.length === 2) {
+              const yearNum = parseInt(year);
+              if (yearNum <= 50) {
+                year = `20${year}`;
+              } else {
+                year = `19${year}`;
+              }
+            }
+            
+            const dayNum = parseInt(day);
+            const monthNum = parseInt(month);
+            
+            if (dayNum >= 1 && dayNum <= 31 && monthNum >= 1 && monthNum <= 12) {
+              formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
           } else {
-            year = `19${year}`;
+            // Assume DD/MM/YYYY or DD/MM/YY format
+            let day = part1;
+            let month = part2;
+            let year = part3;
+            
+            // Handle 2-digit years
+            if (year.length === 2) {
+              const yearNum = parseInt(year);
+              if (yearNum <= 50) {
+                year = `20${year}`;
+              } else {
+                year = `19${year}`;
+              }
+            }
+            
+            const dayNum = parseInt(day);
+            const monthNum = parseInt(month);
+            
+            if (dayNum >= 1 && dayNum <= 31 && monthNum >= 1 && monthNum <= 12) {
+              formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
           }
         }
-        
-        // Validate day and month ranges
-        const dayNum = parseInt(day);
-        const monthNum = parseInt(month);
-        
-        if (dayNum >= 1 && dayNum <= 31 && monthNum >= 1 && monthNum <= 12) {
-          const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-          updates.birthDate = formattedDate;
-          console.log('Converting birth date from', ocrData.birthDate, 'to', formattedDate);
-        } else {
-          console.log('Invalid birth date format detected:', ocrData.birthDate, 'Day:', dayNum, 'Month:', monthNum);
-          // Don't set invalid date
-        }
+      }
+      
+      if (formattedDate) {
+        updates.birthDate = formattedDate;
+        console.log('Converting birth date from', ocrData.birthDate, 'to', formattedDate);
       } else {
-        updates.birthDate = ocrData.birthDate;
-        console.log('Setting birthDate as-is:', updates.birthDate);
+        console.log('Unable to parse birth date format:', ocrData.birthDate);
+        // Don't set invalid date
       }
     }
     if (ocrData.gender) {
