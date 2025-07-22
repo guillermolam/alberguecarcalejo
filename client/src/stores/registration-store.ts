@@ -180,6 +180,11 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
             let month = part2;
             let day = part3;
             
+            // Handle 4-digit years like "1951" which should be truncated to last 2 digits for day
+            if (part3.length === 4) {
+              day = part3.slice(-2); // Take last 2 digits as day
+            }
+            
             // Handle 2-digit years
             if (year.length === 2) {
               const yearNum = parseInt(year);

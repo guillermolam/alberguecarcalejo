@@ -1,4 +1,4 @@
-import React, { Suspense, memo, useState, useEffect } from 'react';
+import React, { Suspense, memo, useState, useEffect, useRef } from 'react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useRegistrationStore, type RegistrationFormData } from '@/stores/registration-store';
 import { StayData } from './stay-info-form';
@@ -158,6 +158,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     className?: string;
     children?: React.ReactNode;
   }) => {
+    const inputRef = useRef<HTMLInputElement>(null);
     const isReadOnly = isFieldReadOnly(fieldName);
     const isEmpty = isFieldEmpty(fieldName);
     const isLocked = fieldLocks[fieldName];
@@ -188,10 +189,16 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
         ) : (
           <div className="relative">
             <Input
+              ref={inputRef}
               type={type}
               value={formData[fieldName as keyof RegistrationFormData] || ''}
               onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
-              onFocus={() => handleFieldFocus(fieldName)}
+              onFocus={() => {
+                handleFieldFocus(fieldName);
+                if (isReadOnly) {
+                  toggleFieldLock(fieldName);
+                }
+              }}
               onMouseEnter={() => handleFieldFocus(fieldName)}
               onClick={() => {
                 handleFieldFocus(fieldName);
@@ -212,6 +219,13 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 onClick={() => {
                   toggleFieldLock(fieldName);
                   handleFieldFocus(fieldName);
+                  // Focus the input after unlocking
+                  setTimeout(() => {
+                    if (inputRef.current && !isFieldReadOnly(fieldName)) {
+                      inputRef.current.focus();
+                      inputRef.current.setSelectionRange(inputRef.current.value.length, inputRef.current.value.length);
+                    }
+                  }, 50);
                 }}
                 onMouseEnter={() => handleFieldFocus(fieldName)}
                 className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100 rounded-md"
