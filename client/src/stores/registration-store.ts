@@ -164,13 +164,33 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       console.log('Setting expiryDate:', updates.expiryDate);
     }
     if (ocrData.birthDate) {
-      // Convert DD/MM/YYYY to YYYY-MM-DD for date input
+      // Convert DD/MM/YYYY or DD/MM/YY to YYYY-MM-DD for date input
       const dateParts = ocrData.birthDate.split('/');
       if (dateParts.length === 3) {
-        const [day, month, year] = dateParts;
-        const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        updates.birthDate = formattedDate;
-        console.log('Converting birth date from', ocrData.birthDate, 'to', formattedDate);
+        let [day, month, year] = dateParts;
+        
+        // Handle 2-digit years (assume 20th century if >50, 21st century if <=50)
+        if (year.length === 2) {
+          const yearNum = parseInt(year);
+          if (yearNum <= 50) {
+            year = `20${year}`;
+          } else {
+            year = `19${year}`;
+          }
+        }
+        
+        // Validate day and month ranges
+        const dayNum = parseInt(day);
+        const monthNum = parseInt(month);
+        
+        if (dayNum >= 1 && dayNum <= 31 && monthNum >= 1 && monthNum <= 12) {
+          const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          updates.birthDate = formattedDate;
+          console.log('Converting birth date from', ocrData.birthDate, 'to', formattedDate);
+        } else {
+          console.log('Invalid birth date format detected:', ocrData.birthDate, 'Day:', dayNum, 'Month:', monthNum);
+          // Don't set invalid date
+        }
       } else {
         updates.birthDate = ocrData.birthDate;
         console.log('Setting birthDate as-is:', updates.birthDate);
