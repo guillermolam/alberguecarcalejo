@@ -73,6 +73,9 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
   
   // State for field locks (individual field overrides)
   const [fieldLocks, setFieldLocks] = useState<Record<string, boolean>>({});
+  
+  // Track which field was just unlocked to trigger focus
+  const [justUnlockedField, setJustUnlockedField] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -103,6 +106,12 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
         [fieldName]: !prev[fieldName]
       };
       console.log('New locks state:', newLocks);
+      
+      // If we're unlocking the field, mark it for focus
+      if (!prev[fieldName]) {
+        setJustUnlockedField(fieldName);
+      }
+      
       return newLocks;
     });
   };
@@ -175,6 +184,21 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     const hasBeenFocused = focusedFields.has(fieldName);
     const isLowConfidence = hasDocumentProcessed && ocrConfidence < 0.9 && !isEmpty && !hasBeenFocused;
     
+    // Effect to focus field when it gets unlocked
+    useEffect(() => {
+      if (justUnlockedField === fieldName && !isReadOnly && inputRef.current) {
+        console.log(`=== FOCUSING UNLOCKED FIELD: ${fieldName} ===`);
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+            inputRef.current.setSelectionRange(inputRef.current.value.length, inputRef.current.value.length);
+            console.log(`Field ${fieldName} focused and cursor positioned`);
+          }
+        }, 100);
+        setJustUnlockedField(null); // Clear the flag
+      }
+    }, [justUnlockedField, fieldName, isReadOnly]);
+    
     // Determine label and border color based on field state
     const getLabelColor = () => {
       if (hasError) return 'text-red-600'; // Missing/invalid field = red
@@ -211,12 +235,18 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 }
               }}
               onMouseEnter={() => handleFieldFocus(fieldName)}
-              onClick={() => {
+              onClick={(e) => {
                 console.log(`=== onClick(${fieldName}) ===`);
+                e.preventDefault(); // Prevent default behavior
                 handleFieldFocus(fieldName);
                 if (isReadOnly) {
                   console.log('Field is readonly, toggling lock');
                   toggleFieldLock(fieldName);
+                } else {
+                  // If field is already unlocked, focus it immediately
+                  if (inputRef.current) {
+                    inputRef.current.focus();
+                  }
                 }
               }}
               maxLength={maxLength}
@@ -229,16 +259,11 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent event bubbling
+                  console.log(`=== PENCIL BUTTON CLICKED for ${fieldName} ===`);
                   toggleFieldLock(fieldName);
                   handleFieldFocus(fieldName);
-                  // Focus the input after unlocking
-                  setTimeout(() => {
-                    if (inputRef.current && !isFieldReadOnly(fieldName)) {
-                      inputRef.current.focus();
-                      inputRef.current.setSelectionRange(inputRef.current.value.length, inputRef.current.value.length);
-                    }
-                  }, 50);
                 }}
                 onMouseEnter={() => handleFieldFocus(fieldName)}
                 className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100 rounded-md"
