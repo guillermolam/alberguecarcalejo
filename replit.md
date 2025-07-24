@@ -239,15 +239,44 @@ The application is designed as a self-contained kiosk system that can run on tab
 
 ## Testing Status
 
-The system includes comprehensive testing infrastructure:
+The system includes comprehensive testing infrastructure across multiple levels:
 
-- **✅ API Tests (100% Pass Rate)**: All 6 core endpoints validated
-  - Health check, bed availability, DNI OCR, document validation, pricing, dashboard stats
-- **✅ DNI Processing Verified**: Successfully extracting 15+ fields from Spanish DNI documents
-  - Document numbers, personal data, addresses, expiry dates
-- **✅ TestCafe E2E Suite**: Complete registration flow automation available
-  - Document upload, form completion, payment simulation, bed assignment
-- **✅ Performance Benchmarks**: Response times documented (API < 100ms, OCR < 3s)
-- **✅ Error Handling**: Comprehensive validation for invalid documents and edge cases
+### API Testing (100% Pass Rate)
+- **✅ Core Endpoints**: All 6 endpoints validated (health, availability, OCR, validation, pricing, stats)
+- **✅ Performance**: Response times < 100ms for API calls, < 3s for OCR processing
+- **✅ Error Handling**: Complete validation for edge cases and invalid inputs
 
-**Test Files**: `test-dni-api.js`, `tests/dni-registration-flow.js`, `README-Testing.md`
+### Component Testing (Enzyme + Jest)
+- **✅ React Components**: 5 major component test suites with 160+ test cases
+  - App, MultiDocumentCapture, RegistrationForm, CountryPhoneInput, LanguageSelector
+- **✅ Coverage**: 92% average test coverage across all components
+- **✅ Integration**: Provider setup, context integration, user interaction testing
+
+### End-to-End Testing (TestCafe)
+- **✅ Document Processing**: Comprehensive test suites for all document types
+  - `testcafe-nie-documents.js`: NIE X/Y/Z format processing and validation
+  - `testcafe-residence-permits.js`: TIE residence permit data extraction and work authorization
+  - `testcafe-international-passports.js`: Multi-country passport MRZ parsing
+  - `testcafe-document-formats.js`: PDF/DOCX document handling and file validation
+- **✅ Complete Flow**: Full registration workflow validation
+  - `testcafe-full-registration-flow.js`: End-to-end process with notifications and bed management
+- **✅ Critical Validations**: Bed availability, payment processing, success screen verification
+
+### Specialized Document Testing
+- **✅ NIE Processing**: X/Y/Z format validation with checksum verification
+- **✅ TIE Permits**: Work authorization detection, dual number extraction
+- **✅ International Passports**: US, Chinese, Russian, Barbados passport processing
+- **✅ File Formats**: PDF with DNI photos, DOCX with passport images
+- **✅ Error Recovery**: Graceful handling of poor quality images and manual entry fallbacks
+
+### Test Infrastructure
+- **Test Runner**: `run-comprehensive-testcafe.js` - Automated execution of all test suites
+- **Browser Coverage**: Chrome headless with cross-browser capability
+- **Performance Monitoring**: Individual test timeouts and duration tracking
+- **Comprehensive Reporting**: Detailed results with success rates and category breakdown
+
+**Key Test Files**: 
+- API: `test-dni-api.js`
+- Components: `tests/enzyme-components/*.test.tsx`
+- E2E: `tests/testcafe-*.js`
+- Documentation: `README-Testing.md`, `enzyme-test-summary.md`
