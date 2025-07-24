@@ -718,7 +718,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   </label>
                   <Select value={formData.gender || ''} onValueChange={(value) => updateField('gender', value)}>
                     <SelectTrigger className={showValidation && validationErrors.gender ? 'border-red-500' : ''}>
-                      <SelectValue placeholder="Seleccionar género" />
+                      <SelectValue placeholder={t('registration.select_gender')} />
                     </SelectTrigger>
                     <SelectContent>
                       {GENDER_OPTIONS.map((option) => (
@@ -940,7 +940,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                         updateField('phone', numericValue);
                       }}
                       type="tel"
-                      placeholder="123456789"
+                      placeholder={t('registration.phone_placeholder')}
                       pattern="[0-9]*"
                       inputMode="numeric"
                       className={showValidation && validationErrors.phone ? 'border-red-500' : ''}
