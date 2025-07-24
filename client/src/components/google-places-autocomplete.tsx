@@ -42,7 +42,7 @@ export function GooglePlacesAutocomplete({
   value = '',
   onChange,
   onPlaceSelected,
-  placeholder = "Enter an address",
+  placeholder = "",
   className
 }: GooglePlacesAutocompleteProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -84,7 +84,7 @@ export function GooglePlacesAutocomplete({
         autocompleteElement.style.fontFamily = 'inherit';
 
         // Set placeholder
-        autocompleteElement.placeholder = placeholder;
+        autocompleteElement.placeholder = placeholder || "Enter an address";
 
         // Add event listener for place selection
         autocompleteElement.addEventListener('gmp-placeselect', (event: any) => {
@@ -116,6 +116,9 @@ export function GooglePlacesAutocomplete({
     const initializeLegacyAutocomplete = () => {
       try {
         if (window.google?.maps?.places?.Autocomplete && fallbackInputRef.current) {
+          // Set placeholder for legacy input
+          fallbackInputRef.current.placeholder = placeholder || "Enter an address";
+          
           const autocomplete = new window.google.maps.places.Autocomplete(
             fallbackInputRef.current,
             {
@@ -316,7 +319,7 @@ export function GooglePlacesAutocomplete({
               setShowSuggestions(true);
             }
           }}
-          placeholder={placeholder}
+          placeholder={placeholder || "Enter an address"}
           className={className}
         />
         
