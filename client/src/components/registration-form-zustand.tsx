@@ -17,11 +17,12 @@ import {
   hasValidationErrors,
   type ValidationErrors,
 } from "@/lib/form-validation";
+import { createRegistrationSchema } from "@/lib/validation";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/contexts/i18n-context";
 import { RegistrationStepper } from "./registration-stepper";
-import MultiDocumentCapture from "./multi-document-capture-new";
+import MultiDocumentCapture from "./multi-document-capture-new/multi-document-capture-new";
 import { CountryPhoneInput } from "./country-phone-input";
 import { GooglePlacesAutocomplete } from "@/components/google-places-autocomplete";
 import { CountrySelector } from "./country-selector";
@@ -258,7 +259,8 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
 
     const handleFormSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      const errors = validateForm(formData);
+      const schema = createRegistrationSchema(formData.documentType, detectedCountryCode);
+      const errors = validateForm(formData, schema);
       setValidationErrors(errors);
 
       if (hasValidationErrors(errors)) {
