@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Lock, Unlock, CheckCircle, AlertTriangle, User, MapPin, Phone, CreditCard, Pencil } from 'lucide-react';
+import { ChevronDown, ChevronUp, Lock, Unlock, CheckCircle, AlertTriangle, User, MapPin, Phone, CreditCard, Pencil, Coins } from 'lucide-react';
 import { GENDER_OPTIONS, DOCUMENT_TYPES, PAYMENT_TYPES } from '@/lib/constants';
 
 // Import constants for country code lookup
@@ -931,7 +931,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                     }`}
                     title="Pay with cash at reception"
                   >
-                    <CreditCard className="w-6 h-6" />
+                    <Coins className="w-6 h-6" />
                     <span className="text-sm font-medium">Cash</span>
                   </button>
 
