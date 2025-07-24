@@ -30,12 +30,14 @@ export default function Home() {
   });
 
   // Fetch secure pricing from backend (prevents CSRF/MitM attacks)
-  const { data: pricing } = useQuery({
+  const { data: pricing, isLoading: pricingLoading, error: pricingError } = useQuery({
     queryKey: ['/api/pricing'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/pricing');
       return response.json();
-    }
+    },
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const handleStayInfoSubmit = (data: StayData) => {
@@ -136,7 +138,15 @@ export default function Home() {
                 <div className="w-px h-12 bg-white/20"></div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-[#45c655]">
-                    {pricing?.dormitory || 15}€
+                    {pricingLoading ? (
+                      <div className="animate-pulse bg-green-200/20 rounded w-16 h-8 mx-auto"></div>
+                    ) : pricingError ? (
+                      <span className="text-red-300 text-sm">Error loading price</span>
+                    ) : pricing?.dormitory ? (
+                      `${pricing.dormitory}€`
+                    ) : (
+                      <span className="text-yellow-300 text-sm">Price unavailable</span>
+                    )}
                   </div>
                   <div className="text-sm text-green-100">
                     {t('hero.price_per_night')}

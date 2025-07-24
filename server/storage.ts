@@ -56,7 +56,7 @@ export interface IStorage {
   getReservationStats(): Promise<any>;
   
   // Pricing management
-  getPricing(): Promise<{dormitory: number, private: number, currency: string}>;
+  getPricing(): Promise<{dormitory: number | null, private: number | null, currency: string}>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -403,8 +403,8 @@ export class DatabaseStorage implements IStorage {
     return GDPRDataHandler.decryptPilgrimData(pilgrim);
   }
 
-  // Get secure pricing from database (prevents client-side tampering)
-  async getPricing(): Promise<{dormitory: number, private: number, currency: string}> {
+  // Get secure pricing from database (prevents client-side tampering) - NO FALLBACKS
+  async getPricing(): Promise<{dormitory: number | null, private: number | null, currency: string}> {
     // Get pricing from first available bed of each type (secure source)
     const dormitoryBed = await db
       .select({ pricePerNight: beds.pricePerNight, currency: beds.currency })
@@ -418,9 +418,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(beds.roomType, 'private'))
       .limit(1);
 
+    // Return null for unavailable prices - no hardcoded fallbacks
     return {
-      dormitory: dormitoryBed.length > 0 ? parseFloat(dormitoryBed[0].pricePerNight || "15.00") : 15.00,
-      private: privateBed.length > 0 ? parseFloat(privateBed[0].pricePerNight || "35.00") : 35.00,
+      dormitory: dormitoryBed.length > 0 && dormitoryBed[0].pricePerNight ? parseFloat(dormitoryBed[0].pricePerNight) : null,
+      private: privateBed.length > 0 && privateBed[0].pricePerNight ? parseFloat(privateBed[0].pricePerNight) : null,
       currency: dormitoryBed.length > 0 ? dormitoryBed[0].currency || "EUR" : "EUR"
     };
   }
