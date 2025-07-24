@@ -69,8 +69,11 @@ export function GooglePlacesAutocomplete({
           throw new Error('PlaceAutocompleteElement not available');
         }
 
-        // Create the new PlaceAutocompleteElement
-        const autocompleteElement = new google.maps.places.PlaceAutocompleteElement();
+        // Create the new PlaceAutocompleteElement with proper configuration
+        const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({
+          types: ["address"],
+          componentRestrictions: { country: ["es"] }
+        });
 
         // Style the element to match our design
         autocompleteElement.style.width = '100%';
@@ -164,7 +167,7 @@ export function GooglePlacesAutocomplete({
         
         const loader = new Loader({
           apiKey: apiKey,
-          version: "weekly",
+          version: "beta",
           libraries: ["places"]
         });
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { countryBFFClient, type CountryInfo } from '@/lib/country-bff-client';
+import { useI18n } from '@/contexts/i18n-context';
 
 
 
@@ -23,6 +24,7 @@ export function CountryPhoneInput({
   placeholder = "Local phone number",
   error
 }: CountryPhoneInputProps) {
+  const { t } = useI18n();
   const [countryInfo, setCountryInfo] = useState<CountryInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -126,7 +128,7 @@ export function CountryPhoneInput({
       
       {countryInfo && (
         <div className="text-xs text-gray-500 mt-1">
-          Format: {countryInfo.calling_code} + local number (without country code)
+          Formato: {countryInfo.calling_code} + número local (sin código país)
         </div>
       )}
     </div>
