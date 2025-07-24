@@ -19,6 +19,8 @@ export interface RegistrationFormData {
   phone?: string;
   email?: string;
   paymentType?: string;
+  estimatedArrivalTime?: string;
+  selectedBedId?: number;
   notes?: string;
 }
 
@@ -61,6 +63,8 @@ const initialState: RegistrationFormData = {
   phone: '',
   email: '',
   paymentType: 'efect',
+  estimatedArrivalTime: '',
+  selectedBedId: undefined,
   notes: '',
 };
 
