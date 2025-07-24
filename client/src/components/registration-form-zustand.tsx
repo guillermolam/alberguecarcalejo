@@ -472,9 +472,47 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     mutationFn: async (finalData: RegistrationFormData) => {
       console.log('Final booking submission:', finalData);
       
+      // Transform form data into the expected API format
+      const requestData = {
+        pilgrim: {
+          firstName: finalData.firstName || '',
+          lastName1: finalData.lastName1 || '',
+          lastName2: finalData.lastName2 || '',
+          documentNumber: finalData.documentNumber || '',
+          documentType: finalData.documentType || 'NIF',
+          documentSupport: finalData.documentSupport || '',
+          expiryDate: finalData.expiryDate || '',
+          birthDate: finalData.birthDate || '',
+          gender: finalData.gender || '',
+          nationality: finalData.nationality || '',
+          addressStreet: finalData.addressStreet || '',
+          addressCity: finalData.addressCity || '',
+          addressPostalCode: finalData.addressPostalCode || '',
+          addressCountry: finalData.addressCountry || '',
+          addressProvince: finalData.addressProvince || '',
+          phone: finalData.phone || '',
+          email: finalData.email || ''
+        },
+        booking: {
+          checkInDate: stayData.checkInDate,
+          checkOutDate: stayData.checkOutDate,
+          numberOfPersons: stayData.numberOfPersons,
+          estimatedArrivalTime: finalData.estimatedArrivalTime || '15:00',
+          selectedBedId: finalData.selectedBedId,
+          notes: finalData.notes || '',
+          totalAmount: (stayData.numberOfNights * 15).toString() // €15 per night dormitory rate
+        },
+        payment: {
+          paymentType: finalData.paymentType || 'efect',
+          amount: (stayData.numberOfNights * 15).toString() // €15 per night dormitory rate
+        }
+      };
+      
+      console.log('Transformed request data:', requestData);
+      
       // Submit the complete registration
-      const response = await apiRequest('/api/register', { body: finalData });
-      return response;
+      const response = await apiRequest('POST', '/api/register', requestData);
+      return response.json();
     },
     onMutate: () => {
       setIsSubmitting(true);
