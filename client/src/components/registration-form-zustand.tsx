@@ -705,6 +705,10 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                       onLocalPhoneChange={(phone) =>
                         updateField("phone", phone)
                       }
+                      onCountryChange={(countryName) => {
+                        updateField("addressCountry", countryName);
+                        console.log("Country changed to:", countryName);
+                      }}
                       label={t("registration.phone")}
                       required
                       placeholder={t("registration.phone_placeholder")}

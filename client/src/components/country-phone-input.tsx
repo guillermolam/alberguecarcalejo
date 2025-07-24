@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronDown } from 'lucide-react';
 import { countryBFFClient, type CountryInfo } from '@/lib/country-bff-client';
 import { useI18n } from '@/contexts/i18n-context';
 
@@ -9,16 +12,32 @@ interface CountryPhoneInputProps {
   countryName?: string;
   localPhone: string;
   onLocalPhoneChange: (phone: string) => void;
+  onCountryChange?: (countryName: string) => void;
   label?: string;
   required?: boolean;
   placeholder?: string;
   error?: string;
 }
 
+// Common countries for the phone input
+const COMMON_COUNTRIES = [
+  { name: 'Spain', code: 'ESP' },
+  { name: 'France', code: 'FRA' },
+  { name: 'Portugal', code: 'PRT' },
+  { name: 'United Kingdom', code: 'GBR' },
+  { name: 'Germany', code: 'DEU' },
+  { name: 'Italy', code: 'ITA' },
+  { name: 'United States', code: 'USA' },
+  { name: 'Brazil', code: 'BRA' },
+  { name: 'Argentina', code: 'ARG' },
+  { name: 'Mexico', code: 'MEX' },
+];
+
 export function CountryPhoneInput({
   countryName,
   localPhone,
   onLocalPhoneChange,
+  onCountryChange,
   label = "Phone Number",
   required = false,
   placeholder = "Local phone number",
@@ -65,41 +84,63 @@ export function CountryPhoneInput({
         {label} {required && '*'}
       </label>
       <div className="flex gap-2">
-        {/* Country Flag and Code (readonly) */}
-        <div className="flex items-center border rounded-md px-3 py-2 bg-gray-50 min-w-[120px]">
-          {loading ? (
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-4 bg-gray-200 animate-pulse rounded"></div>
-              <span className="text-sm text-gray-500">...</span>
+        {/* Country Selector with Flag and Code */}
+        <Select 
+          value={countryName || 'Spain'} 
+          onValueChange={(value) => {
+            onCountryChange?.(value);
+            fetchCountryInfo(value);
+          }}
+        >
+          <SelectTrigger className="min-w-[140px] max-w-[180px]">
+            <div className="flex items-center gap-2 overflow-hidden">
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-4 bg-gray-200 animate-pulse rounded"></div>
+                  <span className="text-sm text-gray-500">...</span>
+                </div>
+              ) : countryInfo ? (
+                <>
+                  <img 
+                    src={countryInfo.flag_url} 
+                    alt={`${countryInfo.country_name} flag`}
+                    className="w-5 h-4 object-cover rounded-sm flex-shrink-0"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  <span className="text-sm font-medium text-gray-700 truncate">
+                    {countryInfo.calling_code}
+                  </span>
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-4 bg-gray-200 rounded-sm"></div>
+                  <span className="text-sm text-gray-500">+--</span>
+                </div>
+              )}
             </div>
-          ) : countryInfo ? (
-            <div className="flex items-center gap-2">
-              <img 
-                src={countryInfo.flag_url} 
-                alt={`${countryInfo.country_name} flag`}
-                className="w-5 h-4 object-cover rounded-sm"
-                onError={(e) => {
-                  // Fallback to a simple colored rectangle if flag fails to load
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const fallback = target.nextElementSibling as HTMLElement;
-                  fallback?.classList.remove('hidden');
-                }}
-              />
-              <div className="w-5 h-4 bg-gray-300 rounded-sm hidden flex items-center justify-center">
-                <span className="text-xs text-gray-600">{countryInfo.country_code}</span>
-              </div>
-              <span className="text-sm font-medium text-gray-700">
-                {countryInfo.calling_code}
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-4 bg-gray-200 rounded-sm"></div>
-              <span className="text-sm text-gray-500">+--</span>
-            </div>
-          )}
-        </div>
+          </SelectTrigger>
+          <SelectContent>
+            {COMMON_COUNTRIES.map((country) => (
+              <SelectItem key={country.code} value={country.name}>
+                <div className="flex items-center gap-2">
+                  <img 
+                    src={`https://flagcdn.com/w320/${country.code.toLowerCase().slice(0, 2)}.png`}
+                    alt={`${country.name} flag`}
+                    className="w-5 h-4 object-cover rounded-sm"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  <span>{country.name}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Local Phone Number Input */}
         <div className="flex-1">
