@@ -618,13 +618,30 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                     <CollapsibleContent>
                       <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <GooglePlacesAutocomplete
-                            value={formData.addressStreet || ""}
-                            onChange={(value) =>
-                              updateField("addressStreet", value)
-                            }
-                            placeholder={t("registration.address")}
-                          />
+                          <div>
+                            <label className="text-sm font-medium text-gray-900 mb-1 block">
+                              {t("registration.address")} *
+                            </label>
+                            <GooglePlacesAutocomplete
+                              value={formData.addressStreet || ""}
+                              onChange={(value) => {
+                                console.log('Address changed:', value);
+                                updateField("addressStreet", value);
+                              }}
+                              onPlaceSelected={(place) => {
+                                console.log('Place selected:', place);
+                                // You can extract more details from the place if needed
+                                if (place?.formatted_address) {
+                                  updateField("addressStreet", place.formatted_address);
+                                }
+                              }}
+                              placeholder={t("registration.address")}
+                              className={showValidation && validationErrors.addressStreet ? "border-red-500" : ""}
+                            />
+                            {showValidation && validationErrors.addressStreet && (
+                              <p className="text-red-500 text-xs mt-1">{validationErrors.addressStreet}</p>
+                            )}
+                          </div>
 
                           <CustomInput
                             label={`${t("registration.city")} *`}

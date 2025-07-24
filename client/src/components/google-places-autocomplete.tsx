@@ -49,6 +49,7 @@ export function GooglePlacesAutocomplete({
   const fallbackInputRef = useRef<HTMLInputElement>(null);
   const autocompleteElementRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
   const [useFallback, setUseFallback] = useState(true);
+  console.log('GooglePlacesAutocomplete render - useFallback:', useFallback, 'value:', value);
   const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -155,7 +156,7 @@ export function GooglePlacesAutocomplete({
 
     const loadGoogleMapsAPI = async () => {
       try {
-        const apiKey = (import.meta.env as any).VITE_GOOGLE_MAPS_API_KEY;
+        const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
         
         if (!apiKey) {
           console.warn('No Google Places API key configured, using fallback input');
@@ -163,7 +164,7 @@ export function GooglePlacesAutocomplete({
           return;
         }
         
-        console.log('Loading Google Maps API with Places library...');
+        console.log('Loading Google Maps API with Places library...', 'API Key:', apiKey ? 'Present' : 'Missing');
         
         const loader = new Loader({
           apiKey: apiKey,
