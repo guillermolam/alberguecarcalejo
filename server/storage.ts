@@ -5,7 +5,7 @@ import {
   type Payment, type InsertPayment, type GovernmentSubmission, type InsertGovernmentSubmission
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, desc, asc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, sql, not, inArray } from "drizzle-orm";
 import { GDPRDataHandler } from "./encryption";
 import { reservationCleanup } from "./reservation-cleanup";
 
@@ -186,22 +186,27 @@ export class DatabaseStorage implements IStorage {
       .from(bookings)
       .where(
         and(
-          gte(bookings.checkOutDate, checkInDate),
           lte(bookings.checkInDate, checkOutDate),
-          eq(bookings.status, 'confirmed')
+          gte(bookings.checkOutDate, checkInDate),
+          // Include both confirmed bookings and active reservations
+          inArray(bookings.status, ['confirmed', 'reserved'])
         )
       );
 
-    const occupiedBedIds = occupiedBeds.map(b => b.bedId).filter(id => id !== null);
+    const occupiedBedIds = occupiedBeds
+      .map(b => b.bedId)
+      .filter(id => id !== null && id !== undefined) as number[];
 
     if (occupiedBedIds.length === 0) {
+      // No occupied beds, return all available beds
       return await db.select().from(beds).where(eq(beds.status, 'available'));
     }
 
+    // Return beds that are available and not in the occupied list
     return await db.select().from(beds).where(
       and(
         eq(beds.status, 'available'),
-        // Not in occupied beds list
+        not(inArray(beds.id, occupiedBedIds))
       )
     );
   }

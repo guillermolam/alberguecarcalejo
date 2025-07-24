@@ -482,16 +482,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use secure bed manager for availability check
       const availability = await bedManager.checkAvailability(checkInDate, checkOutDate, numberOfPersons);
-      const available = availability.available;
+      const available = availability.hasAvailability;
       
       res.json({
         available,
-        totalBeds: availability.totalBeds,
-        availableBeds: availability.availableBeds,
-        occupiedBeds: availability.totalBeds - availability.availableBeds,
-        suggestedDates: !available ? ["2025-07-21", "2025-07-22"] : undefined,
+        totalBeds: "24", // Total beds in albergue
+        availableBeds: availability.totalAvailable.toString(),
+        occupiedBeds: availability.totalAvailable > 0 ? (24 - availability.totalAvailable).toString() : "0",
+        suggestedDates: !available ? ["2025-07-25", "2025-07-26", "2025-07-27"] : undefined,
         message: available 
-          ? `${availability.availableBeds} bed(s) available for your stay.`
+          ? `${availability.totalAvailable} bed(s) available for your stay.`
           : "No beds available for the selected dates. Please consider the suggested alternative dates."
       });
       
