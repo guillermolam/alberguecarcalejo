@@ -718,6 +718,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                     error={
                       showValidation ? validationErrors.paymentType : undefined
                     }
+                    t={t}
                   />
 
                   <div className="text-sm text-gray-600">
@@ -872,7 +873,13 @@ interface CustomSelectProps {
   error?: string;
 }
 
-const CustomSelect = ({ label, value, onValueChange, options, error }: CustomSelectProps) => (
+const CustomSelect = ({
+  label,
+  value,
+  onValueChange,
+  options,
+  error,
+}: CustomSelectProps) => (
   <div>
     {label && (
       <label className="text-sm font-medium text-gray-900 mb-1 block">
@@ -899,31 +906,130 @@ interface PaymentTypeSelectorProps {
   selectedType?: string;
   onChange: (type: string) => void;
   error?: string;
+  t: (key: string) => string;
 }
 
+// Replace the PaymentTypeSelector component with this complete version
 const PaymentTypeSelector = ({
   selectedType,
   onChange,
   error,
+  t,
 }: PaymentTypeSelectorProps) => (
   <div>
-    <label className="text-sm font-medium">Payment Type *</label>
+    <label className="text-sm font-medium">
+      {t("registration.payment_type")} *
+    </label>
     <div className="grid grid-cols-2 gap-3 mt-2">
-      {PAYMENT_TYPES.map((type) => (
-        <button
-          key={type.value}
-          type="button"
-          onClick={() => onChange(type.value)}
-          className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
-            selectedType === type.value
-              ? "border-blue-500 bg-blue-50"
-              : "border-gray-300 hover:border-gray-400"
-          }`}
-        >
-          {type.icon}
-          <span className="text-sm font-medium">{type.label}</span>
-        </button>
-      ))}
+      <button
+        type="button"
+        onClick={() => onChange("tarjeta")}
+        className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+          selectedType === "tarjeta"
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 hover:border-gray-400"
+        }`}
+        title="Pay with Visa or Mastercard credit/debit card"
+      >
+        <div className="flex space-x-1">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Former_Visa_%28company%29_logo.svg/330px-Former_Visa_%28company%29_logo.svg.png"
+            alt="Visa"
+            className="h-6 w-auto"
+            title="Visa credit/debit cards accepted"
+          />
+          <img
+            src="https://brand.mastercard.com/content/dam/mccom/brandcenter/thumbnails/mastercard_circles_92px_2x.png"
+            alt="Mastercard"
+            className="h-6 w-auto"
+            title="Mastercard credit/debit cards accepted"
+          />
+        </div>
+        <span className="text-sm font-medium">Credit Card</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange("efect")}
+        className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+          selectedType === "efect"
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 hover:border-gray-400"
+        }`}
+        title="Pay with cash at reception"
+      >
+        <div className="flex items-center gap-1">
+          <Coins className="w-6 h-6" />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-4 h-4 text-gray-500 hover:text-blue-600" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="text-sm">
+                  Payment at reception. Reservation will only be held for one
+                  additional hour past estimated arrival time. If amount is not
+                  paid in full after that hour, automatic cancellation will be
+                  issued.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <span className="text-sm font-medium">Cash (at reception)</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange("bizum")}
+        className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+          selectedType === "bizum"
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 hover:border-gray-400"
+        }`}
+        title="Pay instantly with Bizum mobile payment"
+      >
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/2/2b/Bizum.svg"
+          alt="Bizum"
+          className="h-6 w-auto"
+          title="Bizum instant mobile payments"
+        />
+        <span className="text-sm font-medium">Bizum</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onChange("transferencia")}
+        className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+          selectedType === "transferencia"
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 hover:border-gray-400"
+        }`}
+        title="Pay via bank transfer or wire transfer"
+      >
+        <div className="flex items-center gap-1">
+          <CreditCard className="w-6 h-6" />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-4 h-4 text-gray-500 hover:text-blue-600" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="text-sm">
+                  Payment at reception. Reservation will only be held for one
+                  additional hour past estimated arrival time. If amount is not
+                  paid in full after that hour, automatic cancellation will be
+                  issued.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <span className="text-sm font-medium">
+          Bank Transfer (at reception)
+        </span>
+      </button>
     </div>
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
