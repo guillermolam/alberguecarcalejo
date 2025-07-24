@@ -543,7 +543,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                             }))}
                             error={
                               showValidation
-                                ? valoidationErrors.gender
+                                ? validationErrors.gender
                                 : undefined
                             }
                           />
@@ -647,10 +647,10 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                                     const components = place.address_components;
 
                                     // Helper function to find component by type
-                                    const findComponent = (types) => {
+                                    const findComponent = (types: string[]) => {
                                       for (const type of types) {
                                         const component = components.find(
-                                          (comp) => comp.types.includes(type),
+                                          (comp: any) => comp.types.includes(type),
                                         );
                                         if (component) return component;
                                       }
@@ -663,7 +663,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                                     ]);
                                     const route = findComponent(["route"]);
                                     if (streetNumber && route) {
-                                      const streetAddress = `${streetNumber.long_name} ${route.long_name}`;ciud
+                                      const streetAddress = `${streetNumber.long_name} ${route.long_name}`;
                                       updateField(
                                         "addressStreet",
                                         streetAddress,
@@ -839,7 +839,6 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                                 ? validationErrors.addressCountry
                                 : undefined
                             }
-                            Disabled={!isFieldReadOnly("addressCountry")}
                             className={
                               isFieldReadOnly("addressCountry")
                                 ? "bg-gray-50"
