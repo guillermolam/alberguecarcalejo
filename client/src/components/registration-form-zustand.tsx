@@ -688,6 +688,9 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                       label={t("registration.phone")}
                       required
                       placeholder={t("registration.phone_placeholder")}
+                      error={
+                        showValidation ? validationErrors.phone : undefined
+                      }
                     />
 
                     <CustomInput

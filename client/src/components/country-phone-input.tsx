@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { countryBFFClient, type CountryInfo } from '@/lib/country-bff-client';
 
 
@@ -12,6 +11,7 @@ interface CountryPhoneInputProps {
   label?: string;
   required?: boolean;
   placeholder?: string;
+  error?: string;
 }
 
 export function CountryPhoneInput({
@@ -20,11 +20,12 @@ export function CountryPhoneInput({
   onLocalPhoneChange,
   label = "Phone Number",
   required = false,
-  placeholder = "Local phone number"
+  placeholder = "Local phone number",
+  error
 }: CountryPhoneInputProps) {
   const [countryInfo, setCountryInfo] = useState<CountryInfo | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (countryName && countryName.trim().length > 0) {
@@ -42,14 +43,14 @@ export function CountryPhoneInput({
 
   const fetchCountryInfo = async (country: string) => {
     setLoading(true);
-    setError(null);
+    setFetchError(null);
     
     try {
       const data = await countryBFFClient.getCountryInfo(country);
       setCountryInfo(data);
     } catch (err) {
       console.error('Error fetching country info:', err);
-      setError('Unable to load country information');
+      setFetchError('Unable to load country information');
       setCountryInfo(null);
     } finally {
       setLoading(false);
@@ -57,10 +58,10 @@ export function CountryPhoneInput({
   };
 
   return (
-    <FormItem>
-      <FormLabel>
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gray-900">
         {label} {required && '*'}
-      </FormLabel>
+      </label>
       <div className="flex gap-2">
         {/* Country Flag and Code (readonly) */}
         <div className="flex items-center border rounded-md px-3 py-2 bg-gray-50 min-w-[120px]">
@@ -100,16 +101,14 @@ export function CountryPhoneInput({
 
         {/* Local Phone Number Input */}
         <div className="flex-1">
-          <FormControl>
-            <Input
-              type="tel"
-              value={localPhone}
-              onChange={(e) => onLocalPhoneChange(e.target.value)}
-              placeholder={placeholder}
-              maxLength={15}
-              className={error ? 'border-red-500' : ''}
-            />
-          </FormControl>
+          <Input
+            type="tel"
+            value={localPhone}
+            onChange={(e) => onLocalPhoneChange(e.target.value)}
+            placeholder={placeholder}
+            maxLength={15}
+            className={error ? 'border-red-500' : ''}
+          />
         </div>
       </div>
       
@@ -117,13 +116,15 @@ export function CountryPhoneInput({
         <div className="text-sm text-red-600 mt-1">{error}</div>
       )}
       
+      {fetchError && (
+        <div className="text-sm text-red-600 mt-1">{fetchError}</div>
+      )}
+      
       {countryInfo && (
         <div className="text-xs text-gray-500 mt-1">
           Format: {countryInfo.calling_code} + local number (without country code)
         </div>
       )}
-      
-      <FormMessage />
-    </FormItem>
+    </div>
   );
 }
