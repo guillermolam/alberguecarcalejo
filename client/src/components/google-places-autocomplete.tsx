@@ -76,29 +76,44 @@ export function GooglePlacesAutocomplete({
           componentRestrictions: { country: ["es"] }
         });
 
-        // Style the element to match shadcn Input component exactly
-        autocompleteElement.style.width = '100%';
-        autocompleteElement.style.height = '40px';
-        autocompleteElement.style.border = '1px solid hsl(var(--border))';
-        autocompleteElement.style.borderRadius = 'calc(var(--radius) - 2px)';
-        autocompleteElement.style.padding = '8px 12px';
-        autocompleteElement.style.fontSize = '14px';
-        autocompleteElement.style.backgroundColor = 'transparent';
-        autocompleteElement.style.color = 'hsl(var(--foreground))';
-        autocompleteElement.style.fontFamily = 'inherit';
-        autocompleteElement.style.transition = 'border-color 0.2s';
-        autocompleteElement.style.outline = 'none';
+        // Apply shadcn Input styling exactly - matches: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background"
+        autocompleteElement.style.cssText = `
+          display: flex;
+          height: 2.5rem;
+          width: 100%;
+          border-radius: calc(var(--radius) - 2px);
+          border: 1px solid hsl(var(--border));
+          background-color: hsl(var(--background));
+          padding: 0.5rem 0.75rem;
+          font-size: 1rem;
+          line-height: 1.5;
+          font-family: inherit;
+          color: hsl(var(--foreground));
+          transition: border-color 0.2s, box-shadow 0.2s;
+          outline: none;
+          box-sizing: border-box;
+          font-weight: 400;
+          ring-offset-background: hsl(var(--background));
+        `;
         
-        // Focus and hover styles
+        // Add placeholder styling
+        autocompleteElement.style.setProperty('--placeholder-color', 'hsl(var(--muted-foreground))');
+        
+        // Focus and hover styles matching shadcn: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         autocompleteElement.addEventListener('focus', () => {
-          autocompleteElement.style.borderColor = 'hsl(var(--ring))';
-          autocompleteElement.style.boxShadow = '0 0 0 2px hsl(var(--ring) / 0.2)';
+          autocompleteElement.style.outline = 'none';
+          autocompleteElement.style.boxShadow = '0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring))';
         });
         
         autocompleteElement.addEventListener('blur', () => {
-          autocompleteElement.style.borderColor = 'hsl(var(--border))';
           autocompleteElement.style.boxShadow = 'none';
         });
+        
+        // Disabled state styling: "disabled:cursor-not-allowed disabled:opacity-50"
+        if (autocompleteElement.hasAttribute('disabled')) {
+          autocompleteElement.style.cursor = 'not-allowed';
+          autocompleteElement.style.opacity = '0.5';
+        }
 
         // Set placeholder
         autocompleteElement.placeholder = placeholder || "Enter an address";
