@@ -515,6 +515,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Complete registration endpoint - with fallback to local logic
+  // Google Places API endpoint for address autocomplete
+  app.get("/api/places/autocomplete", async (req, res) => {
+    try {
+      const { input } = req.query;
+      
+      if (!input || typeof input !== 'string' || input.length < 2) {
+        return res.json({ predictions: [] });
+      }
+
+      const apiKey = process.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        return res.status(503).json({ error: "Google Places API not configured" });
+      }
+
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${apiKey}&types=address&language=en`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Google Places API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      res.json(data);
+      
+    } catch (error) {
+      console.error('Google Places API error:', error);
+      res.status(500).json({ error: "Failed to fetch address suggestions" });
+    }
+  });
+
   app.post("/api/register", async (req, res) => {
     try {
       const { pilgrim, booking, payment } = completeRegistrationSchema.parse(req.body);

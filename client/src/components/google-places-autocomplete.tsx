@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader } from '@googlemaps/js-api-loader';
+import { apiRequest } from '@/lib/queryClient';
 
 declare global {
   interface Window {
@@ -28,6 +29,15 @@ interface GooglePlacesAutocompleteProps {
   className?: string;
 }
 
+interface PlacePrediction {
+  place_id: string;
+  description: string;
+  structured_formatting?: {
+    main_text: string;
+    secondary_text: string;
+  };
+}
+
 export function GooglePlacesAutocomplete({
   value = '',
   onChange,
@@ -39,6 +49,9 @@ export function GooglePlacesAutocomplete({
   const fallbackInputRef = useRef<HTMLInputElement>(null);
   const autocompleteElementRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
   const [useFallback, setUseFallback] = useState(true);
+  const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const initializeModernAutocomplete = () => {
@@ -136,7 +149,7 @@ export function GooglePlacesAutocomplete({
 
     const loadGoogleMapsAPI = async () => {
       try {
-        const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
         
         if (!apiKey) {
           console.warn('No Google Places API key configured, using fallback input');
@@ -195,15 +208,105 @@ export function GooglePlacesAutocomplete({
     };
   }, []);
 
+  // Enhanced fallback with backend-powered Google Places autocomplete
+  const searchAddresses = async (query: string) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('GET', `/api/places/autocomplete?input=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      
+      if (data.predictions) {
+        setSuggestions(data.predictions);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Failed to fetch address suggestions:', error);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSuggestionSelect = (suggestion: PlacePrediction) => {
+    onChange(suggestion.description);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    
+    // Trigger place selected callback with the suggestion data
+    if (onPlaceSelected) {
+      onPlaceSelected({
+        formatted_address: suggestion.description,
+        place_id: suggestion.place_id
+      });
+    }
+  };
+
   if (useFallback) {
     return (
-      <Input
-        ref={fallbackInputRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={className}
-      />
+      <div className="relative">
+        <Input
+          ref={fallbackInputRef}
+          value={value}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            onChange(newValue);
+            
+            // Debounced search
+            clearTimeout((window as any).addressSearchTimeout);
+            (window as any).addressSearchTimeout = setTimeout(() => {
+              searchAddresses(newValue);
+            }, 300);
+          }}
+          onBlur={() => {
+            // Delay hiding suggestions to allow clicks
+            setTimeout(() => setShowSuggestions(false), 150);
+          }}
+          onFocus={() => {
+            if (suggestions.length > 0) {
+              setShowSuggestions(true);
+            }
+          }}
+          placeholder={placeholder}
+          className={className}
+        />
+        
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+            {suggestions.map((suggestion) => (
+              <div
+                key={suggestion.place_id}
+                className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                onMouseDown={(e) => {
+                  e.preventDefault(); // Prevent blur event
+                  handleSuggestionSelect(suggestion);
+                }}
+              >
+                <div className="text-sm font-medium text-gray-900">
+                  {suggestion.structured_formatting?.main_text || suggestion.description}
+                </div>
+                {suggestion.structured_formatting?.secondary_text && (
+                  <div className="text-xs text-gray-500">
+                    {suggestion.structured_formatting.secondary_text}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {isLoading && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+          </div>
+        )}
+      </div>
     );
   }
 
