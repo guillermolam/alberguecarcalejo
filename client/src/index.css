@@ -4,7 +4,7 @@
 @font-face {
   font-family: 'Wablone';
   src: url('https://fonts.fontspace.com/family/wablone/normal/normal') format('woff2'),
-       url('https://fonts.fontspace.com/family/wablone/normal/normal') format('woff');
+    url('https://fonts.fontspace.com/family/wablone/normal/normal') format('woff');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -40,53 +40,22 @@
   --chart-3: hsl(197, 37%, 24%);
   --chart-4: hsl(43, 74%, 66%);
   --chart-5: hsl(27, 87%, 67%);
-  
+
   /* Custom Albergue colors from attached palette */
-  --albergue-sage: hsl(75, 25%, 55%); /* Main sage green #9CA65A */
-  --albergue-dark-green: hsl(75, 35%, 25%); /* Dark green #3D5300 */
-  --albergue-gray: hsl(0, 0%, 20%); /* Dark gray #333333 */
-  --albergue-light-gray: hsl(0, 0%, 80%); /* Light gray #CCCCCC */
-  --albergue-blue: hsl(240, 100%, 50%); /* Bright blue #0000FF */
-  --albergue-cream: hsl(0, 0%, 95%); /* Light cream #F5F5F5 */
-  --albergue-white: hsl(0, 0%, 100%); /* Pure white #FFFFFF */
-}
-
-/* Google Places Element Styling */
-gmp-place-autocomplete-element {
-  display: flex !important;
-  height: 2.5rem !important;
-  width: 100% !important;
-  border-radius: calc(var(--radius) - 2px) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  background-color: hsl(var(--background)) !important;
-  padding: 0.5rem 0.75rem !important;
-  font-size: 1rem !important;
-  line-height: 1.5 !important;
-  font-family: inherit !important;
-  color: hsl(var(--foreground)) !important;
-  transition: border-color 0.2s, box-shadow 0.2s !important;
-  outline: none !important;
-  box-sizing: border-box !important;
-  font-weight: 400 !important;
-}
-
-gmp-place-autocomplete-element:focus {
-  outline: none !important;
-  border-color: hsl(var(--ring)) !important;
-  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring)) !important;
-}
-
-gmp-place-autocomplete-element input {
-  all: unset !important;
-  width: 100% !important;
-  height: 100% !important;
-  font-family: inherit !important;
-  font-size: inherit !important;
-  color: inherit !important;
-}
-
-gmp-place-autocomplete-element::placeholder {
-  color: hsl(var(--muted-foreground)) !important;
+  --albergue-sage: hsl(75, 25%, 55%);
+  /* Main sage green #9CA65A */
+  --albergue-dark-green: hsl(75, 35%, 25%);
+  /* Dark green #3D5300 */
+  --albergue-gray: hsl(0, 0%, 20%);
+  /* Dark gray #333333 */
+  --albergue-light-gray: hsl(0, 0%, 80%);
+  /* Light gray #CCCCCC */
+  --albergue-blue: hsl(240, 100%, 50%);
+  /* Bright blue #0000FF */
+  --albergue-cream: hsl(0, 0%, 95%);
+  /* Light cream #F5F5F5 */
+  --albergue-white: hsl(0, 0%, 100%);
+  /* Pure white #FFFFFF */
 }
 
 .dark {
@@ -144,13 +113,16 @@ gmp-place-autocomplete-element::placeholder {
     @apply font-sans antialiased bg-background text-foreground;
     font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
-  
+
   /* Title fonts using Wablone */
   .font-title {
     font-family: 'Wablone', 'Barlow', sans-serif !important;
   }
-  
-  h1, h2, h3, .title {
+
+  h1,
+  h2,
+  h3,
+  .title {
     font-family: 'Wablone', 'Barlow', sans-serif;
   }
 
@@ -194,7 +166,7 @@ gmp-place-autocomplete-element::placeholder {
   }
 
   .btn-spanish-red {
-    @apply bg-spanish-red hover:bg-red-700 text-white font-semibold transition-colors;
+    @apply bg-spanish-red lhover:bg-red-700 text-white font-semibold transition-colors;
   }
 
   /* Form input enhancements */
@@ -243,7 +215,7 @@ gmp-place-autocomplete-element::placeholder {
     .mobile-stack {
       @apply flex-col space-y-2 space-x-0;
     }
-    
+
     .mobile-full {
       @apply w-full;
     }
@@ -254,11 +226,11 @@ gmp-place-autocomplete-element::placeholder {
     .no-print {
       display: none !important;
     }
-    
+
     .print-break {
       page-break-after: always;
     }
-    
+
     body {
       @apply text-black bg-white;
     }
@@ -274,6 +246,7 @@ gmp-place-autocomplete-element::placeholder {
 
   /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -311,9 +284,12 @@ gmp-place-autocomplete-element::placeholder {
 
   /* Animation keyframes */
   @keyframes pulse-camino {
-    0%, 100% {
+
+    0%,
+    100% {
       opacity: 1;
     }
+
     50% {
       opacity: 0.5;
     }
@@ -335,5 +311,161 @@ gmp-place-autocomplete-element::placeholder {
 
   .shadow-spanish {
     box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1), 0 2px 4px -1px rgba(220, 38, 38, 0.06);
+  }
+
+  /* Google Places Autocomplete Fixes */
+  .google-places-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .google-places-input {
+    display: flex;
+    height: 2.5rem;
+    /* h-10 equivalent */
+    width: 100%;
+    border-radius: 0.375rem;
+    /* rounded-md */
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--background));
+    padding: 0.5rem 0.75rem;
+    /* px-3 py-2 */
+    font-size: 0.875rem;
+    /* text-sm */
+    ring-offset-background: hsl(var(--background));
+    transition: border-color 0.2s;
+  }
+
+  .google-places-input:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: hsl(var(--ring));
+    box-shadow: 0 0 0 2px hsl(var(--ring));
+  }
+
+  .google-places-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .google-places-input::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Google Places Dropdown Styles */
+  .pac-container {
+    background-color: hsl(var(--popover));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.375rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    font-family: inherit;
+    z-index: 10000 !important;
+    margin-top: 2px;
+  }
+
+  .pac-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+    border-bottom: 1px solid hsl(var(--border));
+    transition: background-color 0.2s;
+  }
+
+  .pac-item:last-child {
+    border-bottom: none;
+  }
+
+  .pac-item:hover,
+  .pac-item-selected {
+    background-color: hsl(var(--muted));
+  }
+
+  .pac-item-query {
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  .pac-matched {
+    font-weight: 700;
+  }
+
+  .pac-icon {
+    display: none;
+    /* Hide Google's default icons */
+  }
+
+  /* Fix for when address field is populated from OCR */
+  .google-places-input[value]:not([value=""]) {
+    color: hsl(var(--foreground));
+  }
+
+  /* Ensure proper stacking context */
+  .google-places-autocomplete-container {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Dark mode support */
+  .dark .pac-container {
+    background-color: hsl(var(--popover));
+    border-color: hsl(var(--border));
+  }
+
+  .dark .pac-item {
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+  }
+
+  .dark .pac-item:hover,
+  .dark .pac-item-selected {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+
+  /* Mobile responsive adjustments */
+  @media (max-width: 640px) {
+    .pac-container {
+      font-size: 16px;
+      /* Prevent zoom on iOS */
+    }
+
+    .pac-item {
+      padding: 0.75rem 1rem;
+    }
+  }
+
+  /* Auto-populated field animation */
+  @keyframes fieldPopulated {
+    0% {
+      background-color: hsl(var(--primary) / 0.1);
+    }
+
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .field-populated {
+    animation: fieldPopulated 1s ease-out;
+  }
+
+  /* Read-only fields styling */
+  input[readonly],
+  .google-places-input[readonly] {
+    background-color: hsl(var(--muted));
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+
+  /* Address hint styling */
+  .address-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+    font-style: italic;
+    margin-top: 0.25rem;
   }
 }

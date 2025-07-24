@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+  import { Check } from 'lucide-react';
 import { useI18n } from '@/contexts/i18n-context';
 
 interface Step {
@@ -13,6 +13,9 @@ interface RegistrationStepperProps {
 }
 
 export function RegistrationStepper({ currentStep }: RegistrationStepperProps) {
+  
+
+  
   const { t } = useI18n();
 
   const steps: Step[] = [

@@ -537,13 +537,13 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                             onValueChange={(value) =>
                               updateField("gender", value)
                             }
-                            options={GENDER_OPTIONS.map(option => ({
+                            options={GENDER_OPTIONS.map((option) => ({
                               value: option.value,
-                              label: t(option.label)
+                              label: t(option.label),
                             }))}
                             error={
                               showValidation
-                                ? validationErrors.gender
+                                ? valoidationErrors.gender
                                 : undefined
                             }
                           />
@@ -618,29 +618,163 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                     <CollapsibleContent>
                       <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
+                          <div className="google-places-wrapper">
                             <label className="text-sm font-medium text-gray-900 mb-1 block">
                               {t("registration.address")} *
                             </label>
-                            <GooglePlacesAutocomplete
-                              value={formData.addressStreet || ""}
-                              onChange={(value) => {
-                                console.log('Address changed:', value);
-                                updateField("addressStreet", value);
-                              }}
-                              onPlaceSelected={(place) => {
-                                console.log('Place selected:', place);
-                                // You can extract more details from the place if needed
-                                if (place?.formatted_address) {
-                                  updateField("addressStreet", place.formatted_address);
-                                }
-                              }}
-                              placeholder={t("registration.address")}
-                              className={showValidation && validationErrors.addressStreet ? "border-red-500" : ""}
-                            />
-                            {showValidation && validationErrors.addressStreet && (
-                              <p className="text-red-500 text-xs mt-1">{validationErrors.addressStreet}</p>
-                            )}
+                            <div className="relative">
+                              <GooglePlacesAutocomplete
+                                value={formData.addressStreet || ""}
+                                onChange={(value) => {
+                                  console.log("Address changed:", value);
+                                  updateField("addressStreet", value);
+                                }}
+                                onPlaceSelected={(place) => {
+                                  console.log("Place selected:", place);
+
+                                  if (!place) return;
+
+                                  // Set the formatted address
+                                  if (place.formatted_address) {
+                                    updateField(
+                                      "addressStreet",
+                                      place.formatted_address,
+                                    );
+                                  }
+
+                                  // Extract and populate address components
+                                  if (place.address_components) {
+                                    const components = place.address_components;
+
+                                    // Helper function to find component by type
+                                    const findComponent = (types) => {
+                                      for (const type of types) {
+                                        const component = components.find(
+                                          (comp) => comp.types.includes(type),
+                                        );
+                                        if (component) return component;
+                                      }
+                                      return null;
+                                    };
+
+                                    // Extract street number and route for more specific address
+                                    const streetNumber = findComponent([
+                                      "street_number",
+                                    ]);
+                                    const route = findComponent(["route"]);
+                                    if (streetNumber && route) {
+                                      const streetAddress = `${streetNumber.long_name} ${route.long_name}`;ciud
+                                      updateField(
+                                        "addressStreet",
+                                        streetAddress,
+                                      );
+                                    }
+
+                                    // Extract city (try multiple component types)
+                                    const city = findComponent([
+                                      "locality",
+                                      "administrative_area_level_2",
+                                      "sublocality",
+                                      "sublocality_level_1",
+                                    ]);
+                                    if (city) {
+                                      updateField(
+                                        "addressCity",
+                                        city.long_name,
+                                      );
+                                    }
+
+                                    // Extract postal code
+                                    const postalCode = findComponent([
+                                      "postal_code",
+                                    ]);
+                                    if (postalCode) {
+                                      updateField(
+                                        "addressPostalCode",
+                                        postalCode.long_name,
+                                      );
+                                    }
+
+                                    // Extract province/state
+                                    const province = findComponent([
+                                      "administrative_area_level_1",
+                                      "administrative_area_level_2",
+                                    ]);
+                                    if (province) {
+                                      updateField(
+                                        "addressProvince",
+                                        province.long_name,
+                                      );
+                                    }
+
+                                    // Extract country
+                                    const country = findComponent(["country"]);
+                                    if (country) {
+                                      const countryName = country.long_name;
+                                      const countryCode = country.short_name;
+
+                                      updateField(
+                                        "addressCountry",
+                                        countryName,
+                                      );
+                                      setDetectedCountryCode(countryCode);
+
+                                      // The CountryAutocomplete component will handle finding the matching
+                                      // country and updating nationality/phone format through its useEffect
+                                    }
+
+                                    // Trigger animation for populated fields
+                                    const fieldsToAnimate = [
+                                      "addressCity",
+                                      "addressPostalCode",
+                                      "addressProvince",
+                                      "addressCountry",
+                                    ];
+                                    fieldsToAnimate.forEach((field) => {
+                                      const element = document.querySelector(
+                                        `[name="${field}"]`,
+                                      );
+                                      if (element) {
+                                        element.classList.add(
+                                          "field-populated",
+                                        );
+                                        setTimeout(() => {
+                                          element.classList.remove(
+                                            "field-populated",
+                                          );
+                                        }, 1000);
+                                      }
+                                    });
+                                  }
+
+                                  // Show a success toast
+                                  toast({
+                                    title: t("notifications.address_populated"),
+                                    description: t(
+                                      "registration.address_fields_updated",
+                                    ),
+                                  });
+                                }}
+                                placeholder={t("registration.address")}
+                                className={`google-places-input ${showValidation && validationErrors.addressStreet ? "border-red-500" : ""}`}
+                              />
+                              {/* Debug info - remove in production */}
+                              {process.env.NODE_ENV === "development" && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Debug: {formData.addressStreet || "(empty)"}
+                                </div>
+                              )}
+                            </div>
+                            {showValidation &&
+                              validationErrors.addressStreet && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {validationErrors.addressStreet}
+                                </p>
+                              )}
+                            <p className="text-xs text-gray-500 mt-1 italic">
+                              {t("registration.address_autocomplete_hint") ||
+                                "Start typing and select an address to auto-fill city, postal code, and country"}
+                            </p>
                           </div>
 
                           <CustomInput
@@ -666,8 +800,31 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                               updateField("addressPostalCode", e.target.value)
                             }
                             maxLength={10}
+                            readOnly={isFieldReadOnly("addressPostalCode")}
+                            className={
+                              isFieldReadOnly("addressPostalCode")
+                                ? "bg-gray-50"
+                                : ""
+                            }
                           />
 
+                          <CustomInput
+                            label={t("registration.province")}
+                            value={formData.addressProvince || ""}
+                            onChange={(e) =>
+                              updateField("addressProvince", e.target.value)
+                            }
+                            maxLength={100}
+                            readOnly={isFieldReadOnly("addressProvince")}
+                            className={
+                              isFieldReadOnly("addressProvince")
+                                ? "bg-gray-50"
+                                : ""
+                            }
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1">
                           <CountryAutocomplete
                             value={formData.addressCountry || ""}
                             onCountrySelect={(country) => {
@@ -681,6 +838,12 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                               showValidation
                                 ? validationErrors.addressCountry
                                 : undefined
+                            }
+                            Disabled={!isFieldReadOnly("addressCountry")}
+                            className={
+                              isFieldReadOnly("addressCountry")
+                                ? "bg-gray-50"
+                                : ""
                             }
                           />
                         </div>
