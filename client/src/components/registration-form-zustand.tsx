@@ -3,7 +3,7 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useRegistrationStore, type RegistrationFormData } from '@/stores/registration-store';
 import { StayData } from './stay-info-form';
 import { ComprehensiveOCRResult } from '@/lib/enhanced-ocr';
-import { createRegistrationSchema } from '@/lib/validation';
+import { validateForm, validateField, hasValidationErrors, type ValidationErrors } from '@/lib/form-validation';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/i18n-context';
@@ -12,6 +12,10 @@ import MultiDocumentCapture from './multi-document-capture-new';
 import { CountryPhoneInput } from './country-phone-input';
 import { GooglePlacesAutocomplete } from './google-places-autocomplete';
 import { CountrySelector } from './country-selector';
+import { ArrivalTimePicker } from './arrival-time-picker';
+import { BedSelectionMap } from './bed-selection-map';
+import { BookingConfirmation } from './booking-confirmation';
+import { BookingSuccess } from './booking-success';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -44,6 +48,8 @@ interface RegistrationFormProps {
   onSuccess: () => void;
 }
 
+type BookingStep = 'form' | 'bed-selection' | 'confirmation' | 'success';
+
 export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ stayData, onBack, onSuccess }) => {
   const { t } = useI18n();
   const {
@@ -62,18 +68,28 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     populateFromOCR
   } = useRegistrationStore();
 
-  // State for validation display only (Zustand handles form data)
-  const [showValidation, setShowValidation] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  // Multi-step booking state
+  const [currentStep, setCurrentStep] = useState<BookingStep>('form');
+  const [bookingReference, setBookingReference] = useState<string>('');
+  
+  // State for validation display (field-specific errors)
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
   
   // State for collapsible cards and OCR confidence
   const [ocrConfidence, setOcrConfidence] = useState(0);
   const [personalInfoCollapsed, setPersonalInfoCollapsed] = useState(false);
   const [addressInfoCollapsed, setAddressInfoCollapsed] = useState(false);
   
-  // Simple state for tracking which fields have been focused
+  // Simple state for tracking which fields have been focused and bed info
   const [focusedFields, setFocusedFields] = useState<Set<string>>(new Set());
+  const [selectedBedInfo, setSelectedBedInfo] = useState<{
+    roomName: string;
+    bedNumber: number;
+    position: 'top' | 'bottom';
+    bunkNumber: number;
+  } | null>(null);
   
   // State for field locking system (lockable fields)
   const [fieldLocks, setFieldLocks] = useState<Record<string, boolean>>({});
@@ -401,97 +417,118 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     return errorMap[field] || message;
   };
 
-  // Validate form only on submit
-  const validateForm = () => {
-    try {
-      const schema = createRegistrationSchema();
-      schema.parse(formData);
-      return { success: true, errors: {} };
-    } catch (error: any) {
-      console.log('Form validation errors:', error);
-      const fieldErrors: Record<string, string> = {};
+  // Form submission handlers for different steps
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Form submission started - validating...');
+    
+    // Validate form data
+    const errors = validateForm(formData);
+    setValidationErrors(errors);
+    
+    if (hasValidationErrors(errors)) {
+      setShowValidation(true);
+      console.log('Form validation failed:', errors);
       
-      if (error.errors) {
-        error.errors.forEach((err: any) => {
-          const field = err.path?.[0];
-          if (field) {
-            fieldErrors[field] = translateValidationError(field, err.message);
-          }
-        });
+      // Find first error field and scroll to it
+      const firstErrorField = Object.keys(errors)[0];
+      const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       
-      return { success: false, errors: fieldErrors };
-    }
-  };
-
-  // Submit form - ONLY VALIDATE ON FINAL SUBMIT
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('FINAL FORM SUBMISSION - Completar Registro clicked');
-    
-    // Only now validate the form
-    const validation = validateForm();
-    setValidationErrors(validation.errors);
-    setShowValidation(true);
-    
-    if (!validation.success) {
-      console.log('Form validation failed on final submit:', validation.errors);
-      
-      // Create detailed error list
-      const errorList = Object.entries(validation.errors)
-        .map(([field, message]) => `• ${message}`)
-        .join('\n');
-      
       toast({
-        title: t('registration.validation_error'),
-        description: `${t('registration.fix_errors')}\n${errorList}`,
+        title: t('notifications.validation_error'),
+        description: errors[firstErrorField as keyof ValidationErrors] || t('registration.check_required_fields'),
         variant: 'destructive',
       });
       return;
     }
-
-    setIsSubmitting(true);
     
-    try {
-      const payload = { pilgrim: formData, booking: stayData };
-      console.log('Submitting registration:', payload);
+    // If validation passes, proceed to bed selection
+    console.log('Form validation passed, proceeding to bed selection');
+    setCurrentStep('bed-selection');
+  };
+
+  const handleBedSelection = (bedId: number) => {
+    console.log('Bed selected:', bedId);
+    updateField('selectedBedId', bedId);
+    
+    // Mock bed info - in real app this would come from API
+    setSelectedBedInfo({
+      roomName: bedId < 200 ? 'Dormitorio A' : bedId < 300 ? 'Dormitorio B' : 'Private Rooms',
+      bedNumber: (bedId % 100),
+      position: (bedId % 2 === 0) ? 'bottom' : 'top',
+      bunkNumber: Math.floor((bedId % 100) / 2) + 1
+    });
+  };
+
+  const handleBedConfirmation = () => {
+    console.log('Bed selection confirmed, proceeding to final confirmation');
+    setCurrentStep('confirmation');
+  };
+
+  const mutation = useMutation({
+    mutationFn: async (finalData: RegistrationFormData) => {
+      console.log('Final booking submission:', finalData);
       
-      const result = await apiRequest('POST', '/api/registration', payload);
+      // Submit the complete registration
+      const response = await apiRequest('/api/register', { body: finalData });
+      return response;
+    },
+    onMutate: () => {
+      setIsSubmitting(true);
+    },
+    onSuccess: (data) => {
+      console.log('Booking successful:', data);
+      setIsSubmitting(false);
+      
+      // Generate booking reference
+      const reference = `ALB-${Date.now().toString().slice(-6)}`;
+      setBookingReference(reference);
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       
       toast({
         title: t('notifications.success'),
-        description: t('registration.success_description'),
+        description: t('registration.booking_confirmed'),
       });
       
-      queryClient.invalidateQueries({ queryKey: ['api/dashboard'] });
-      onSuccess();
-    } catch (error: any) {
-      console.error('Registration submission error:', error);
+      setCurrentStep('success');
+    },
+    onError: (error: any) => {
+      console.error('Booking failed:', error);
+      setIsSubmitting(false);
+      
       toast({
         title: t('notifications.error'),
-        description: error.message || t('registration.error_description'),
+        description: error?.message || t('registration.error_message'),
         variant: 'destructive',
       });
-    } finally {
-      setIsSubmitting(false);
-    }
+    },
+  });
+
+  const handleFinalConfirmation = () => {
+    console.log('Final confirmation clicked');
+    mutation.mutate(formData);
   };
 
-  return (
-    <div className="min-h-screen p-4 bg-gradient-to-br from-green-50 to-blue-50">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={onBack} className="text-white">
-            &larr; {t('registration.back')}
-          </Button>
-          <h1 className="flex-1 text-center text-2xl font-bold text-white">
-            {t('registration.title')}
-          </h1>
-        </div>
+  const handleNewBooking = () => {
+    // Reset form and return to first step
+    setCurrentStep('form');
+    setBookingReference('');
+    setSelectedBedInfo(null);
+    setValidationErrors({});
+    setShowValidation(false);
+    onSuccess(); // This will typically navigate back to home
+  };
 
-        <RegistrationStepper currentStep={2} />
-
-        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+  // Render different steps
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 'form':
+        return (
+          <form onSubmit={handleFormSubmit} className="space-y-6 mt-6">
           {/* Document Type Selection */}
           <Card>
             <CardHeader>
@@ -1008,6 +1045,14 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
             </CardContent>
           </Card>
 
+          {/* Arrival Time Picker */}
+          <ArrivalTimePicker
+            checkInDate={stayData.checkInDate}
+            value={formData.estimatedArrivalTime}
+            onChange={(time) => updateField('estimatedArrivalTime', time)}
+            error={showValidation ? validationErrors.estimatedArrivalTime : undefined}
+          />
+
           {/* Compliance Notice */}
           <Alert>
             <AlertDescription>
@@ -1022,13 +1067,67 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
             </Button>
             <Button 
               type="submit" 
-              className="flex-1"
+              className="flex-1 bg-[#45c655] hover:bg-[#3bb048]"
               disabled={isSubmitting}
             >
-              {isSubmitting ? t('loading.submitting') : t('registration.submit')}
+              {isSubmitting ? t('loading.submitting') : t('registration.continue_to_bed_selection')}
             </Button>
           </div>
         </form>
+        );
+
+      case 'bed-selection':
+        return (
+          <BedSelectionMap
+            checkInDate={stayData.checkInDate}
+            checkOutDate={stayData.checkOutDate}
+            selectedBedId={formData.selectedBedId}
+            onBedSelect={handleBedSelection}
+            onConfirm={handleBedConfirmation}
+            onBack={() => setCurrentStep('form')}
+          />
+        );
+
+      case 'confirmation':
+        return (
+          <BookingConfirmation
+            formData={formData}
+            stayData={stayData}
+            bedInfo={selectedBedInfo}
+            onConfirm={handleFinalConfirmation}
+            onBack={() => setCurrentStep('bed-selection')}
+            isSubmitting={isSubmitting}
+          />
+        );
+
+      case 'success':
+        return (
+          <BookingSuccess
+            bookingReference={bookingReference}
+            onNewBooking={handleNewBooking}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen p-4 bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center mb-6">
+          <Button variant="ghost" onClick={onBack} className="text-white">
+            &larr; {t('registration.back')}
+          </Button>
+          <h1 className="flex-1 text-center text-2xl font-bold text-white">
+            {t('registration.title')}
+          </h1>
+        </div>
+
+        <RegistrationStepper currentStep={currentStep === 'form' ? 2 : currentStep === 'bed-selection' ? 3 : currentStep === 'confirmation' ? 4 : 5} />
+
+        {renderCurrentStep()}
       </div>
     </div>
   );

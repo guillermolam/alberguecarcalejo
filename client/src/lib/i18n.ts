@@ -123,6 +123,63 @@ export const translations: Record<string, Translations> = {
       "Tus datos serán transmitidos automáticamente a las autoridades españolas según el Real Decreto 933/2021 sobre obligaciones de registro en hospedajes.",
     "registration.back": "Volver",
     "registration.submit": "Completar registro",
+    "registration.continue_to_bed_selection": "Continuar a selección de cama",
+    "registration.check_required_fields": "Por favor revise los campos requeridos",
+    "registration.booking_confirmed": "Reserva confirmada exitosamente",
+    
+    // Arrival time picker
+    "arrival.title": "Hora estimada de llegada",
+    "arrival.estimated_time": "Hora estimada de llegada",
+    "arrival.select_time": "Seleccionar hora",
+    "arrival.required": "La hora de llegada es obligatoria",
+    
+    // Bed selection
+    "bed_selection.title": "Selección de cama",
+    "bed_selection.choose_bed": "Elige tu cama",
+    "bed_selection.available": "Disponible",
+    "bed_selection.occupied": "Ocupado",
+    "bed_selection.selected": "Seleccionado",
+    "bed_selection.confirm": "Confirmar selección",
+    "bed_selection.confirmed": "Confirmado",
+    "bed_selection.top_bunk": "Litera superior",
+    "bed_selection.bottom_bunk": "Litera inferior",
+    
+    // Confirmation
+    "confirmation.review_booking": "Revisar reserva",
+    "confirmation.review_details": "Por favor revise todos los detalles antes de confirmar",
+    "confirmation.personal_info": "Información personal",
+    "confirmation.contact_info": "Información de contacto",
+    "confirmation.stay_info": "Información de estancia",
+    "confirmation.bed_assignment": "Asignación de cama",
+    "confirmation.payment_info": "Información de pago",
+    "confirmation.important_notice": "Aviso importante",
+    "confirmation.cancellation_policy": "Política de cancelación de 1 hora después de la llegada",
+    "confirmation.check_in_time": "Check-in disponible a partir de las 15:00",
+    "confirmation.payment_due": "Pago debido a la llegada",
+    "confirmation.back": "Volver",
+    "confirmation.confirm_booking": "Confirmar reserva",
+    "confirmation.processing": "Procesando...",
+    
+    // Success
+    "success.congratulations": "¡Felicitaciones!",
+    "success.booking_confirmed": "Su reserva ha sido confirmada",
+    "success.reference_number": "Número de referencia",
+    "success.what_happens_next": "¿Qué pasa ahora?",
+    "success.email_sent": "Email de confirmación enviado",
+    "success.owner_notified": "Propietario notificado",
+    "success.government_submitted": "Datos enviados al gobierno",
+    "success.bed_reserved": "Cama reservada",
+    "success.explore_area": "Explora el área",
+    "success.recommendations": "Recomendaciones para peregrinos",
+    "success.attractions": "Atracciones",
+    "success.dining": "Restaurantes",
+    "success.services": "Servicios",
+    "success.need_help": "¿Necesitas ayuda?",
+    "success.contact_reception": "Contacta con recepción:",
+    "success.new_booking": "Nueva reserva",
+    
+    // Validation
+    "notifications.validation_error": "Error de validación",
     "validation.document_expired": "Documento caducado",
     "validation.document_expired_desc":
       "El documento ha caducado. Por favor, utilice un documento vigente.",
@@ -175,6 +232,12 @@ export const translations: Record<string, Translations> = {
     "validation.nationality_required": "La nacionalidad es obligatoria",
     "validation.phone_required": "El teléfono es obligatorio",
     "validation.country_required": "El país es obligatorio",
+    "validation.email_invalid": "Email inválido",
+    "validation.address_required": "La dirección es obligatoria",
+    "validation.city_required": "La ciudad es obligatoria", 
+    "validation.postal_code_required": "El código postal es obligatorio",
+    "validation.payment_type_required": "El tipo de pago es obligatorio",
+    "validation.document_type_required": "El tipo de documento es obligatorio",
 
     // General
     "general.locale_code": "es-ES",

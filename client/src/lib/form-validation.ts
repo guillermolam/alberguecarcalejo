@@ -94,9 +94,12 @@ export type ValidationErrors = {
 // Validate individual field
 export const validateField = (field: keyof RegistrationFormData, value: any): string | undefined => {
   try {
-    const fieldSchema = registrationValidationSchema.shape[field];
-    if (fieldSchema) {
-      fieldSchema.parse(value);
+    // Only validate fields that exist in our schema
+    if (field in registrationValidationSchema.shape) {
+      const fieldSchema = (registrationValidationSchema.shape as any)[field];
+      if (fieldSchema) {
+        fieldSchema.parse(value);
+      }
     }
     return undefined;
   } catch (error) {
