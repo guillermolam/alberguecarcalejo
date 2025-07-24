@@ -646,20 +646,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         referenceNumber
       });
 
+      // First create payment record
+      const paymentRecord = await storage.createPayment({
+        ...validated.payment,
+        bookingId: bookingRecord.id,
+        receiptNumber: `REC-${bookingRecord.id}-${Date.now()}`
+      });
+
       // Process payment and automatically assign bed using secure bed manager
       const paymentAndBedResult = await bedManager.processPaymentAndAssignBed(
         bookingRecord.id,
-        {
-          amount: parseFloat(validated.payment.amount),
-          paymentType: validated.payment.paymentType,
-          receiptNumber: `REC-${bookingRecord.id}-${Date.now()}`
-        }
+        paymentRecord.id
       );
 
       if (!paymentAndBedResult.success) {
         return res.status(400).json({
           success: false,
-          error: paymentAndBedResult.error
+          error: paymentAndBedResult.message || "Payment processing failed"
         });
       }
 
@@ -668,8 +671,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: {
           pilgrim: pilgrimRecord,
           booking: bookingRecord,
-          payment: { id: paymentAndBedResult.paymentId },
-          bedAssignment: paymentAndBedResult.bedAssignment,
+          payment: { id: paymentRecord.id },
+          bedAssignment: null, // Simple success response
           referenceNumber
         }
       });
@@ -981,14 +984,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (result.success) {
         res.json({
           success: true,
-          message: "Payment processed and bed assigned successfully",
-          bedAssignment: result.bedAssignment,
-          paymentId: result.paymentId
+          message: result.message || "Payment processed and bed assigned successfully"
         });
       } else {
         res.status(400).json({
           success: false,
-          error: result.error
+          error: result.message || "Payment processing failed"
         });
       }
     } catch (error) {
