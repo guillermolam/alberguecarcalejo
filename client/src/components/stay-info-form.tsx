@@ -235,15 +235,24 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
               <div className="w-6 h-4 bg-[#45c655] rounded-sm flex items-center justify-center">
                 <span className="text-white text-xs font-bold">€</span>
               </div>
-              <div className="w-6 h-4 bg-[#9CA65A] rounded-sm flex items-center justify-center">
-                <span className="text-white text-xs font-bold">V</span>
-              </div>
-              <div className="w-6 h-4 bg-[#45c655] rounded-sm flex items-center justify-center">
-                <span className="text-white text-xs font-bold">MC</span>
-              </div>
-              <div className="w-6 h-4 bg-[#9CA65A] rounded-sm flex items-center justify-center">
-                <span className="text-white text-xs font-bold">Bz</span>
-              </div>
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Former_Visa_%28company%29_logo.svg/330px-Former_Visa_%28company%29_logo.svg.png" 
+                alt="Visa" 
+                className="h-4 w-auto"
+                title="Visa cards accepted"
+              />
+              <img 
+                src="https://brand.mastercard.com/content/dam/mccom/brandcenter/thumbnails/mastercard_circles_92px_2x.png" 
+                alt="Mastercard" 
+                className="h-4 w-auto"
+                title="Mastercard accepted"
+              />
+              <img 
+                src="https://upload.wikimedia.org/wikipedia/commons/2/2b/Bizum.svg" 
+                alt="Bizum" 
+                className="h-4 w-auto"
+                title="Bizum mobile payments accepted"
+              />
             </div>
           </div>
         </div>
