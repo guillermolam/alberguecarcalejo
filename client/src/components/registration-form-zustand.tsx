@@ -73,6 +73,12 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
   
   // Simple state for tracking which fields have been focused
   const [focusedFields, setFocusedFields] = useState<Set<string>>(new Set());
+  
+  // State for field locking system (lockable fields)
+  const [fieldLocks, setFieldLocks] = useState<Record<string, boolean>>({});
+  
+  // Refs for input fields
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -190,9 +196,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     // Set up ref for this input
     const setInputRef = useCallback((el: HTMLInputElement | null) => {
       inputRefs.current[fieldName] = el;
-      if (inputRef) {
-        inputRef.current = el;
-      }
+      // Note: inputRef is readonly, no assignment needed
     }, [fieldName]);
     
     // Determine label and border color based on field state
@@ -812,22 +816,81 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium">{t('registration.payment_type')} *</label>
-                <Select value={formData.paymentType || 'efect'} onValueChange={(value) => updateField('paymentType', value)}>
-                  <SelectTrigger
-                    onFocus={() => handleFieldFocus('paymentType')}
-                    onMouseEnter={() => handleFieldFocus('paymentType')}
-                    onClick={() => handleFieldFocus('paymentType')}
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => updateField('paymentType', 'tarjeta')}
+                    className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                      formData.paymentType === 'tarjeta'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    title="Pay with Visa or Mastercard credit/debit card"
                   >
-                    <SelectValue placeholder="Seleccionar tipo de pago" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {t(type.label)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <div className="flex space-x-1">
+                      <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Former_Visa_%28company%29_logo.svg/330px-Former_Visa_%28company%29_logo.svg.png" 
+                        alt="Visa" 
+                        className="h-6 w-auto"
+                        title="Visa credit/debit cards accepted"
+                      />
+                      <img 
+                        src="https://brand.mastercard.com/content/dam/mccom/brandcenter/thumbnails/mastercard_circles_92px_2x.png" 
+                        alt="Mastercard" 
+                        className="h-6 w-auto"
+                        title="Mastercard credit/debit cards accepted"
+                      />
+                    </div>
+                    <span className="text-sm font-medium">Credit Card</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => updateField('paymentType', 'efect')}
+                    className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                      formData.paymentType === 'efect'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    title="Pay with cash at reception"
+                  >
+                    <CreditCard className="w-6 h-6" />
+                    <span className="text-sm font-medium">Cash</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => updateField('paymentType', 'bizum')}
+                    className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                      formData.paymentType === 'bizum'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    title="Pay instantly with Bizum mobile payment"
+                  >
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/2/2b/Bizum.svg" 
+                      alt="Bizum" 
+                      className="h-6 w-auto"
+                      title="Bizum instant mobile payments"
+                    />
+                    <span className="text-sm font-medium">Bizum</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => updateField('paymentType', 'transferencia')}
+                    className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                      formData.paymentType === 'transferencia'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    title="Pay via bank transfer or wire transfer"
+                  >
+                    <CreditCard className="w-6 h-6" />
+                    <span className="text-sm font-medium">Bank Transfer</span>
+                  </button>
+                </div>
               </div>
 
               <div className="text-sm text-gray-600">
