@@ -71,11 +71,8 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
   const [personalInfoCollapsed, setPersonalInfoCollapsed] = useState(false);
   const [addressInfoCollapsed, setAddressInfoCollapsed] = useState(false);
   
-  // State for field locks (individual field overrides)
-  const [fieldLocks, setFieldLocks] = useState<Record<string, boolean>>({});
-  
-  // Refs for inputs to manage focus
-  const inputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
+  // Simple state for tracking which fields have been focused
+  const [focusedFields, setFocusedFields] = useState<Set<string>>(new Set());
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
