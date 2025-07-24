@@ -497,15 +497,16 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
         booking: {
           checkInDate: stayData.checkInDate,
           checkOutDate: stayData.checkOutDate,
-          numberOfPersons: stayData.numberOfPersons,
+          numberOfPersons: stayData.guests || 1,
+          numberOfNights: stayData.nights || 1,
           estimatedArrivalTime: finalData.estimatedArrivalTime || '15:00',
           selectedBedId: finalData.selectedBedId,
           notes: finalData.notes || '',
-          totalAmount: (stayData.numberOfNights * 15).toString() // €15 per night dormitory rate
+          totalAmount: ((stayData.nights || 1) * 15).toString() // €15 per night dormitory rate
         },
         payment: {
           paymentType: finalData.paymentType || 'efect',
-          amount: (stayData.numberOfNights * 15).toString() // €15 per night dormitory rate
+          amount: ((stayData.nights || 1) * 15).toString() // €15 per night dormitory rate
         }
       };
       
@@ -1089,7 +1090,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               </div>
 
               <div className="text-sm text-gray-600">
-                <p>{t('pricing.total')}: €{(stayData.nights * 15).toFixed(2)}</p>
+                <p>{t('pricing.total')}: €{((stayData.nights || 1) * 15).toFixed(2)}</p>
                 <p>{t('pricing.payment_due')}</p>
               </div>
             </CardContent>

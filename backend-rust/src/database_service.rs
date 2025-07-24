@@ -67,11 +67,71 @@ impl DatabaseService {
     }
 
     pub async fn register_pilgrim(&self, mut req: Request) -> Result<Response> {
-        // This would handle the actual registration logic
-        // For now, return a mock success response
+        let body: serde_json::Value = req.json().await?;
+        
+        // Extract pilgrim, booking, and payment data
+        let pilgrim_data = body.get("pilgrim").ok_or("Missing pilgrim data")?;
+        let booking_data = body.get("booking").ok_or("Missing booking data")?;
+        let payment_data = body.get("payment").ok_or("Missing payment data")?;
+        
+        // Validate required fields
+        if let Some(document_number) = pilgrim_data.get("documentNumber").and_then(|v| v.as_str()) {
+            if document_number.is_empty() {
+                return Response::from_json(&json!({
+                    "success": false,
+                    "error": "Document number is required"
+                })).map(|mut r| { r.with_status(400); r });
+            }
+        } else {
+            return Response::from_json(&json!({
+                "success": false,
+                "error": "Document number is required"
+            })).map(|mut r| { r.with_status(400); r });
+        }
+        
+        // Generate booking reference
+        let booking_id = format!("BOOK-{}", chrono::Utc::now().timestamp());
+        let reference_number = format!("ALB-{}", chrono::Utc::now().timestamp().to_string().chars().rev().take(6).collect::<String>());
+        
+        // In a real implementation, this would:
+        // 1. Connect to PostgreSQL database using self.connection_string
+        // 2. Insert pilgrim data (or update if exists)
+        // 3. Create booking record
+        // 4. Process payment
+        // 5. Assign bed automatically
+        // 6. Generate government compliance XML
+        
+        // For now, return success with mock data structure
         Response::from_json(&json!({
             "success": true,
-            "booking_id": "BOOK-2025-001",
+            "data": {
+                "pilgrim": {
+                    "id": chrono::Utc::now().timestamp(),
+                    "firstName": pilgrim_data.get("firstName"),
+                    "lastName1": pilgrim_data.get("lastName1"),
+                    "documentNumber": pilgrim_data.get("documentNumber")
+                },
+                "booking": {
+                    "id": booking_id,
+                    "referenceNumber": reference_number,
+                    "checkInDate": booking_data.get("checkInDate"),
+                    "checkOutDate": booking_data.get("checkOutDate"),
+                    "totalAmount": booking_data.get("totalAmount"),
+                    "status": "confirmed"
+                },
+                "payment": {
+                    "id": format!("PAY-{}", chrono::Utc::now().timestamp()),
+                    "amount": payment_data.get("amount"),
+                    "paymentType": payment_data.get("paymentType"),
+                    "status": "pending"
+                },
+                "bedAssignment": {
+                    "bedId": booking_data.get("selectedBedId"),
+                    "bedNumber": format!("BED-{}", booking_data.get("selectedBedId").unwrap_or(&json!(108))),
+                    "roomType": "dormitory"
+                },
+                "referenceNumber": reference_number
+            },
             "message": "Registration completed successfully"
         }))
     }
