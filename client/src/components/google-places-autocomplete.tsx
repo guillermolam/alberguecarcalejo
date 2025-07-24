@@ -76,16 +76,29 @@ export function GooglePlacesAutocomplete({
           componentRestrictions: { country: ["es"] }
         });
 
-        // Style the element to match our design
+        // Style the element to match shadcn Input component exactly
         autocompleteElement.style.width = '100%';
         autocompleteElement.style.height = '40px';
         autocompleteElement.style.border = '1px solid hsl(var(--border))';
         autocompleteElement.style.borderRadius = 'calc(var(--radius) - 2px)';
         autocompleteElement.style.padding = '8px 12px';
         autocompleteElement.style.fontSize = '14px';
-        autocompleteElement.style.backgroundColor = 'hsl(var(--background))';
+        autocompleteElement.style.backgroundColor = 'transparent';
         autocompleteElement.style.color = 'hsl(var(--foreground))';
         autocompleteElement.style.fontFamily = 'inherit';
+        autocompleteElement.style.transition = 'border-color 0.2s';
+        autocompleteElement.style.outline = 'none';
+        
+        // Focus and hover styles
+        autocompleteElement.addEventListener('focus', () => {
+          autocompleteElement.style.borderColor = 'hsl(var(--ring))';
+          autocompleteElement.style.boxShadow = '0 0 0 2px hsl(var(--ring) / 0.2)';
+        });
+        
+        autocompleteElement.addEventListener('blur', () => {
+          autocompleteElement.style.borderColor = 'hsl(var(--border))';
+          autocompleteElement.style.boxShadow = 'none';
+        });
 
         // Set placeholder
         autocompleteElement.placeholder = placeholder || "Enter an address";
@@ -300,7 +313,7 @@ export function GooglePlacesAutocomplete({
 
   if (useFallback) {
     return (
-      <div className="relative">
+      <div className="relative w-full">
         <Input
           ref={fallbackInputRef}
           value={value}
@@ -324,7 +337,7 @@ export function GooglePlacesAutocomplete({
             }
           }}
           placeholder={placeholder || "Enter an address"}
-          className={className}
+          className={`w-full ${className || ""}`}
         />
         
         {showSuggestions && suggestions.length > 0 && (
@@ -361,6 +374,6 @@ export function GooglePlacesAutocomplete({
   }
 
   return (
-    <div ref={containerRef} className={className} />
+    <div ref={containerRef} className={`w-full ${className || ""}`} />
   );
 }
