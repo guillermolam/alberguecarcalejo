@@ -247,7 +247,7 @@ export function GooglePlacesAutocomplete({
             input: query,
             types: ['address']
           },
-          (predictions, status) => {
+          (predictions: any, status: any) => {
             console.log('Google Places response:', { status, predictions });
             setIsLoading(false);
             if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {

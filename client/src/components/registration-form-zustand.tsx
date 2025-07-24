@@ -23,9 +23,9 @@ import { useI18n } from "@/contexts/i18n-context";
 import { RegistrationStepper } from "./registration-stepper";
 import MultiDocumentCapture from "./multi-document-capture-new";
 import { CountryPhoneInput } from "./country-phone-input";
-import { GooglePlacesAutocomplete } from "@/components/country-autocomplete";
+import { GooglePlacesAutocomplete } from "@/components/google-places-autocomplete";
 import { CountrySelector } from "./country-selector";
-import { CountryAutocomplete } from "./country-autocomplete";
+import CountryAutocomplete from "./country-autocomplete";
 import { ArrivalTimePicker } from "./arrival-time-picker";
 import { BedSelectionMap } from "./bed-selection-map";
 import { BookingConfirmation } from "./booking-confirmation";
@@ -68,7 +68,7 @@ import {
   Info,
 } from "lucide-react";
 import { GENDER_OPTIONS, DOCUMENT_TYPES, PAYMENT_TYPES } from "@/lib/constants";
-import { getCountryCode } from "@/lib/country-utils";
+import { getCountryCode } from "@/lib/validation";
 
 type BookingStep = "form" | "bed-selection" | "confirmation" | "success";
 
@@ -285,7 +285,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
     };
 
     const handleBedSelection = (bedId: number) => {
-      updateField("selectedBedId", bedId);
+      updateField("selectedBedId", bedId.toString());
       setSelectedBedInfo({
         roomName:
           bedId < 200
@@ -478,7 +478,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                     <CollapsibleContent>
                       <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <Input
+                          <CustomInput
                             label={`${t("registration.first_name")} *`}
                             value={formData.firstName || ""}
                             onChange={(e) =>
@@ -492,7 +492,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                             }
                           />
 
-                          <Input
+                          <CustomInput
                             label={`${t("registration.last_name_1")} *`}
                             value={formData.lastName1 || ""}
                             onChange={(e) =>
@@ -506,7 +506,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                             }
                           />
 
-                          <Input
+                          <CustomInput
                             label={t("registration.last_name_2")}
                             value={formData.lastName2 || ""}
                             onChange={(e) =>
@@ -517,7 +517,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <Input
+                          <CustomInput
                             type="date"
                             label={`${t("registration.birth_date")} *`}
                             value={formData.birthDate || ""}
@@ -531,7 +531,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                             }
                           />
 
-                          <Select
+                          <CustomSelect
                             label={`${t("registration.gender")} *`}
                             value={formData.gender || ""}
                             onValueChange={(value) =>
@@ -545,7 +545,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                             }
                           />
 
-                          <Input
+                          <CustomInput
                             label={`${t("registration.nationality")} *`}
                             value={formData.nationality || ""}
                             onChange={(e) =>
@@ -561,7 +561,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <Input
+                          <CustomInput
                             label={`${t("registration.document_number")} *`}
                             value={formData.documentNumber || ""}
                             onChange={(e) =>
@@ -575,7 +575,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                             }
                           />
 
-                          <Input
+                          <CustomInput
                             label={t("registration.document_support")}
                             value={formData.documentSupport || ""}
                             onChange={(e) =>
@@ -621,14 +621,9 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                               updateField("addressStreet", value)
                             }
                             placeholder={t("registration.address")}
-                            error={
-                              showValidation
-                                ? validationErrors.addressStreet
-                                : undefined
-                            }
                           />
 
-                          <Input
+                          <CustomInput
                             label={`${t("registration.city")} *`}
                             value={formData.addressCity || ""}
                             onChange={(e) =>
@@ -644,7 +639,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <Input
+                          <CustomInput
                             label={t("registration.postal_code")}
                             value={formData.addressPostalCode || ""}
                             onChange={(e) =>
@@ -654,7 +649,6 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                           />
 
                           <CountryAutocomplete
-                            label={`${t("registration.country")} *`}
                             value={formData.addressCountry || ""}
                             onCountrySelect={(country) => {
                               updateField("addressCountry", country.name);
@@ -696,7 +690,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                       placeholder={t("registration.phone_placeholder")}
                     />
 
-                    <Input
+                    <CustomInput
                       type="email"
                       label={`${t("registration.email")} *`}
                       value={formData.email || ""}
@@ -792,7 +786,7 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
             <BookingConfirmation
               formData={formData}
               stayData={stayData}
-              bedInfo={selectedBedInfo}
+              bedInfo={selectedBedInfo || undefined}
               onConfirm={handleFinalConfirmation}
               onBack={() => setCurrentStep("bed-selection")}
               isSubmitting={isSubmitting}
@@ -847,13 +841,13 @@ RegistrationFormZustand.displayName = "RegistrationFormZustand";
 export default RegistrationFormZustand;
 
 // Helper components
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface CustomInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
 }
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, ...props }, ref) => (
+const CustomInput = React.forwardRef<HTMLInputElement, CustomInputProps>(
+  ({ label, error, className, ...props }, ref) => (
     <div>
       {label && (
         <label className="text-sm font-medium text-gray-900 mb-1 block">
@@ -862,7 +856,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       )}
       <input
         ref={ref}
-        className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${error ? "border-red-500" : ""}`}
+        className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${error ? "border-red-500" : ""} ${className || ""}`}
         {...props}
       />
       {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
@@ -870,32 +864,33 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ),
 );
 
-interface SelectProps {
+interface CustomSelectProps {
   label?: string;
   value: string;
-  onChange: (value: string) => void;
+  onValueChange: (value: string) => void;
   options: { value: string; label: string }[];
   error?: string;
 }
 
-const Select = ({ label, value, onChange, options, error }: SelectProps) => (
+const CustomSelect = ({ label, value, onValueChange, options, error }: CustomSelectProps) => (
   <div>
     {label && (
       <label className="text-sm font-medium text-gray-900 mb-1 block">
         {label}
       </label>
     )}
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${error ? "border-red-500" : ""}`}
-    >
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className={error ? "border-red-500" : ""}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
