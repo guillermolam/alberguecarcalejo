@@ -1,4 +1,4 @@
-import React, { Suspense, memo, useState, useEffect, useRef } from 'react';
+import React, { Suspense, memo, useState, useEffect, useRef, useCallback } from 'react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useRegistrationStore, type RegistrationFormData } from '@/stores/registration-store';
 import { StayData } from './stay-info-form';
@@ -74,8 +74,8 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
   // State for field locks (individual field overrides)
   const [fieldLocks, setFieldLocks] = useState<Record<string, boolean>>({});
   
-  // Track which field was just unlocked to trigger focus
-  const [justUnlockedField, setJustUnlockedField] = useState<string | null>(null);
+  // Refs for inputs to manage focus
+  const inputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -107,9 +107,16 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
       };
       console.log('New locks state:', newLocks);
       
-      // If we're unlocking the field, mark it for focus
+      // If we're unlocking the field, focus it after a short delay
       if (!prev[fieldName]) {
-        setTimeout(() => setJustUnlockedField(fieldName), 0);
+        setTimeout(() => {
+          const inputEl = inputRefs.current[fieldName];
+          if (inputEl) {
+            inputEl.focus();
+            inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+            console.log(`Field ${fieldName} focused after unlock`);
+          }
+        }, 100);
       }
       
       return newLocks;
@@ -184,21 +191,13 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     const hasBeenFocused = focusedFields.has(fieldName);
     const isLowConfidence = hasDocumentProcessed && ocrConfidence < 0.9 && !isEmpty && !hasBeenFocused;
     
-    // Effect to focus field when it gets unlocked
-    useEffect(() => {
-      if (justUnlockedField === fieldName && inputRef.current) {
-        console.log(`=== FOCUSING UNLOCKED FIELD: ${fieldName} ===`);
-        
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.focus();
-            inputRef.current.setSelectionRange(inputRef.current.value.length, inputRef.current.value.length);
-            console.log(`Field ${fieldName} focused and cursor positioned`);
-          }
-        }, 100);
-        setJustUnlockedField(null); // Clear the flag
+    // Set up ref for this input
+    const setInputRef = useCallback((el: HTMLInputElement | null) => {
+      inputRefs.current[fieldName] = el;
+      if (inputRef) {
+        inputRef.current = el;
       }
-    }, [justUnlockedField, fieldName]); // Remove isReadOnly from dependency array
+    }, [fieldName]);
     
     // Determine label and border color based on field state
     const getLabelColor = () => {
@@ -236,7 +235,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
             ) : (
               // Fully editable Input mode - no readOnly attributes at all
               <Input
-                ref={inputRef}
+                ref={setInputRef}
                 type={type}
                 value={formData[fieldName as keyof RegistrationFormData] || ''}
                 onChange={(e) => updateField(fieldName as keyof RegistrationFormData, e.target.value)}
@@ -247,7 +246,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                 maxLength={maxLength}
                 className={`${className} ${getBorderColor()} ${hasDocumentProcessed && !isEmpty ? 'pr-10' : ''} bg-white text-black`}
                 lang={type === 'date' ? t('general.locale_code') : undefined}
-                autoFocus={justUnlockedField === fieldName}
+                placeholder={label}
                 inputMode={type === 'date' ? 'numeric' : 'text'}
               />
             )}
