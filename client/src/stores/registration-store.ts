@@ -19,6 +19,7 @@ export interface RegistrationFormData {
   phone?: string;
   email?: string;
   paymentType?: string;
+  notes?: string;
 }
 
 interface RegistrationState {
@@ -60,6 +61,7 @@ const initialState: RegistrationFormData = {
   phone: '',
   email: '',
   paymentType: 'efect',
+  notes: '',
 };
 
 export const useRegistrationStore = create<RegistrationState>((set, get) => ({

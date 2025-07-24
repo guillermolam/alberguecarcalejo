@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useRegistrationStore, type RegistrationFormData } from '@/stores/registration-store';
 import { StayData } from './stay-info-form';
@@ -10,7 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/contexts/i18n-context';
-import { User, MapPin, Phone, CreditCard } from 'lucide-react';
+import { User, MapPin, Phone, CreditCard, Camera, Upload } from 'lucide-react';
+
+// Import document capture component
+import MultiDocumentCapture from './multi-document-capture-new';
 
 interface SimpleRegistrationFormProps {
   stayData: StayData;
@@ -45,6 +48,9 @@ export const SimpleRegistrationForm: React.FC<SimpleRegistrationFormProps> = ({
   const [showValidation, setShowValidation] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Document upload states
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -74,6 +80,30 @@ export const SimpleRegistrationForm: React.FC<SimpleRegistrationFormProps> = ({
       });
     }
   }, [ocrResult, hasDocumentProcessed, populateFromOCR, setDocumentProcessed, toast]);
+
+  const handleDocumentProcessed = (result: any) => {
+    console.log('Document processing completed:', result);
+    if (result.frontOCR?.extractedData || result.backOCR?.extractedData) {
+      // Combine data from front and back OCR if available
+      const extractedData = {
+        ...result.frontOCR?.extractedData,
+        ...result.backOCR?.extractedData
+      };
+      populateFromOCR(extractedData);
+      setDocumentProcessed(true);
+      setShowDocumentUpload(false);
+      
+      toast({
+        title: 'Document processed successfully',
+        description: 'Your document information has been extracted and populated in the form.',
+      });
+    }
+  };
+
+  const handleDocumentTypeChange = (documentType: string) => {
+    updateField('documentType', documentType);
+    setSelectedDocumentType(documentType);
+  };
 
   // Validation function
   const validateForm = (): boolean => {
@@ -161,7 +191,7 @@ export const SimpleRegistrationForm: React.FC<SimpleRegistrationFormProps> = ({
       const registrationData = {
         ...formData,
         ...stayData,
-        totalAmount: stayData.totalAmount,
+        totalAmount: (stayData.nights * 15), // Calculate based on nights and price per night
         establishmentCode: 'H28079511',
       };
 
@@ -175,6 +205,55 @@ export const SimpleRegistrationForm: React.FC<SimpleRegistrationFormProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Document Upload Section */}
+      {!hasDocumentProcessed && (
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-900">
+              <Camera className="w-5 h-5" />
+              Document Upload (Optional)
+            </CardTitle>
+            <p className="text-blue-700 text-sm">
+              Upload your ID document to automatically fill the form fields, or fill them manually below.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {!showDocumentUpload ? (
+              <Button
+                type="button"
+                onClick={() => setShowDocumentUpload(true)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Camera className="w-4 h-4" />
+                Upload or Take Photo
+              </Button>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => setShowDocumentUpload(false)}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                
+                <Suspense fallback={<div className="p-4 text-center">Loading document uploader...</div>}>
+                  <MultiDocumentCapture
+                    onDocumentProcessed={handleDocumentProcessed}
+                    onDocumentTypeChange={handleDocumentTypeChange}
+                    selectedDocumentType={selectedDocumentType}
+                  />
+                </Suspense>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* Personal Information Card */}
@@ -451,13 +530,13 @@ export const SimpleRegistrationForm: React.FC<SimpleRegistrationFormProps> = ({
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="font-medium text-blue-900 mb-2">{t('registration.stay_summary')}</h3>
               <p className="text-blue-800">
-                Dates: {stayData.startDate} - {stayData.endDate}
+                Dates: {stayData.checkInDate} - {stayData.checkOutDate}
               </p>
               <p className="text-blue-800">
                 Nights: {stayData.nights}
               </p>
               <p className="text-blue-800 font-bold">
-                Total: €{stayData.totalAmount}
+                Total: €{stayData.nights * 15}
               </p>
             </div>
 
@@ -493,7 +572,7 @@ export const SimpleRegistrationForm: React.FC<SimpleRegistrationFormProps> = ({
           >
             {isSubmitting || registrationMutation.isPending
               ? 'Submitting...'
-              : `Complete Registration (€${stayData.totalAmount})`
+              : `Complete Registration (€${stayData.nights * 15})`
             }
           </Button>
         </div>
