@@ -16,10 +16,12 @@ The application follows a zero-cost, modern full-stack architecture optimized fo
 - **Zero-Cost OCR Service**: 
   - **AWS Lambda Function**: Rust-based Spanish document OCR service (DEPLOYED)
   - **Function URL**: https://ypeekiyyo4wb4mvzg3vsa2yy2m0lhmew.lambda-url.eu-west-3.on.aws/
+  - **Multi-Document Support**: DNI, NIE, TIE (Residence Permits), and Passport processing
   - **Tesseract Integration**: Spanish DNI/NIE validation with checksum verification
   - **MRZ Parsing**: International passport processing
+  - **NIE/TIE Processing**: Complete extraction of residence permits and foreign identity documents
   - **Cost Optimization**: 256MB memory, 30s timeout, fits AWS free tier
-  - **Processing**: <$0/month for 720 requests (24 users/day)
+  - **Processing**: <$0/month for 720 requests (24 users/day)  
   - **Status**: CONFIGURED - VITE_LAMBDA_OCR_URL and VITE_GOOGLE_PLACES_API_KEY configured
   - **SAM Template**: Updated template provided in `lambda-sam-template.yaml`
   - **Code Structure**: Complete Lambda architecture documented in `lambda-code-structure.md`
@@ -160,6 +162,11 @@ The database schema supports full GDPR/NIS2 compliance with encrypted storage:
 - Replit-specific optimizations for cloud deployment
 
 ### Key Features
+- **Comprehensive Document Processing**: Full support for Spanish DNI, NIE (Foreign Identity Numbers), TIE (Residence Permits), and international passports
+  - **NIE Processing**: Extracts X/Y/Z-format foreign identity numbers with validation
+  - **TIE Processing**: Complete residence permit data extraction including work authorization status
+  - **Document Classification**: Automatic detection and routing for different permit types
+  - **Dual Number Extraction**: Handles documents with both NIE and TIE numbers
 - **GDPR/NIS2 Compliance System**: Full European data protection compliance implemented
   - **Encrypted Data at Rest**: AES-256-GCM encryption for all personal data in database
   - **Data Retention Management**: Automatic 7-year retention period for hospitality records
@@ -174,10 +181,15 @@ The database schema supports full GDPR/NIS2 compliance with encrypted storage:
   - **Transaction Integrity**: Atomic operations ensuring data consistency
 - **Dynamic Pricing System**: Database-driven pricing with dormitory beds (€15/night) and private rooms (€35/night)
 - **Secure Pricing Architecture**: All pricing data served from backend API to prevent CSRF/MitM attacks and client-side tampering
-- **Zero-Cost OCR Processing**: AWS Lambda function for Spanish DNI/NIE and passport processing (<$0/month for 24 users/day)
+- **Zero-Cost OCR Processing**: AWS Lambda function for Spanish DNI, NIE, TIE, and passport processing (<$0/month for 24 users/day)
 - **Advanced Document Validation**: Checksum verification for DNI/NIE using mod-23 algorithm
 - **International Passport Support**: MRZ (Machine Readable Zone) parsing for worldwide passports
 - **Intelligent Document Classification**: Automatic document type detection and routing
+- **Spanish Residence Permit Support**: Complete TIE (Tarjeta de Identidad de Extranjero) processing
+  - **Work Authorization Detection**: Automatic extraction of employment permission status
+  - **Dual Document Numbers**: Extracts both TIE permit numbers and associated NIE numbers
+  - **Multiple Permit Types**: Handles student visas, work permits, EU registration certificates
+  - **Expiry Date Extraction**: Automatic validation period detection for permit renewals
 - **Smart Rotation Detection**: Multi-algorithm rotation correction system with binarization/thresholding for optimal OCR accuracy
   - **Projection Method**: Variance-based rotation detection using document projections
   - **Text Orientation**: Gradient-based text line detection for proper alignment

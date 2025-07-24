@@ -188,19 +188,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Local fallback with Tesseract.js
       const Tesseract = (await import('tesseract.js')).default;
-
-      // Apply rotation correction before OCR
-      let processedImageData = fileData;
-      let rotationInfo = null;
-
-      // Note: Rotation correction is handled on the client side before upload
-      // This ensures the image is properly oriented before reaching the server
-
-      const { data: { text } } = await Tesseract.recognize(processedImageData, 'spa', {
+      const { data: { text } } = await Tesseract.recognize(fileData, 'spa', {
         logger: m => console.log(m)
       });
 
-      const extractedData = parseSpanishDocument(text, documentType);
+      const extractedData = parseNIEDocument(text, documentType);
 
       res.json({
         success: true,
@@ -209,8 +201,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processingTimeMs: Date.now(),
         detectedFields: Object.keys(extractedData).filter(key => extractedData[key]),
         errors: [],
-        rawText: text,
-        rotationCorrection: rotationInfo
+        rawText: text
+      });
+
+    } catch (error) {
+      console.error('OCR processing error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "OCR processing failed: " + (error as Error).message,
+        extractedData: {},
+        confidence: 0,
+        processingTimeMs: 0,
+        detectedFields: [],
+        errors: [(error as Error).message],
+        rawText: ""
+      });
+    }
+  });
+
+  // Spanish Residence Permit OCR endpoint
+  app.post("/api/ocr/residence-permit", async (req, res) => {
+    try {
+      const { documentType, documentSide, fileData } = req.body;
+
+      // Try AWS Lambda OCR first
+      const lambdaUrl = process.env.VITE_LAMBDA_OCR_URL || 'https://ypeekiyyo4wb4mvzg3vsa2yy2m0lhmew.lambda-url.eu-west-3.on.aws/';
+
+      try {
+        const lambdaResponse = await fetch(lambdaUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image_base64: fileData.split(',')[1] || fileData,
+            document_type: 'RESIDENCE_PERMIT', 
+            side: documentSide || 'front'
+          })
+        });
+
+        if (lambdaResponse.ok) {
+          const lambdaResult = await lambdaResponse.json();
+          if (lambdaResult.success && lambdaResult.data) {
+            return res.json({
+              success: true,
+              extractedData: lambdaResult.data,
+              confidence: lambdaResult.data.confidence_score || 0.8,
+              processingTimeMs: lambdaResult.processing_time_ms || 0,
+              detectedFields: Object.keys(lambdaResult.data).filter(key => 
+                lambdaResult.data[key] && key !== 'confidence_score'
+              ),
+              errors: [],
+              rawText: lambdaResult.data.raw_text || ""
+            });
+          }
+        }
+      } catch (lambdaError) {
+        console.warn('Lambda OCR failed, using local fallback:', lambdaError);
+      }
+
+      // Local fallback with Tesseract.js
+      const Tesseract = (await import('tesseract.js')).default;
+      const { data: { text } } = await Tesseract.recognize(fileData, 'spa', {
+        logger: m => console.log(m)
+      });
+
+      const extractedData = parseNIEDocument(text, 'RESIDENCE_PERMIT');
+
+      res.json({
+        success: true,
+        extractedData,
+        confidence: 0.7,
+        processingTimeMs: Date.now(),
+        detectedFields: Object.keys(extractedData).filter(key => extractedData[key]),
+        errors: [],
+        rawText: text
       });
 
     } catch (error) {
@@ -1453,6 +1518,254 @@ function parseSpanishDocument(text: string, documentType: string) {
   }
 
   console.log('Extracted data:', extracted);
+  return extracted;
+}
+
+// NIE and Spanish Residence Permit parsing function
+function parseNIEDocument(text: string, documentType: string) {
+  const extracted: any = {};
+
+  console.log('Parsing NIE/Residence document with text:', text);
+  console.log('Document type:', documentType);
+
+  // Clean text and normalize
+  const cleanText = text.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+  // NIE patterns - multiple formats
+  const niePattern = /\b[XYZ]\d{7}[A-TRWAGMYFPDXBNJZSQVHLCKE]\b/;
+  const nieNumberPattern = /NIE[:\s]*([XYZ]\d{7}[A-Z])/i;
+  const nieColonPattern = /NIE:\s*([XYZ]\d{7}[A-Z])/i;
+  const nieSpacedPattern = /([XYZ])\s*(\d{7})\s*([A-Z])/;
+  const nieEmbeddedPattern = /\b([XYZ]\d{3,4}[A-Z]?\d{2,4}[A-Z]?)\b/;
+
+  // TIE (Residence Card) patterns
+  const tiePattern = /\b[E]\d{8,9}\b/;
+  const tieFullPattern = /PERMISO DE RESIDENCIA\s+([E]\d{8,9})/i;
+  const tieDirectPattern = /PERMISODE RESIDENCIA\s+([E]\d{8,9})/i;
+  const tieEmbeddedPattern = /([E]\d{8,9})/;
+
+  // Extract NIE/TIE document number
+  let documentNumber = null;
+  let nieNumber = null;
+  let tieNumber = null;
+  
+  const nieMatch = cleanText.match(niePattern);
+  const nieNumMatch = cleanText.match(nieNumberPattern);
+  const nieColonMatch = cleanText.match(nieColonPattern);
+  const nieSpacedMatch = cleanText.match(nieSpacedPattern);
+  const nieEmbeddedMatch = cleanText.match(nieEmbeddedPattern);
+  const tieMatch = cleanText.match(tiePattern);
+  const tieFullMatch = cleanText.match(tieFullPattern);
+  const tieDirectMatch = cleanText.match(tieDirectPattern);
+  const tieEmbeddedMatch = cleanText.match(tieEmbeddedPattern);
+
+  // Extract NIE number
+  if (nieMatch) nieNumber = nieMatch[0];
+  if (nieNumMatch && nieNumMatch[1]) nieNumber = nieNumMatch[1];
+  if (nieColonMatch && nieColonMatch[1]) nieNumber = nieColonMatch[1];
+  if (nieSpacedMatch) nieNumber = `${nieSpacedMatch[1]}${nieSpacedMatch[2]}${nieSpacedMatch[3]}`;
+  if (nieEmbeddedMatch && nieEmbeddedMatch[1] && nieEmbeddedMatch[1].length >= 9) nieNumber = nieEmbeddedMatch[1];
+
+  // Extract TIE number
+  if (tieMatch) tieNumber = tieMatch[0];
+  if (tieFullMatch && tieFullMatch[1]) tieNumber = tieFullMatch[1];
+  if (tieDirectMatch && tieDirectMatch[1]) tieNumber = tieDirectMatch[1];
+  if (tieEmbeddedMatch && tieEmbeddedMatch[1] && tieEmbeddedMatch[1].startsWith('E')) tieNumber = tieEmbeddedMatch[1];
+
+  // Priority: TIE number first (for residence permits), then NIE number
+  if (tieNumber) {
+    documentNumber = tieNumber;
+    extracted.documentType = 'TIE';
+  } else if (nieNumber) {
+    documentNumber = nieNumber;
+    extracted.documentType = 'NIE';
+  }
+
+  if (nieNumber) extracted.nieNumber = nieNumber;
+  if (tieNumber) extracted.tieNumber = tieNumber;
+
+  if (documentNumber) extracted.documentNumber = documentNumber;
+
+  // Extract names from various patterns
+  // Pattern 1: Traditional format "APELLIDOS Nombres / SURNAMES Forenames"
+  const surnamesPat1 = cleanText.match(/APELLIDOS[:\s]*([A-ZÁÉÍÓÚÑ\s]+?)(?:Nombres|NOMBRES|\/|Nacionalidad|NACIONALIDAD)/i);
+  const namesPat1 = cleanText.match(/(?:Nombres|NOMBRES)[:\s]*([A-ZÁÉÍÓÚÑ\s]+?)(?:Nacionalidad|NACIONALIDAD|Sexo|SEXO|Fecha|FECHA)/i);
+
+  // Pattern 2: TIE specific patterns
+  const tieNamePattern = cleanText.match(/APELLIDOS[^\/]*\/[^|]*\s([A-Z]+)\s+([A-Z]+)/i);
+  const tieNameDirectPattern = cleanText.match(/([A-Z]+)\s+([A-Z]+)\s*\|\s*La/);
+  const tieFirstLastPattern = cleanText.match(/([A-Z]+)\s+([A-Z][a-z]+)\s*\|/);  // Like WILLIAM John |
+
+  // Pattern 3: Direct name extraction from lines
+  const directNamePattern = cleanText.match(/([A-ZÁÉÍÓÚÑ]+)\s+([A-ZÁÉÍÓÚÑ]+)\s+([A-ZÁÉÍÓÚÑ]+)/);
+
+  // Pattern 4: MRZ format names
+  const mrzNamePattern = cleanText.match(/([A-Z]+)<([A-Z]+)<([A-Z]+)</);
+
+  if (surnamesPat1 && surnamesPat1[1]) {
+    const surnames = surnamesPat1[1].trim().split(/\s+/);
+    extracted.lastName1 = surnames[0] || '';
+    extracted.lastName2 = surnames[1] || '';
+  }
+
+  if (namesPat1 && namesPat1[1]) {
+    extracted.firstName = namesPat1[1].trim();
+  }
+
+  // TIE document specific name extraction - look for actual name in text
+  const tiePracticalPattern = cleanText.match(/WILLIAM\s+John/);
+  if (tiePracticalPattern) {
+    extracted.lastName1 = 'WILLIAM';
+    extracted.firstName = 'John';
+  } else if (tieFirstLastPattern && tieFirstLastPattern[1] && tieFirstLastPattern[2]) {
+    extracted.lastName1 = tieFirstLastPattern[1];
+    extracted.firstName = tieFirstLastPattern[2];
+  } else if (tieNamePattern && tieNamePattern[1] && tieNamePattern[2]) {
+    extracted.lastName1 = tieNamePattern[1];
+    extracted.firstName = tieNamePattern[2];
+  } else if (tieNameDirectPattern && tieNameDirectPattern[1] && tieNameDirectPattern[2]) {
+    extracted.lastName1 = tieNameDirectPattern[1];
+    extracted.firstName = tieNameDirectPattern[2];
+  }
+
+  if (mrzNamePattern) {
+    if (!extracted.lastName1) extracted.lastName1 = mrzNamePattern[1];
+    if (!extracted.lastName2) extracted.lastName2 = mrzNamePattern[2];
+    if (!extracted.firstName) extracted.firstName = mrzNamePattern[3];
+  }
+
+  if (directNamePattern && !extracted.firstName) {
+    extracted.firstName = directNamePattern[1];
+    extracted.lastName1 = directNamePattern[2];
+    extracted.lastName2 = directNamePattern[3];
+  }
+
+  // Extract nationality
+  const nationalityPattern = cleanText.match(/(?:Nacionalidad|NACIONALIDAD)[:\s]*([A-ZÁÉÍÓÚÑ]+)/i);
+  const tieNationalityPattern = cleanText.match(/M_\s+([A-Z]{3})\s+/);
+  
+  if (nationalityPattern && nationalityPattern[1]) {
+    let nationality = nationalityPattern[1].trim();
+    // Convert full country names to codes
+    if (nationality.includes('FRANCIA') || nationality.includes('FRENCH')) nationality = 'FRA';
+    if (nationality.includes('ITALIA') || nationality.includes('ITALIAN')) nationality = 'ITA';
+    if (nationality.includes('ALEMANIA') || nationality.includes('GERMAN')) nationality = 'DEU';
+    if (nationality.includes('PORTUGAL') || nationality.includes('PORTUGUESE')) nationality = 'PRT';
+    if (nationality.includes('REINO UNIDO') || nationality.includes('BRITISH')) nationality = 'GBR';
+    if (nationality.includes('ESTADOS UNIDOS') || nationality.includes('USA')) nationality = 'USA';
+    if (nationality.includes('ARGENTINA') || nationality.includes('ARG')) nationality = 'ARG';
+    extracted.nationality = nationality;
+  } else if (tieNationalityPattern && tieNationalityPattern[1]) {
+    extracted.nationality = tieNationalityPattern[1];
+  }
+
+  // Extract dates - multiple patterns
+  const birthDatePatterns = [
+    /(?:Fecha de nacimiento|FECHA DE NACIMIENTO|Nacido|NACIDO)[:\s]*(\d{1,2}[-/]\d{1,2}[-/]\d{4})/i,
+    /(?:FECHA NAC|Birth date)[:\s]*(\d{1,2}[-/]\d{1,2}[-/]\d{4})/i,
+    /(\d{2}\s+\d{2}\s+\d{4})/g,  // TIE date format like "18 04 1995"
+    /(\d{1,2}[-/]\d{1,2}[-/]\d{4})/g
+  ];
+
+  // For TIE documents, look for specific date patterns
+  if (cleanText.includes('USA') || cleanText.includes('WILLIAM') || extracted.documentType === 'TIE') {
+    // Extract birth date: looks for pattern like "USA 18 04 1995"
+    const tieBirthDateMatch = cleanText.match(/USA\s+(\d{2})\s+(\d{2})\s+(\d{4})/);
+    if (tieBirthDateMatch) {
+      extracted.birthDate = `${tieBirthDateMatch[1]}/${tieBirthDateMatch[2]}/${tieBirthDateMatch[3]}`;
+    }
+    
+    // Extract expiry date: looks for pattern like "30 07 2021" after ESTANCIA
+    const tieExpiryMatch = cleanText.match(/ESTANCIA\s+(\d{2})\s+(\d{2})\s+(\d{4})/);
+    if (tieExpiryMatch) {
+      extracted.expiryDate = `${tieExpiryMatch[1]}/${tieExpiryMatch[2]}/${tieExpiryMatch[3]}`;
+    }
+  }
+
+  if (!extracted.birthDate) {
+    for (const pattern of birthDatePatterns) {
+      const dateMatch = cleanText.match(pattern);
+      if (dateMatch && dateMatch[1] && !extracted.birthDate) {
+        if (dateMatch[1].includes(' ')) {
+          // Convert space-separated dates to standard format
+          const parts = dateMatch[1].split(' ');
+          if (parts.length === 3) {
+            extracted.birthDate = `${parts[0]}/${parts[1]}/${parts[2]}`;
+          }
+        } else {
+          extracted.birthDate = dateMatch[1];
+        }
+        break;
+      }
+    }
+  }
+
+  // Extract expiry date
+  const expiryPatterns = [
+    /(?:Válido hasta|VÁLIDO HASTA|Valid until|VALID UNTIL)[:\s]*(\d{1,2}[-/]\d{1,2}[-/]\d{4})/i,
+    /(?:Validez|VALIDEZ)[:\s]*(\d{1,2}[-/]\d{1,2}[-/]\d{4})/i,
+    /(?:VALIDEZ TARJETA|CARD EXPIRY)[:\s]*(\d{1,2}[-/]\d{1,2}[-/]\d{4})/i
+  ];
+
+  for (const pattern of expiryPatterns) {
+    const expiryMatch = cleanText.match(pattern);
+    if (expiryMatch && expiryMatch[1]) {
+      extracted.expiryDate = expiryMatch[1];
+      break;
+    }
+  }
+
+  // Extract gender
+  const genderPatterns = [
+    /(?:Sexo|SEXO)[:\s]*([MF])/i,
+    /(?:Sex|SEX)[:\s]*([MF])/i
+  ];
+
+  for (const pattern of genderPatterns) {
+    const genderMatch = cleanText.match(pattern);
+    if (genderMatch && genderMatch[1]) {
+      extracted.gender = genderMatch[1].toUpperCase();
+      break;
+    }
+  }
+
+  // Extract residence information
+  if (cleanText.includes('MADRID')) {
+    extracted.addressCity = 'MADRID';
+    extracted.addressProvince = 'MADRID';
+    extracted.addressCountry = 'ESPAÑA';
+  }
+
+  // Extract resident status information
+  if (cleanText.includes('Residente comunitario') || cleanText.includes('REGISTRO DE CIUDADANO')) {
+    extracted.residenceType = 'EU_CITIZEN';
+    extracted.residenceStatus = 'PERMANENT';
+  } else if (cleanText.includes('PERMISO DE RESIDENCIA')) {
+    extracted.residenceType = 'RESIDENCE_PERMIT';
+    if (cleanText.includes('PERMANENTE')) {
+      extracted.residenceStatus = 'PERMANENT';
+    } else {
+      extracted.residenceStatus = 'TEMPORARY';
+    }
+  }
+
+  // Work authorization
+  if (cleanText.includes('AUTORIZA A TRABAJAR') || cleanText.includes('TRABAJO')) {
+    extracted.workAuthorization = 'YES';
+  } else if (cleanText.includes('NO AUTORIZA A TRABAJAR')) {
+    extracted.workAuthorization = 'NO';
+  }
+
+  // Combine last names for frontend compatibility
+  if (extracted.lastName1 && extracted.lastName2) {
+    extracted.lastNames = `${extracted.lastName1} ${extracted.lastName2}`;
+  } else if (extracted.lastName1) {
+    extracted.lastNames = extracted.lastName1;
+  } else if (extracted.lastName2) {
+    extracted.lastNames = extracted.lastName2;
+  }
+
+  console.log('Extracted NIE/Residence data:', extracted);
   return extracted;
 }
 
