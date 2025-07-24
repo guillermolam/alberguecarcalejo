@@ -37,6 +37,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize bed inventory and reservation cleanup service
+  const { bedManager } = await import("./bed-manager");
+  const { reservationCleanup } = await import("./reservation-cleanup");
+  
+  await bedManager.initializeBedInventory();
+  reservationCleanup.startAutomatedCleanup();
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

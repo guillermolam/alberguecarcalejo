@@ -12,25 +12,32 @@ export const users = pgTable("users", {
 
 export const pilgrims = pgTable("pilgrims", {
   id: serial("id").primaryKey(),
-  firstName: text("first_name").notNull(),
-  lastName1: text("last_name_1").notNull(),
-  lastName2: text("last_name_2"),
-  birthDate: date("birth_date").notNull(),
+  // Encrypted personal data (GDPR/NIS2 compliance)
+  firstName: text("first_name_encrypted").notNull(), // Encrypted at rest
+  lastName1: text("last_name_1_encrypted").notNull(), // Encrypted at rest
+  lastName2: text("last_name_2_encrypted"), // Encrypted at rest
+  birthDate: text("birth_date_encrypted").notNull(), // Encrypted at rest
   documentType: text("document_type").notNull(),
-  documentNumber: text("document_number").notNull(),
+  documentNumber: text("document_number_encrypted").notNull(), // Encrypted at rest
   documentSupport: text("document_support"),
   gender: text("gender").notNull(),
   nationality: text("nationality"),
-  phone: text("phone").notNull(),
-  email: text("email"),
+  phone: text("phone_encrypted").notNull(), // Encrypted at rest
+  email: text("email_encrypted"), // Encrypted at rest
   addressCountry: text("address_country").notNull(),
-  addressStreet: text("address_street").notNull(),
-  addressStreet2: text("address_street_2"),
-  addressCity: text("address_city").notNull(),
+  addressStreet: text("address_street_encrypted").notNull(), // Encrypted at rest
+  addressStreet2: text("address_street_2_encrypted"), // Encrypted at rest
+  addressCity: text("address_city_encrypted").notNull(), // Encrypted at rest
   addressPostalCode: text("address_postal_code").notNull(),
+  addressProvince: text("address_province"),
   addressMunicipalityCode: text("address_municipality_code"),
   idPhotoUrl: text("id_photo_url"),
   language: text("language").default("es"),
+  // GDPR compliance fields
+  consentGiven: boolean("consent_given").default(true),
+  consentDate: timestamp("consent_date").defaultNow(),
+  dataRetentionUntil: timestamp("data_retention_until"), // Auto-delete after legal period
+  lastAccessDate: timestamp("last_access_date").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -45,8 +52,15 @@ export const bookings = pgTable("bookings", {
   numberOfPersons: integer("number_of_persons").default(1),
   numberOfRooms: integer("number_of_rooms").default(1),
   hasInternet: boolean("has_internet").default(false),
-  status: text("status").default("confirmed"), // confirmed, checked_in, checked_out, cancelled
+  status: text("status").default("reserved"), // reserved, confirmed, checked_in, checked_out, cancelled, expired
   bedAssignmentId: integer("bed_assignment_id").references(() => beds.id),
+  estimatedArrivalTime: text("estimated_arrival_time"),
+  notes: text("notes"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  // Reservation timeout fields
+  reservationExpiresAt: timestamp("reservation_expires_at").notNull(), // 2 hours from creation
+  paymentDeadline: timestamp("payment_deadline").notNull(), // Same as expiration
+  autoCleanupProcessed: boolean("auto_cleanup_processed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -56,8 +70,12 @@ export const beds = pgTable("beds", {
   bedNumber: integer("bed_number").notNull(),
   roomNumber: integer("room_number").notNull(),
   roomName: text("room_name").notNull(),
+  roomType: text("room_type").default("dormitory"), // dormitory, private
   isAvailable: boolean("is_available").default(true),
-  status: text("status").default("available"), // available, occupied, maintenance
+  status: text("status").default("available"), // available, reserved, occupied, maintenance, cleaning
+  reservedUntil: timestamp("reserved_until"), // When reservation expires
+  lastCleanedAt: timestamp("last_cleaned_at"),
+  maintenanceNotes: text("maintenance_notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -66,12 +84,16 @@ export const payments = pgTable("payments", {
   id: serial("id").primaryKey(),
   bookingId: integer("booking_id").references(() => bookings.id).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  paymentType: text("payment_type").notNull(), // EFECT, TARJT, TRANS
-  paymentStatus: text("payment_status").default("pending"), // pending, completed, failed
+  paymentType: text("payment_type").notNull(), // efect, tarjeta, bizum, transferencia
+  paymentStatus: text("payment_status").default("awaiting_payment"), // awaiting_payment, completed, failed, cancelled, expired
   currency: text("currency").default("EUR"),
   receiptNumber: text("receipt_number"),
   paymentDate: timestamp("payment_date"),
+  paymentDeadline: timestamp("payment_deadline").notNull(), // 2 hours from creation
+  transactionId: text("transaction_id"),
+  gatewayResponse: json("gateway_response"), // For card payments
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const pricing = pgTable("pricing", {

@@ -1,383 +1,159 @@
-import { db } from "./db";
-import { beds, bookings, pilgrims, payments, pricing } from "@shared/schema";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { storage } from './storage';
+import { InsertBed } from '@shared/schema';
 
-export interface BedAssignmentRequest {
-  bookingId: number;
-  checkInDate: string;
-  checkOutDate: string;
-  numberOfPersons: number;
-}
-
-export interface BedAssignmentResult {
-  success: boolean;
-  bedId?: number;
-  bedNumber?: number;
-  roomNumber?: number;
-  roomName?: string;
-  error?: string;
-}
-
+// Bed Management Service for automatic inventory setup and management
 export class BedManager {
-  /**
-   * Initialize pricing if it doesn't exist
-   */
-  async initializePricing(): Promise<void> {
-    const existingPricing = await db.select().from(pricing).limit(1);
-    
-    if (existingPricing.length === 0) {
-      const defaultPricing = [
-        {
-          roomType: "dormitory",
-          bedType: "shared",
-          pricePerNight: "15.00",
-          currency: "EUR",
-          isActive: true
-        },
-        {
-          roomType: "private",
-          bedType: "private",
-          pricePerNight: "35.00",
-          currency: "EUR",
-          isActive: true
-        }
-      ];
-      
-      await db.insert(pricing).values(defaultPricing);
-      console.log("Initialized default pricing for Albergue Del Carrascalejo");
-    }
-  }
-
-  /**
-   * Initialize bed inventory if it doesn't exist
-   */
-  async initializeBeds(): Promise<void> {
-    const existingBeds = await db.select().from(beds).limit(1);
+  // Initialize bed inventory (24 beds total)
+  async initializeBedInventory() {
+    const existingBeds = await storage.getAllBeds();
     
     if (existingBeds.length === 0) {
-      // Create default bed inventory for Albergue Del Carrascalejo
-      const bedsToCreate = [];
+      console.log('🛏️  Initializing bed inventory...');
       
-      // Room 1: Dormitory A (10 beds)
-      for (let i = 1; i <= 10; i++) {
-        bedsToCreate.push({
-          bedNumber: i,
+      const bedsToCreate: InsertBed[] = [
+        // Dormitorio A (12 beds)
+        ...Array.from({ length: 12 }, (_, i) => ({
+          bedNumber: i + 1,
           roomNumber: 1,
-          roomName: "Dormitorio A",
+          roomName: 'Dormitorio A',
+          roomType: 'dormitory' as const,
           isAvailable: true,
-          status: "available" as const
-        });
-      }
-      
-      // Room 2: Dormitory B (8 beds)
-      for (let i = 11; i <= 18; i++) {
-        bedsToCreate.push({
-          bedNumber: i,
+          status: 'available' as const
+        })),
+        
+        // Dormitorio B (8 beds)
+        ...Array.from({ length: 8 }, (_, i) => ({
+          bedNumber: i + 1,
           roomNumber: 2,
-          roomName: "Dormitorio B",
+          roomName: 'Dormitorio B',
+          roomType: 'dormitory' as const,
           isAvailable: true,
-          status: "available" as const
-        });
-      }
-      
-      // Room 3: Private rooms (6 beds)
-      for (let i = 19; i <= 24; i++) {
-        bedsToCreate.push({
-          bedNumber: i,
-          roomNumber: 3,
-          roomName: `Habitación Privada ${i - 18}`,
+          status: 'available' as const
+        })),
+        
+        // Private Rooms (4 beds - individual rooms)
+        ...Array.from({ length: 4 }, (_, i) => ({
+          bedNumber: 1, // Each private room has bed #1
+          roomNumber: 100 + i + 1, // Rooms 101, 102, 103, 104
+          roomName: `Habitación Privada ${i + 1}`,
+          roomType: 'private' as const,
           isAvailable: true,
-          status: "available" as const
-        });
-      }
-      
-      await db.insert(beds).values(bedsToCreate);
-      console.log(`Initialized ${bedsToCreate.length} beds for Albergue Del Carrascalejo`);
+          status: 'available' as const
+        }))
+      ];
+
+      await storage.initializeBeds();
+      console.log(`✅ Initialized ${bedsToCreate.length} bed inventory`);
+    } else {
+      console.log(`🛏️  Bed inventory already exists: ${existingBeds.length} beds`);
     }
   }
 
-  /**
-   * Calculate pricing for a booking
-   */
-  async calculateBookingPrice(bedNumber: number, numberOfNights: number): Promise<{ total: number; currency: string; roomType: string }> {
-    // Determine room type based on bed number
-    let roomType = "dormitory";
-    if (bedNumber >= 19) {
-      roomType = "private";
-    }
-    
-    // Get pricing from database
-    const pricingData = await db
-      .select()
-      .from(pricing)
-      .where(and(
-        eq(pricing.roomType, roomType),
-        eq(pricing.isActive, true)
-      ))
-      .limit(1);
-    
-    if (pricingData.length === 0) {
-      throw new Error(`No pricing found for room type: ${roomType}`);
-    }
-    
-    const pricePerNight = parseFloat(pricingData[0].pricePerNight);
-    const total = pricePerNight * numberOfNights;
-    
+  // Get available beds for specific dates
+  async getAvailableBeds(checkInDate: string, checkOutDate: string) {
+    return await storage.getAvailableBeds(checkInDate, checkOutDate);
+  }
+
+  // Get bed occupancy statistics
+  async getBedOccupancyStats() {
+    const allBeds = await storage.getAllBeds();
+    const availableBeds = allBeds.filter(bed => bed.isAvailable && bed.status === 'available');
+    const reservedBeds = allBeds.filter(bed => bed.status === 'reserved');
+    const occupiedBeds = allBeds.filter(bed => bed.status === 'occupied');
+    const maintenanceBeds = allBeds.filter(bed => bed.status === 'maintenance');
+
     return {
-      total,
-      currency: pricingData[0].currency,
-      roomType
+      total: allBeds.length,
+      available: availableBeds.length,
+      reserved: reservedBeds.length,
+      occupied: occupiedBeds.length,
+      maintenance: maintenanceBeds.length,
+      occupancyRate: Math.round(((reservedBeds.length + occupiedBeds.length) / allBeds.length) * 100)
     };
   }
 
-  /**
-   * Get available beds for a date range
-   */
-  async getAvailableBeds(checkInDate: string, checkOutDate: string): Promise<any[]> {
-    return await db
-      .select({
-        id: beds.id,
-        bedNumber: beds.bedNumber,
-        roomNumber: beds.roomNumber,
-        roomName: beds.roomName,
-        status: beds.status
-      })
-      .from(beds)
-      .leftJoin(
-        bookings,
-        and(
-          eq(beds.id, bookings.bedAssignmentId),
-          // Check for date overlap
-          sql`(${bookings.checkInDate} <= ${checkOutDate} AND ${bookings.checkOutDate} >= ${checkInDate})`
-        )
-      )
-      .where(
-        and(
-          eq(beds.isAvailable, true),
-          eq(beds.status, "available"),
-          isNull(bookings.id) // No conflicting booking
-        )
-      )
-      .orderBy(beds.bedNumber);
-  }
-
-  /**
-   * Automatically assign a bed to a confirmed booking
-   */
-  async assignBedToBooking(request: BedAssignmentRequest): Promise<BedAssignmentResult> {
-    try {
-      await this.initializeBeds();
-
-      // Get available beds for the date range
-      const availableBeds = await this.getAvailableBeds(request.checkInDate, request.checkOutDate);
-      
-      if (availableBeds.length === 0) {
-        return {
-          success: false,
-          error: "No beds available for the selected dates"
-        };
-      }
-
-      // Select the first available bed (could be enhanced with room preferences)
-      const selectedBed = availableBeds[0];
-
-      // Update the booking with bed assignment
-      await db
-        .update(bookings)
-        .set({
-          bedAssignmentId: selectedBed.id,
-          status: "confirmed",
-          updatedAt: new Date()
-        })
-        .where(eq(bookings.id, request.bookingId));
-
-      return {
-        success: true,
-        bedId: selectedBed.id,
-        bedNumber: selectedBed.bedNumber,
-        roomNumber: selectedBed.roomNumber,
-        roomName: selectedBed.roomName
-      };
-
-    } catch (error) {
-      console.error("Error assigning bed:", error);
-      return {
-        success: false,
-        error: "Failed to assign bed due to system error"
-      };
-    }
-  }
-
-  /**
-   * Release a bed when booking is cancelled or checked out
-   */
-  async releaseBed(bookingId: number): Promise<boolean> {
-    try {
-      await db
-        .update(bookings)
-        .set({
-          bedAssignmentId: null,
-          status: "cancelled",
-          updatedAt: new Date()
-        })
-        .where(eq(bookings.id, bookingId));
-
-      return true;
-    } catch (error) {
-      console.error("Error releasing bed:", error);
-      return false;
-    }
-  }
-
-  /**
-   * Get bed occupancy statistics
-   */
-  async getBedOccupancyStats(date?: string): Promise<{
-    total: number;
-    occupied: number;
-    available: number;
-    maintenance: number;
-    occupancyRate: number;
-  }> {
-    await this.initializeBeds();
-
-    const currentDate = date || new Date().toISOString().split('T')[0];
-    
-    // Get total beds
-    const totalBeds = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(beds);
-
-    // Get occupied beds for the current date
-    const occupiedBeds = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(beds)
-      .innerJoin(
-        bookings,
-        and(
-          eq(beds.id, bookings.bedAssignmentId),
-          sql`${bookings.checkInDate} <= ${currentDate} AND ${bookings.checkOutDate} > ${currentDate}`,
-          eq(bookings.status, "confirmed")
-        )
-      );
-
-    // Get maintenance beds
-    const maintenanceBeds = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(beds)
-      .where(eq(beds.status, "maintenance"));
-
-    const total = totalBeds[0].count;
-    const occupied = occupiedBeds[0].count;
-    const maintenance = maintenanceBeds[0].count;
-    const available = total - occupied - maintenance;
-    const occupancyRate = total > 0 ? (occupied / total) * 100 : 0;
-
-    return {
-      total,
-      occupied,
-      available,
-      maintenance,
-      occupancyRate
-    };
-  }
-
-  /**
-   * Check bed availability for a specific date range
-   */
-  async checkAvailability(checkInDate: string, checkOutDate: string, numberOfPersons: number = 1): Promise<{
-    available: boolean;
-    availableBeds: number;
-    totalBeds: number;
-  }> {
-    await this.initializeBeds();
-
+  // Auto-assign best available bed based on request
+  async autoAssignBed(roomType: 'dormitory' | 'private' = 'dormitory', checkInDate: string, checkOutDate: string) {
     const availableBeds = await this.getAvailableBeds(checkInDate, checkOutDate);
-    const stats = await this.getBedOccupancyStats();
+    
+    // Filter by room type preference
+    const preferredBeds = availableBeds.filter(bed => bed.roomType === roomType);
+    
+    if (preferredBeds.length === 0) {
+      // No beds of preferred type, try any available bed
+      if (availableBeds.length > 0) {
+        return availableBeds[0]; // Return first available bed of any type
+      }
+      return null; // No beds available
+    }
+    
+    // For dormitory, prefer Dormitorio A (larger room)
+    if (roomType === 'dormitory') {
+      const dormitorioA = preferredBeds.filter(bed => bed.roomName === 'Dormitorio A');
+      if (dormitorioA.length > 0) {
+        return dormitorioA[0];
+      }
+    }
+    
+    // Return first available bed of preferred type
+    return preferredBeds[0];
+  }
 
+  // Check bed availability for specific dates (compatibility alias)
+  async checkAvailability(checkInDate: string, checkOutDate: string, numberOfPersons: number = 1) {
+    return await this.checkBedAvailability(checkInDate, checkOutDate);
+  }
+
+  // Check bed availability for specific dates
+  async checkBedAvailability(checkInDate: string, checkOutDate: string) {
+    const availableBeds = await this.getAvailableBeds(checkInDate, checkOutDate);
+    const dormitoryBeds = availableBeds.filter(bed => bed.roomType === 'dormitory');
+    const privateBeds = availableBeds.filter(bed => bed.roomType === 'private');
+    
     return {
-      available: availableBeds.length >= numberOfPersons,
-      availableBeds: availableBeds.length,
-      totalBeds: stats.total
+      totalAvailable: availableBeds.length,
+      dormitoryAvailable: dormitoryBeds.length,
+      privateAvailable: privateBeds.length,
+      hasAvailability: availableBeds.length > 0
     };
   }
 
-  /**
-   * Process payment and automatically assign bed
-   */
-  async processPaymentAndAssignBed(bookingId: number, paymentData: {
-    amount: number;
-    paymentType: string;
-    receiptNumber?: string;
-  }): Promise<{
-    success: boolean;
-    bedAssignment?: BedAssignmentResult;
-    paymentId?: number;
-    error?: string;
-  }> {
+  // Process payment and assign bed (atomic operation)
+  async processPaymentAndAssignBed(bookingId: number, paymentId: number) {
     try {
       // Get booking details
-      const booking = await db
-        .select()
-        .from(bookings)
-        .where(eq(bookings.id, bookingId))
-        .limit(1);
-
-      if (booking.length === 0) {
-        return { success: false, error: "Booking not found" };
+      const booking = await storage.getBooking(bookingId);
+      if (!booking) {
+        throw new Error('Booking not found');
       }
 
-      const bookingData = booking[0];
+      // Update payment status to completed
+      await storage.updatePaymentStatus(paymentId, 'completed');
 
-      // Create payment record
-      const paymentResult = await db
-        .insert(payments)
-        .values({
-          bookingId,
-          amount: paymentData.amount.toString(),
-          paymentType: paymentData.paymentType,
-          paymentStatus: "completed",
-          currency: "EUR",
-          receiptNumber: paymentData.receiptNumber,
-          paymentDate: new Date()
-        })
-        .returning({ id: payments.id });
+      // Update booking status to confirmed
+      await storage.updateBookingStatus(bookingId, 'confirmed');
 
-      const paymentId = paymentResult[0].id;
-
-      // Assign bed automatically after payment confirmation
-      const bedAssignment = await this.assignBedToBooking({
-        bookingId,
-        checkInDate: bookingData.checkInDate,
-        checkOutDate: bookingData.checkOutDate,
-        numberOfPersons: bookingData.numberOfPersons
-      });
-
-      if (!bedAssignment.success) {
-        // Rollback payment if bed assignment fails
-        await db
-          .update(payments)
-          .set({ paymentStatus: "failed" })
-          .where(eq(payments.id, paymentId));
-
-        return {
-          success: false,
-          error: bedAssignment.error
-        };
+      // Update bed status to occupied if bed is assigned
+      if (booking.bedAssignmentId) {
+        await storage.updateBedStatus(booking.bedAssignmentId, 'occupied');
       }
 
-      return {
-        success: true,
-        bedAssignment,
-        paymentId
-      };
-
+      return { success: true, message: 'Payment processed and bed assigned' };
     } catch (error) {
-      console.error("Error processing payment and bed assignment:", error);
-      return {
-        success: false,
-        error: "Failed to process payment and assign bed"
-      };
+      console.error('Error processing payment and assigning bed:', error);
+      throw error;
+    }
+  }
+
+  // Release bed when booking is cancelled
+  async releaseBed(bedId: number) {
+    try {
+      await storage.updateBedStatus(bedId, 'available');
+      console.log(`🛏️  Released bed ${bedId} back to available inventory`);
+      return { success: true, message: 'Bed released successfully' };
+    } catch (error) {
+      console.error('Error releasing bed:', error);
+      throw error;
     }
   }
 }

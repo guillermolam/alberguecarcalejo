@@ -65,14 +65,30 @@ The application follows a zero-cost, modern full-stack architecture optimized fo
 - **Type-Safe Operations**: Serde serialization for request/response validation
 
 ### Database Design
-The database schema supports:
-- **Pilgrims**: Personal information and documents
-- **Bookings**: Reservation management with status tracking
-- **Beds**: Physical bed inventory and availability
-- **Payments**: Financial transaction records
+The database schema supports full GDPR/NIS2 compliance with encrypted storage:
+- **Pilgrims**: GDPR-compliant encrypted personal data storage
+  - Encrypted fields: firstName, lastName1, lastName2, birthDate, documentNumber, phone, email, address fields
+  - Compliance tracking: consentGiven, consentDate, dataRetentionUntil, lastAccessDate
+- **Bookings**: Advanced reservation management with automated timeout
+  - Status tracking: reserved → confirmed/expired with automatic transitions
+  - Reservation expiry: 2-hour timeout with automatic cleanup triggers
+  - Payment deadlines: Strict enforcement with automated cancellation
+- **Beds**: Physical bed inventory with reservation state management
+  - Enhanced status tracking: available, reserved, occupied, maintenance, cleaning
+  - Temporal reservations: reservedUntil timestamps for automatic release
+- **Payments**: Financial transaction records with deadline enforcement
+  - Payment status: awaiting_payment → completed/cancelled/expired
+  - Deadline tracking: 2-hour payment windows with automatic expiration
 - **Government Submissions**: Compliance tracking for Spanish authorities
+- **PostgreSQL Triggers**: Database-level automation for reservation cleanup
 
 ### Authentication & Security
+- **GDPR/NIS2 Compliance**: Full European data protection regulation compliance
+  - **AES-256-GCM Encryption**: All personal data encrypted at rest in database
+  - **Data Retention Policies**: 7-year automatic retention for Spanish hospitality regulations
+  - **Consent Management**: Explicit consent tracking with timestamps
+  - **Access Logging**: All personal data access logged with timestamps
+  - **Right to Erasure**: Secure data deletion with memory overwriting
 - **Multi-layered Security**: Rust-WASM BFF modules provide enhanced input validation and rate limiting
 - **Admin Authentication**: Session-based auth with SHA-256 hashing and progressive lockouts (5min after 3 failures, 30min after 5+ failures)
 - **Rate Limiting**: Granular limits per operation type:
@@ -144,6 +160,18 @@ The database schema supports:
 - Replit-specific optimizations for cloud deployment
 
 ### Key Features
+- **GDPR/NIS2 Compliance System**: Full European data protection compliance implemented
+  - **Encrypted Data at Rest**: AES-256-GCM encryption for all personal data in database
+  - **Data Retention Management**: Automatic 7-year retention period for hospitality records
+  - **Consent Tracking**: Explicit consent recording with timestamps
+  - **Data Access Logging**: Last access tracking for all personal data queries
+  - **Right to be Forgotten**: Secure data deletion capabilities
+- **Automated Reservation Management**: 2-hour reservation timeout with automated cleanup
+  - **PostgreSQL Triggers**: Database-level automated cleanup for expired reservations
+  - **Bed Inventory Restoration**: Automatic bed release on reservation expiration
+  - **Payment Deadline Enforcement**: Strict 2-hour payment window with auto-cancellation
+  - **Background Cleanup Service**: 5-minute interval processing of expired reservations
+  - **Transaction Integrity**: Atomic operations ensuring data consistency
 - **Dynamic Pricing System**: Database-driven pricing with dormitory beds (€15/night) and private rooms (€35/night)
 - **Zero-Cost OCR Processing**: AWS Lambda function for Spanish DNI/NIE and passport processing (<$0/month for 24 users/day)
 - **Advanced Document Validation**: Checksum verification for DNI/NIE using mod-23 algorithm

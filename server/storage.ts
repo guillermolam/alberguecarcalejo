@@ -5,7 +5,9 @@ import {
   type Payment, type InsertPayment, type GovernmentSubmission, type InsertGovernmentSubmission
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, sql } from "drizzle-orm";
+import { GDPRDataHandler } from "./encryption";
+import { reservationCleanup } from "./reservation-cleanup";
 
 export interface IStorage {
   // User management
@@ -48,6 +50,10 @@ export interface IStorage {
   getOccupancyStats(date: string): Promise<{ occupied: number; available: number; total: number }>;
   getRevenueStats(date: string): Promise<{ total: number; currency: string }>;
   getComplianceStats(): Promise<{ successRate: number; pendingSubmissions: number }>;
+  
+  // GDPR/Cleanup operations
+  runReservationCleanup(): Promise<number>;
+  getReservationStats(): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -70,9 +76,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPilgrim(pilgrim: InsertPilgrim): Promise<Pilgrim> {
+    // Encrypt sensitive data for GDPR/NIS2 compliance
+    const encryptedData = GDPRDataHandler.encryptPilgrimData(pilgrim);
+    
     const [result] = await db
       .insert(pilgrims)
-      .values(pilgrim)
+      .values(encryptedData)
       .returning();
     return result;
   }
@@ -93,10 +102,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBooking(booking: InsertBooking): Promise<Booking> {
+    // Calculate reservation expiry (2 hours from now)
+    const reservationExpiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const paymentDeadline = reservationExpiresAt;
+    
+    const bookingWithExpiry = {
+      ...booking,
+      status: 'reserved',
+      reservationExpiresAt,
+      paymentDeadline,
+      autoCleanupProcessed: false
+    };
+    
     const [result] = await db
       .insert(bookings)
-      .values(booking)
+      .values(bookingWithExpiry)
       .returning();
+    
+    // Reserve the bed if assigned
+    if (booking.bedAssignmentId) {
+      await db
+        .update(beds)
+        .set({
+          status: 'reserved',
+          isAvailable: false,
+          reservedUntil: reservationExpiresAt,
+          updatedAt: new Date()
+        })
+        .where(eq(beds.id, booking.bedAssignmentId));
+    }
+    
     return result;
   }
 
@@ -223,9 +258,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPayment(payment: InsertPayment): Promise<Payment> {
+    // Set payment deadline (2 hours from now)
+    const paymentDeadline = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    
+    const paymentWithDeadline = {
+      ...payment,
+      paymentStatus: 'awaiting_payment',
+      paymentDeadline
+    };
+    
     const [result] = await db
       .insert(payments)
-      .values(payment)
+      .values(paymentWithDeadline)
       .returning();
     return result;
   }
@@ -310,6 +354,32 @@ export class DatabaseStorage implements IStorage {
       successRate: Math.round(successRate), 
       pendingSubmissions: pendingSubmissions.length 
     };
+  }
+
+  // Run database cleanup for expired reservations
+  async runReservationCleanup(): Promise<number> {
+    const result = await db.execute(sql`SELECT scheduled_reservation_cleanup()`);
+    return result.rows[0]?.scheduled_reservation_cleanup || 0;
+  }
+
+  // Get reservation statistics
+  async getReservationStats(): Promise<any> {
+    return await reservationCleanup.getExpiryStats();
+  }
+
+  // GDPR: Get pilgrim data (decrypted)
+  async getPilgrimDecrypted(id: number): Promise<Pilgrim | undefined> {
+    const [pilgrim] = await db.select().from(pilgrims).where(eq(pilgrims.id, id));
+    if (!pilgrim) return undefined;
+    
+    // Update last access date for GDPR compliance
+    await db
+      .update(pilgrims)
+      .set({ lastAccessDate: new Date() })
+      .where(eq(pilgrims.id, id));
+    
+    // Decrypt sensitive data before returning
+    return GDPRDataHandler.decryptPilgrimData(pilgrim);
   }
 }
 
