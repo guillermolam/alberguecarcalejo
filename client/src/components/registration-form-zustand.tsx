@@ -154,8 +154,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
     return hasDocumentProcessed && confidence >= 0.9;
   };
 
-  // Track which fields have been focused to clear low confidence warnings
-  const [focusedFields, setFocusedFields] = useState<Set<string>>(new Set());
+
 
   // Clear low confidence warning when field is focused
   const handleFieldFocus = (fieldName: string) => {
