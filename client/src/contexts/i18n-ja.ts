@@ -141,6 +141,7 @@ export const translations_ja = {
   "errors.invalid_email": "無効なメールアドレス",
   "errors.invalid_document": "無効な書類形式",
   "errors.invalid_phone": "無効な電話番号形式",
+  "errors.ocr_processing": "書類処理エラー",
   "auth.welcome": "ようこそ",
   "auth.logout": "ログアウト",
   "auth.login_required": "認証が必要です",

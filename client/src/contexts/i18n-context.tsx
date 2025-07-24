@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { i18n as i18nInstance, Translations } from '@/lib/i18n';
+import { i18n as i18nInstance } from '@/lib/i18n';
 import { LANGUAGES } from '@/lib/constants';
 
 interface I18nContextType {
@@ -13,18 +14,12 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-interface I18nProviderProps {
-  children: ReactNode;
-}
-
-export function I18nProvider({ children }: I18nProviderProps) {
+export function I18nProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState(i18nInstance.getLanguage());
 
   const setLanguage = (newLanguage: string) => {
     i18nInstance.setLanguage(newLanguage);
     setLanguageState(newLanguage);
-    // Store preference in localStorage
-    localStorage.setItem('preferred-language', newLanguage);
   };
 
   const t = (key: string, variables?: Record<string, string | number>) => {
@@ -36,19 +31,17 @@ export function I18nProvider({ children }: I18nProviderProps) {
     
     const locale = language === 'es' ? 'es-ES' : 
                    language === 'en' ? 'en-GB' : 
-                   language === 'fr' ? 'fr-FR' : 
-                   language === 'de' ? 'de-DE' : 
-                   language === 'it' ? 'it-IT' : 
-                   language === 'pt' ? 'pt-PT' : 
-                   language === 'nl' ? 'nl-NL' : 
-                   language === 'ko' ? 'ko-KR' : 
-                   language === 'ja' ? 'ja-JP' : 
-                   language === 'pl' ? 'pl-PL' : 'es-ES';
+                   language === 'de' ? 'de-DE' :
+                   language === 'fr' ? 'fr-FR' :
+                   language === 'eu' ? 'eu-ES' :
+                   language === 'ja' ? 'ja-JP' :
+                   'es-ES';
 
-    const options: Intl.DateTimeFormatOptions = 
-      style === 'short' ? { day: '2-digit', month: '2-digit', year: 'numeric' } :
-      style === 'long' ? { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' } :
-      { day: 'numeric', month: 'short', year: 'numeric' };
+    const options: Intl.DateTimeFormatOptions = style === 'short' 
+      ? { day: '2-digit', month: '2-digit', year: 'numeric' }
+      : style === 'long'
+      ? { day: 'numeric', month: 'long', year: 'numeric' }
+      : { day: 'numeric', month: 'short', year: 'numeric' };
 
     return dateObj.toLocaleDateString(locale, options);
   };
@@ -58,6 +51,10 @@ export function I18nProvider({ children }: I18nProviderProps) {
     
     const locale = language === 'es' ? 'es-ES' : 
                    language === 'en' ? 'en-GB' : 
+                   language === 'de' ? 'de-DE' :
+                   language === 'fr' ? 'fr-FR' :
+                   language === 'eu' ? 'eu-ES' :
+                   language === 'ja' ? 'ja-JP' :
                    'es-ES';
 
     return dateObj.toLocaleString(locale, {

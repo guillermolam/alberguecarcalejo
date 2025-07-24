@@ -141,6 +141,7 @@ export const translations_eu = {
   "errors.invalid_email": "Email baliogabea",
   "errors.invalid_document": "Dokumentu formatu baliogabea",
   "errors.invalid_phone": "Telefono formatu baliogabea",
+  "errors.ocr_processing": "Errorea dokumentua prozesatzean",
   "auth.welcome": "Ongi etorri",
   "auth.logout": "Saioa itxi",
   "auth.login_required": "Autentifikazioa beharrezkoa",

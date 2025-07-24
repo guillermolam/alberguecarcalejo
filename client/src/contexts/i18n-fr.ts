@@ -141,6 +141,7 @@ export const translations_fr = {
   "errors.invalid_email": "Email invalide",
   "errors.invalid_document": "Format de document invalide",
   "errors.invalid_phone": "Format de téléphone invalide",
+  "errors.ocr_processing": "Erreur lors du traitement du document",
   "auth.welcome": "Bienvenue",
   "auth.logout": "Déconnexion",
   "auth.login_required": "Authentification requise",
