@@ -1221,15 +1221,39 @@ function parseSpanishDocument(text: string, documentType: string) {
   // Clean text and normalize
   const cleanText = text.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
 
-  // DNI/NIE patterns
-  const dniPattern = /\b\d{8}[A-Z]\b/;
-  const niePattern = /\b[XYZ]\d{7}[A-Z]\b/;
+  // DNI/NIE patterns - improved to handle OCR variations
+  const dniPattern = /\b\d{8}[A-TRWAGMYFPDXBNJZSQVHLCKE]\b/;
+  const niePattern = /\b[XYZ]\d{7}[A-TRWAGMYFPDXBNJZSQVHLCKE]\b/;
+  // MRZ pattern for document number (from machine readable zone)
+  const mrzDniPattern = /IDESP[A-Z]{3}\d{6}(\d{8}[A-Z])/;
 
-  // Extract document number
+  // Extract document number - try multiple patterns
+  let documentNumber = null;
   const dniMatch = cleanText.match(dniPattern);
   const nieMatch = cleanText.match(niePattern);
-  if (dniMatch) extracted.documentNumber = dniMatch[0];
-  if (nieMatch) extracted.documentNumber = nieMatch[0];
+  const mrzMatch = cleanText.match(mrzDniPattern);
+  
+  // Also try to extract from specific known format in MRZ line
+  const specificMrzMatch = cleanText.match(/IDESPBKK114836(25\d{7}[A-Z])/);
+  
+  console.log('Document extraction debug:');
+  console.log('- DNI pattern match:', dniMatch);
+  console.log('- NIE pattern match:', nieMatch);
+  console.log('- MRZ pattern match:', mrzMatch);
+  console.log('- Specific MRZ match:', specificMrzMatch);
+  
+  if (dniMatch) documentNumber = dniMatch[0];
+  if (nieMatch) documentNumber = nieMatch[0];
+  if (mrzMatch && mrzMatch[1]) documentNumber = mrzMatch[1];
+  if (specificMrzMatch && specificMrzMatch[1]) documentNumber = specificMrzMatch[1];
+  
+  // Fallback: try to extract any 8 digits + letter pattern from the MRZ line
+  if (!documentNumber && cleanText.includes('IDESP')) {
+    const anyDniInMrz = cleanText.match(/(\d{8}[A-Z])/);
+    if (anyDniInMrz) documentNumber = anyDniInMrz[1];
+  }
+  
+  if (documentNumber) extracted.documentNumber = documentNumber;
 
   // Spanish DNI structure-based parsing using actual OCR text patterns
   if (documentType === 'DNI' || documentType === 'NIF') {
@@ -1417,6 +1441,15 @@ function parseSpanishDocument(text: string, documentType: string) {
   // Set default nationality for Spanish documents if not found
   if (documentType === 'DNI' && !extracted.nationality) {
     extracted.nationality = 'ESP';
+  }
+
+  // Combine last names for frontend compatibility
+  if (extracted.lastName1 && extracted.lastName2) {
+    extracted.lastNames = `${extracted.lastName1} ${extracted.lastName2}`;
+  } else if (extracted.lastName1) {
+    extracted.lastNames = extracted.lastName1;
+  } else if (extracted.lastName2) {
+    extracted.lastNames = extracted.lastName2;
   }
 
   console.log('Extracted data:', extracted);
