@@ -932,7 +932,7 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   <div className="col-span-2">
                     <label className="text-sm font-medium">{t('registration.country_code')}</label>
                     <div className="flex items-center h-10 px-3 border border-gray-300 rounded-md bg-gray-50">
-                      <span className="text-sm font-medium">{phoneFormat}</span>
+                      <span className="text-sm font-medium">{phoneFormat || '+34'}</span>
                     </div>
                   </div>
 
