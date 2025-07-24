@@ -18,7 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Lock, Unlock, CheckCircle, AlertTriangle, User, MapPin, Phone, CreditCard, Pencil, Coins } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ChevronDown, ChevronUp, Lock, Unlock, CheckCircle, AlertTriangle, User, MapPin, Phone, CreditCard, Pencil, Coins, Info } from 'lucide-react';
 import { GENDER_OPTIONS, DOCUMENT_TYPES, PAYMENT_TYPES } from '@/lib/constants';
 
 // Import constants for country code lookup
@@ -931,8 +932,23 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                     }`}
                     title="Pay with cash at reception"
                   >
-                    <Coins className="w-6 h-6" />
-                    <span className="text-sm font-medium">Cash</span>
+                    <div className="flex items-center gap-1">
+                      <Coins className="w-6 h-6" />
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-4 h-4 text-gray-500 hover:text-blue-600" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-sm">
+                              Payment at reception. Reservation will only be held for one additional hour past estimated arrival time. 
+                              If amount is not paid in full after that hour, automatic cancellation will be issued.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <span className="text-sm font-medium">Cash (at reception)</span>
                   </button>
 
                   <button
@@ -964,8 +980,23 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                     }`}
                     title="Pay via bank transfer or wire transfer"
                   >
-                    <CreditCard className="w-6 h-6" />
-                    <span className="text-sm font-medium">Bank Transfer</span>
+                    <div className="flex items-center gap-1">
+                      <CreditCard className="w-6 h-6" />
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-4 h-4 text-gray-500 hover:text-blue-600" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-sm">
+                              Payment at reception. Reservation will only be held for one additional hour past estimated arrival time. 
+                              If amount is not paid in full after that hour, automatic cancellation will be issued.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <span className="text-sm font-medium">Bank Transfer (at reception)</span>
                   </button>
                 </div>
               </div>
