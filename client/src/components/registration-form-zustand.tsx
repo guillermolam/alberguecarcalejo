@@ -809,33 +809,11 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   <label className="text-sm font-medium text-gray-900 mb-1 block">
                     {t('registration.address')} *
                   </label>
-                  <GooglePlacesAutocomplete
+                  <Input
                     value={formData.addressStreet || ''}
-                    onChange={(address) => updateField('addressStreet', address)}
-                    onPlaceSelected={(place) => {
-                      if (place.formattedAddress) {
-                        updateField('addressStreet', place.formattedAddress);
-                      }
-                      // Extract address components
-                      if (place.addressComponents) {
-                        place.addressComponents.forEach((component: any) => {
-                          if (component.types.includes('locality')) {
-                            updateField('addressCity', component.longName);
-                          }
-                          if (component.types.includes('postal_code')) {
-                            updateField('addressPostalCode', component.longName);
-                          }
-                          if (component.types.includes('country')) {
-                            updateField('addressCountry', component.longName);
-                            setDetectedCountryCode(component.shortName || 'ESP');
-                          }
-                          if (component.types.includes('administrative_area_level_1')) {
-                            updateField('addressProvince', component.longName);
-                          }
-                        });
-                      }
-                    }}
+                    onChange={(e) => updateField('addressStreet', e.target.value)}
                     placeholder={t('registration.address')}
+                    maxLength={100}
                     className={showValidation && validationErrors.addressStreet ? 'border-red-500' : ''}
                   />
                   {showValidation && validationErrors.addressStreet && (
