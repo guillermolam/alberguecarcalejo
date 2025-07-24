@@ -12,6 +12,7 @@ import MultiDocumentCapture from './multi-document-capture-new';
 import { CountryPhoneInput } from './country-phone-input';
 import { GooglePlacesAutocomplete } from './google-places-autocomplete';
 import { CountrySelector } from './country-selector';
+import { CountryAutocomplete } from './country-autocomplete';
 import { ArrivalTimePicker } from './arrival-time-picker';
 import { BedSelectionMap } from './bed-selection-map';
 import { BookingConfirmation } from './booking-confirmation';
@@ -873,15 +874,26 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   <label className="text-sm font-medium text-gray-900 mb-1 block">
                     {t('registration.country')} *
                   </label>
-                  <Input
+                  <CountryAutocomplete
                     value={formData.addressCountry || ''}
-                    onChange={(e) => updateField('addressCountry', e.target.value)}
-                    maxLength={100}
-                    className={showValidation && validationErrors.addressCountry ? 'border-red-500' : ''}
+                    onCountrySelect={(country) => {
+                      // Auto-fill related fields when country is selected
+                      updateField('addressCountry', country.name);
+                      updateField('nationality', country.nationality);
+                      setDetectedCountryCode(country.code);
+                      setPhoneFormat(country.dialCode);
+                      
+                      console.log('Country selected:', country);
+                      console.log('Auto-filled fields:', {
+                        addressCountry: country.name,
+                        nationality: country.nationality,
+                        countryCode: country.code,
+                        phoneCode: country.dialCode
+                      });
+                    }}
+                    placeholder={t('registration.select_country')}
+                    error={showValidation && validationErrors.addressCountry ? validationErrors.addressCountry : undefined}
                   />
-                  {showValidation && validationErrors.addressCountry && (
-                    <p className="text-red-500 text-xs mt-1">{validationErrors.addressCountry}</p>
-                  )}
                 </div>
               </div>
                 </CardContent>
