@@ -51,6 +51,44 @@
   --albergue-white: hsl(0, 0%, 100%); /* Pure white #FFFFFF */
 }
 
+/* Google Places Element Styling */
+gmp-place-autocomplete-element {
+  display: flex !important;
+  height: 2.5rem !important;
+  width: 100% !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  background-color: hsl(var(--background)) !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  font-family: inherit !important;
+  color: hsl(var(--foreground)) !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  font-weight: 400 !important;
+}
+
+gmp-place-autocomplete-element:focus {
+  outline: none !important;
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring)) !important;
+}
+
+gmp-place-autocomplete-element input {
+  all: unset !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  color: inherit !important;
+}
+
+gmp-place-autocomplete-element::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
 .dark {
   --background: hsl(222, 84%, 4%);
   --foreground: hsl(210, 40%, 98%);

@@ -76,47 +76,33 @@ export function GooglePlacesAutocomplete({
           componentRestrictions: { country: ["es"] }
         });
 
-        // Apply shadcn Input styling exactly - matches: "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background"
-        autocompleteElement.style.cssText = `
-          display: flex;
-          height: 2.5rem;
-          width: 100%;
-          border-radius: calc(var(--radius) - 2px);
-          border: 1px solid hsl(var(--border));
-          background-color: hsl(var(--background));
-          padding: 0.5rem 0.75rem;
-          font-size: 1rem;
-          line-height: 1.5;
-          font-family: inherit;
-          color: hsl(var(--foreground));
-          transition: border-color 0.2s, box-shadow 0.2s;
-          outline: none;
-          box-sizing: border-box;
-          font-weight: 400;
-          ring-offset-background: hsl(var(--background));
-        `;
+        // Apply shadcn Input class names directly to the element
+        autocompleteElement.className = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';
         
-        // Add placeholder styling
-        autocompleteElement.style.setProperty('--placeholder-color', 'hsl(var(--muted-foreground))');
+        // Set tabindex to make it focusable
+        autocompleteElement.setAttribute('tabindex', '0');
         
-        // Focus and hover styles matching shadcn: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        autocompleteElement.addEventListener('focus', () => {
-          autocompleteElement.style.outline = 'none';
-          autocompleteElement.style.boxShadow = '0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring))';
-        });
-        
-        autocompleteElement.addEventListener('blur', () => {
-          autocompleteElement.style.boxShadow = 'none';
-        });
-        
-        // Disabled state styling: "disabled:cursor-not-allowed disabled:opacity-50"
-        if (autocompleteElement.hasAttribute('disabled')) {
-          autocompleteElement.style.cursor = 'not-allowed';
-          autocompleteElement.style.opacity = '0.5';
+        // Ensure proper value setting (Google Places elements handle this differently)
+        if (value) {
+          try {
+            (autocompleteElement as any).value = value;
+          } catch (e) {
+            console.log('Could not set value on Google Places element:', e);
+          }
         }
+        
+        // Add standard focus/blur event listeners to the DOM element
+        (autocompleteElement as any).addEventListener('focus', () => {
+          console.log('Google Places element focused');
+        });
+        
+        (autocompleteElement as any).addEventListener('blur', () => {
+          console.log('Google Places element blurred');
+        });
 
-        // Set placeholder
+        // Set placeholder and other attributes
         autocompleteElement.placeholder = placeholder || "Enter an address";
+        autocompleteElement.setAttribute('data-testid', 'google-places-input');
 
         // Add event listener for place selection
         autocompleteElement.addEventListener('gmp-placeselect', (event: any) => {
@@ -184,7 +170,7 @@ export function GooglePlacesAutocomplete({
 
     const loadGoogleMapsAPI = async () => {
       try {
-        const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+        const apiKey = (import.meta.env as any).VITE_GOOGLE_PLACES_API_KEY;
         
         if (!apiKey) {
           console.warn('No Google Places API key configured, using fallback input');
