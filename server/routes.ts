@@ -415,22 +415,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Fallback to basic country data (limited set for common countries)
       const countryData: Record<string, any> = {
-        "spain": { name: "Spain", code: "ES", dialCode: "+34" },
-        "france": { name: "France", code: "FR", dialCode: "+33" },
-        "portugal": { name: "Portugal", code: "PT", dialCode: "+351" },
-        "italy": { name: "Italy", code: "IT", dialCode: "+39" },
-        "germany": { name: "Germany", code: "DE", dialCode: "+49" },
-        "united kingdom": { name: "United Kingdom", code: "GB", dialCode: "+44" },
-        "united states": { name: "United States", code: "US", dialCode: "+1" }
+        "spain": { 
+          country_name: "Spain", 
+          country_code: "ESP", 
+          calling_code: "+34",
+          flag_url: "https://flagcdn.com/w320/es.png"
+        },
+        "españa": { 
+          country_name: "Spain", 
+          country_code: "ESP", 
+          calling_code: "+34",
+          flag_url: "https://flagcdn.com/w320/es.png"
+        },
+        "france": { 
+          country_name: "France", 
+          country_code: "FRA", 
+          calling_code: "+33",
+          flag_url: "https://flagcdn.com/w320/fr.png"
+        },
+        "portugal": { 
+          country_name: "Portugal", 
+          country_code: "PRT", 
+          calling_code: "+351",
+          flag_url: "https://flagcdn.com/w320/pt.png"
+        },
+        "italy": { 
+          country_name: "Italy", 
+          country_code: "ITA", 
+          calling_code: "+39",
+          flag_url: "https://flagcdn.com/w320/it.png"
+        },
+        "germany": { 
+          country_name: "Germany", 
+          country_code: "DEU", 
+          calling_code: "+49",
+          flag_url: "https://flagcdn.com/w320/de.png"
+        },
+        "united kingdom": { 
+          country_name: "United Kingdom", 
+          country_code: "GBR", 
+          calling_code: "+44",
+          flag_url: "https://flagcdn.com/w320/gb.png"
+        },
+        "united states": { 
+          country_name: "United States", 
+          country_code: "USA", 
+          calling_code: "+1",
+          flag_url: "https://flagcdn.com/w320/us.png"
+        }
       };
 
       const country = countryData[countryName.toLowerCase()];
       if (country) {
-        res.json({
-          success: true,
-          data: country,
-          rate_limited: false
-        });
+        res.json(country);
       } else {
         res.status(404).json({ error: "Country not found" });
       }

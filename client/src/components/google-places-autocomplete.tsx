@@ -152,7 +152,7 @@ export function GooglePlacesAutocomplete({
 
     const loadGoogleMapsAPI = async () => {
       try {
-        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        const apiKey = (import.meta.env as any).VITE_GOOGLE_MAPS_API_KEY;
         
         if (!apiKey) {
           console.warn('No Google Places API key configured, using fallback input');

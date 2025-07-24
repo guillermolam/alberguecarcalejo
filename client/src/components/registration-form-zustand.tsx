@@ -537,7 +537,10 @@ const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(
                             onValueChange={(value) =>
                               updateField("gender", value)
                             }
-                            options={GENDER_OPTIONS}
+                            options={GENDER_OPTIONS.map(option => ({
+                              value: option.value,
+                              label: t(option.label)
+                            }))}
                             error={
                               showValidation
                                 ? validationErrors.gender

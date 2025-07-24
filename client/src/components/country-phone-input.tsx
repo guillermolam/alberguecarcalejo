@@ -104,7 +104,11 @@ export function CountryPhoneInput({
           <Input
             type="tel"
             value={localPhone}
-            onChange={(e) => onLocalPhoneChange(e.target.value)}
+            onChange={(e) => {
+              // Only allow numeric characters and common phone separators
+              const value = e.target.value.replace(/[^0-9\s\-\+\(\)]/g, '');
+              onLocalPhoneChange(value);
+            }}
             placeholder={placeholder}
             maxLength={15}
             className={error ? 'border-red-500' : ''}
