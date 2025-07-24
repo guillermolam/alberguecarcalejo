@@ -1,0 +1,19 @@
+{
+  "name": "pilgrim-registration-tests",
+  "version": "1.0.0",
+  "description": "TestCafe end-to-end tests for Pilgrim Registration System",
+  "scripts": {
+    "test": "testcafe chrome tests/dni-registration-flow.js",
+    "test:headless": "testcafe chrome:headless tests/dni-registration-flow.js",
+    "test:all-browsers": "testcafe chrome,firefox,safari tests/dni-registration-flow.js",
+    "test:with-reports": "testcafe chrome tests/dni-registration-flow.js --reporter spec,json:reports/test-results.json",
+    "test:debug": "testcafe chrome tests/dni-registration-flow.js --debug-on-fail",
+    "test:live": "testcafe chrome tests/dni-registration-flow.js --live"
+  },
+  "devDependencies": {
+    "testcafe": "^3.6.2"
+  },
+  "keywords": ["testcafe", "e2e", "testing", "pilgrim", "registration", "dni", "ocr"],
+  "author": "Albergue Del Carrascalejo",
+  "license": "MIT"
+}

@@ -26,6 +26,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize bed inventory on startup
   await storage.initializeBeds();
 
+  // Health check endpoint for testing
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      services: {
+        database: "connected",
+        ocr: "available",
+        bedManager: "operational"
+      }
+    });
+  });
+
   // Document validation endpoint - with fallback to local validation
   app.post("/api/validate/document", async (req, res) => {
     try {

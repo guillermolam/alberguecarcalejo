@@ -1,0 +1,37 @@
+{
+  "browsers": ["chrome:headless"],
+  "src": ["tests/dni-registration-flow.js"],
+  "reporter": [
+    "spec",
+    {
+      "name": "json",
+      "output": "reports/test-results.json"
+    }
+  ],
+  "screenshots": {
+    "path": "screenshots/",
+    "takeOnFails": true,
+    "pathPattern": "${DATE}_${TIME}/test-${TEST_INDEX}/${USERAGENT}/${FILE_INDEX}.png"
+  },
+  "videoPath": "videos/",
+  "videoOptions": {
+    "singleFile": true,
+    "failedOnly": false
+  },
+  "speed": 0.8,
+  "stopOnFirstFail": false,
+  "skipJsErrors": true,
+  "assertionTimeout": 30000,
+  "pageLoadTimeout": 30000,
+  "concurrency": 1,
+  "clientScripts": [
+    {
+      "content": "window.testMode = true;"
+    }
+  ],
+  "disablePageCaching": true,
+  "quarantineMode": false,
+  "skipUncaughtErrors": true,
+  "selectorTimeout": 10000,
+  "baseUrl": "http://localhost:5000"
+}

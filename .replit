@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["rustc", "cargo", "wasm-pack", "awscli2", "unzip", "cargo-lambda"]
+packages = ["rustc", "cargo", "wasm-pack", "awscli2", "unzip", "cargo-lambda", "chromium"]
 
 [deployment]
 deploymentTarget = "autoscale"
