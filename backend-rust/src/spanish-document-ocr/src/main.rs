@@ -4,6 +4,7 @@ mod image_processor;
 mod ocr_engine;
 mod spanish_validator;
 mod passport_parser;
+mod dni_parser;
 mod utils;
 mod http_handler;
 
@@ -18,6 +19,7 @@ use crate::image_processor::ImageProcessor;
 use crate::ocr_engine::OCREngine;
 use crate::spanish_validator::SpanishValidator;
 use crate::passport_parser::PassportParser;
+use crate::dni_parser::SpanishDNIParser;
 use crate::utils::Utils;
 
 #[lambda_web]
@@ -115,61 +117,63 @@ async fn process_document(
     // Validate image size
     Utils::validate_image_size(&image, max_size_mb)?;
     
-    // Auto-rotate if needed
-    let processed_image = ImageProcessor::auto_rotate(&image);
-    
-    // Classify document type
-    let doc_type = DocumentClassifier::classify(&processed_image, request.document_type);
-    
+    // Classify document type first
+    let doc_type = DocumentClassifier::classify(&image, request.document_type);
     info!("Detected document type: {}", doc_type.to_string());
     
-    // Preprocess image for OCR
-    let preprocessed = ImageProcessor::preprocess(&processed_image)?;
-    
-    // Initialize OCR engine
-    let mut ocr_engine = OCREngine::new()?;
-    
-    // Extract text
-    let (extracted_text, confidence) = ocr_engine.extract_text_with_confidence(&preprocessed)?;
-    
-    if extracted_text.trim().is_empty() {
-        warn!("No text extracted from image");
-        return Ok(OCRResponse {
-            success: false,
-            document_type: doc_type.to_string(),
-            data: None,
-            error: Some("No text could be extracted from the image".to_string()),
-            processing_time_ms: 0,
-        });
-    }
-    
-    info!("Extracted text length: {} chars, confidence: {:.2}", extracted_text.len(), confidence);
-    
-    // Parse document based on type
+    // Parse document based on type using specialized parsers
     let document_data = match doc_type {
-        DocumentType::DniFront => SpanishValidator::parse_dni_front(&extracted_text),
-        DocumentType::DniBack => SpanishValidator::parse_dni_back(&extracted_text),
-        DocumentType::NieFront => SpanishValidator::parse_nie_front(&extracted_text),
-        DocumentType::NieBack => SpanishValidator::parse_dni_back(&extracted_text), // Same as DNI back
-        DocumentType::Passport => PassportParser::parse_passport(&extracted_text),
+        DocumentType::DniFront | DocumentType::DniBack | 
+        DocumentType::NieFront | DocumentType::NieBack => {
+            // Use the new Spanish DNI parser
+            let mut dni_parser = SpanishDNIParser::new()?;
+            match dni_parser.parse_dni(&image, &doc_type) {
+                Ok(data) => data,
+                Err(e) => {
+                    error!("DNI parsing failed: {}", e);
+                    return Ok(OCRResponse {
+                        success: false,
+                        document_type: doc_type.to_string(),
+                        data: None,
+                        error: Some(format!("DNI parsing failed: {}", e)),
+                        processing_time_ms: 0,
+                    });
+                }
+            }
+        },
+        DocumentType::Passport => {
+            // Use passport parser with improved preprocessing
+            let processed_image = ImageProcessor::preprocess_for_ocr(&image)?;
+            let mut ocr_engine = OCREngine::new()?;
+            let extracted_text = ocr_engine.extract_text(&processed_image)?;
+            PassportParser::parse_passport(&extracted_text)
+        },
         DocumentType::Other => {
-            // For other documents, just extract basic text information
-            let mut data = SpanishValidator::parse_dni_front(&extracted_text);
-            data.confidence_score = confidence;
-            data
+            // Try DNI parsing first as fallback
+            let mut dni_parser = SpanishDNIParser::new()?;
+            match dni_parser.parse_dni(&image, &DocumentType::DniFront) {
+                Ok(data) => data,
+                Err(_) => {
+                    // If DNI parsing fails, try passport parsing
+                    let processed_image = ImageProcessor::preprocess_for_ocr(&image)?;
+                    let mut ocr_engine = OCREngine::new()?;
+                    let extracted_text = ocr_engine.extract_text(&processed_image)?;
+                    PassportParser::parse_passport(&extracted_text)
+                }
+            }
         }
     };
     
-    // Ensure minimum confidence threshold
-    let final_confidence = (confidence + document_data.confidence_score) / 2.0;
+    info!("Parsed document with confidence: {:.2}", document_data.confidence_score);
     
-    if final_confidence < 0.3 {
-        warn!("Low confidence extraction: {:.2}", final_confidence);
+    // Check if we got meaningful data
+    if document_data.confidence_score < 0.2 {
+        warn!("Very low confidence extraction: {:.2}", document_data.confidence_score);
         return Ok(OCRResponse {
             success: false,
             document_type: doc_type.to_string(),
-            data: None,
-            error: Some("Document text quality too low for reliable extraction".to_string()),
+            data: Some(document_data), // Still return data for debugging
+            error: Some("Document quality too low for reliable extraction. Please ensure good lighting and focus.".to_string()),
             processing_time_ms: 0,
         });
     }

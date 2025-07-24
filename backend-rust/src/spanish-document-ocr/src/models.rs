@@ -28,6 +28,14 @@ pub struct DocumentData {
     pub postal_code: Option<String>,
     pub validation: ValidationResult,
     pub confidence_score: f32,
+    // Additional DNI-specific fields
+    pub gender: Option<String>,
+    pub issue_date: Option<String>,
+    pub issuing_authority: Option<String>,
+    pub provincia: Option<String>,
+    pub municipio: Option<String>,
+    pub support_number: Option<String>, // Número soporte
+    pub can_number: Option<String>, // CAN for modern DNIs
 }
 
 #[derive(Debug, Serialize)]

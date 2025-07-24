@@ -1,27 +1,45 @@
-use image::{DynamicImage, ImageBuffer, Luma, GrayImage};
+use image::{DynamicImage, ImageBuffer, Luma, GrayImage, Rgb, RgbImage};
 use imageproc::contrast::threshold;
 use imageproc::morphology::{close, open};
 use imageproc::definitions::Connectivity;
 use imageproc::geometric_transformations::{rotate_about_center, Interpolation};
 use imageproc::edges::sobel_gradients;
 use imageproc::hough::{detect_lines, LineDetectionOptions, PolarLine};
+use imageproc::filter::{gaussian_blur_f32};
 use std::f32::consts::PI;
 
 pub struct ImageProcessor;
 
 impl ImageProcessor {
     pub fn preprocess(image: &DynamicImage) -> Result<GrayImage, Box<dyn std::error::Error>> {
+        // First, auto-rotate the image if needed
+        let rotated_image = Self::auto_rotate(image);
+        
         // Convert to grayscale
-        let mut gray_image = image.to_luma8();
+        let mut gray_image = rotated_image.to_luma8();
         
-        // Apply noise reduction
-        gray_image = Self::reduce_noise(gray_image);
+        // Apply Gaussian blur to reduce noise
+        gray_image = gaussian_blur_f32(&gray_image, 0.5);
         
-        // Apply Otsu binarization
-        gray_image = Self::apply_otsu_threshold(gray_image);
+        // Enhance contrast first
+        gray_image = Self::enhance_contrast(gray_image);
+        
+        // Apply adaptive threshold instead of Otsu for better text handling
+        gray_image = Self::apply_adaptive_threshold(gray_image);
         
         // Apply morphological operations to clean up text
         gray_image = Self::morphological_cleanup(gray_image);
+        
+        Ok(gray_image)
+    }
+    
+    pub fn preprocess_for_ocr(image: &DynamicImage) -> Result<GrayImage, Box<dyn std::error::Error>> {
+        // Specialized preprocessing for OCR with less aggressive processing
+        let rotated_image = Self::auto_rotate(image);
+        let mut gray_image = rotated_image.to_luma8();
+        
+        // Light noise reduction
+        gray_image = Self::reduce_noise_light(gray_image);
         
         // Enhance contrast
         gray_image = Self::enhance_contrast(gray_image);
@@ -65,6 +83,69 @@ impl ImageProcessor {
         
         // Apply threshold
         threshold(&image, threshold_value)
+    }
+    
+    fn apply_adaptive_threshold(image: GrayImage) -> GrayImage {
+        let (width, height) = image.dimensions();
+        let mut result = image.clone();
+        let block_size = 15; // Size of the neighborhood area
+        let c = 5; // Constant subtracted from the mean
+        
+        for y in 0..height {
+            for x in 0..width {
+                // Calculate mean of neighborhood
+                let mut sum = 0u32;
+                let mut count = 0u32;
+                
+                let start_x = x.saturating_sub(block_size / 2);
+                let end_x = std::cmp::min(x + block_size / 2, width - 1);
+                let start_y = y.saturating_sub(block_size / 2);
+                let end_y = std::cmp::min(y + block_size / 2, height - 1);
+                
+                for ny in start_y..=end_y {
+                    for nx in start_x..=end_x {
+                        sum += image.get_pixel(nx, ny)[0] as u32;
+                        count += 1;
+                    }
+                }
+                
+                let mean = sum / count;
+                let threshold = mean.saturating_sub(c);
+                let pixel_value = image.get_pixel(x, y)[0] as u32;
+                
+                if pixel_value > threshold {
+                    result.put_pixel(x, y, Luma([255]));
+                } else {
+                    result.put_pixel(x, y, Luma([0]));
+                }
+            }
+        }
+        
+        result
+    }
+    
+    fn reduce_noise_light(image: GrayImage) -> GrayImage {
+        // Light noise reduction using a smaller kernel
+        let (width, height) = image.dimensions();
+        let mut result = image.clone();
+        
+        for y in 1..height-1 {
+            for x in 1..width-1 {
+                let mut values = Vec::new();
+                for dy in -1..=1 {
+                    for dx in -1..=1 {
+                        let px = (x as i32 + dx) as u32;
+                        let py = (y as i32 + dy) as u32;
+                        values.push(image.get_pixel(px, py)[0]);
+                    }
+                }
+                values.sort();
+                // Use median value
+                result.put_pixel(x, y, Luma([values[4]]));
+            }
+        }
+        
+        result
     }
     
     fn calculate_otsu_threshold(histogram: &[u32; 256], total_pixels: u32) -> u8 {
