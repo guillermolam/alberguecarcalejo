@@ -576,47 +576,70 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               <CollapsibleContent>
                 <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <LockableInput
-                  fieldName="firstName"
-                  label={t('registration.first_name')}
-                  required={true}
-                  maxLength={50}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.first_name')} *
+                  </label>
+                  <Input
+                    value={formData.firstName || ''}
+                    onChange={(e) => updateField('firstName', e.target.value)}
+                    maxLength={50}
+                    className={showValidation && validationErrors.firstName ? 'border-red-500' : ''}
+                  />
+                  {showValidation && validationErrors.firstName && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.firstName}</p>
+                  )}
+                </div>
                 
-                <LockableInput
-                  fieldName="lastName1"
-                  label={t('registration.last_name_1')}
-                  required={true}
-                  maxLength={50}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.last_name_1')} *
+                  </label>
+                  <Input
+                    value={formData.lastName1 || ''}
+                    onChange={(e) => updateField('lastName1', e.target.value)}
+                    maxLength={50}
+                    className={showValidation && validationErrors.lastName1 ? 'border-red-500' : ''}
+                  />
+                  {showValidation && validationErrors.lastName1 && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.lastName1}</p>
+                  )}
+                </div>
                 
-                <LockableInput
-                  fieldName="lastName2"
-                  label={t('registration.last_name_2')}
-                  maxLength={50}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.last_name_2')}
+                  </label>
+                  <Input
+                    value={formData.lastName2 || ''}
+                    onChange={(e) => updateField('lastName2', e.target.value)}
+                    maxLength={50}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <LockableInput
-                  fieldName="birthDate"
-                  label={t('registration.birth_date')}
-                  type="date"
-                  required={true}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.birth_date')} *
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.birthDate || ''}
+                    onChange={(e) => updateField('birthDate', e.target.value)}
+                    className={showValidation && validationErrors.birthDate ? 'border-red-500' : ''}
+                  />
+                  {showValidation && validationErrors.birthDate && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.birthDate}</p>
+                  )}
+                </div>
 
-                <LockableInput
-                  fieldName="gender"
-                  label={t('registration.gender')}
-                  required={true}
-                >
-                  <Select value={formData.gender || ''} onValueChange={(value) => updateField('gender', value)} disabled={isFieldReadOnly('gender')}>
-                    <SelectTrigger 
-                      className={`${isFieldReadOnly('gender') ? 'bg-gray-50 text-gray-700' : ''} ${showValidation && validationErrors.gender ? 'border-red-500' : ''}`}
-                      onFocus={() => handleFieldFocus('gender')}
-                      onMouseEnter={() => handleFieldFocus('gender')}
-                      onClick={() => handleFieldFocus('gender')}
-                    >
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.gender')} *
+                  </label>
+                  <Select value={formData.gender || ''} onValueChange={(value) => updateField('gender', value)}>
+                    <SelectTrigger className={showValidation && validationErrors.gender ? 'border-red-500' : ''}>
                       <SelectValue placeholder="Seleccionar género" />
                     </SelectTrigger>
                     <SelectContent>
@@ -627,30 +650,53 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                       ))}
                     </SelectContent>
                   </Select>
-                </LockableInput>
+                  {showValidation && validationErrors.gender && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.gender}</p>
+                  )}
+                </div>
 
-                <LockableInput
-                  fieldName="nationality"
-                  label={t('registration.nationality')}
-                  required={true}
-                  maxLength={3}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.nationality')} *
+                  </label>
+                  <Input
+                    value={formData.nationality || ''}
+                    onChange={(e) => updateField('nationality', e.target.value)}
+                    maxLength={3}
+                    className={showValidation && validationErrors.nationality ? 'border-red-500' : ''}
+                  />
+                  {showValidation && validationErrors.nationality && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.nationality}</p>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <LockableInput
-                  fieldName="documentNumber"
-                  label={t('registration.document_number')}
-                  required={true}
-                  maxLength={20}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.document_number')} *
+                  </label>
+                  <Input
+                    value={formData.documentNumber || ''}
+                    onChange={(e) => updateField('documentNumber', e.target.value)}
+                    maxLength={20}
+                    className={showValidation && validationErrors.documentNumber ? 'border-red-500' : ''}
+                  />
+                  {showValidation && validationErrors.documentNumber && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.documentNumber}</p>
+                  )}
+                </div>
 
-                <LockableInput
-                  fieldName="documentSupport"
-                  label={t('registration.document_support')}
-                  required={false}
-                  maxLength={20}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.document_support')}
+                  </label>
+                  <Input
+                    value={formData.documentSupport || ''}
+                    onChange={(e) => updateField('documentSupport', e.target.value)}
+                    maxLength={20}
+                  />
+                </div>
               </div>
                 </CardContent>
               </CollapsibleContent>
@@ -681,11 +727,10 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
               <CollapsibleContent>
                 <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <LockableInput
-                  fieldName="addressStreet"
-                  label={t('registration.address')}
-                  required={true}
-                >
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.address')} *
+                  </label>
                   <GooglePlacesAutocomplete
                     value={formData.addressStreet || ''}
                     onChange={(address) => updateField('addressStreet', address)}
@@ -713,31 +758,55 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                       }
                     }}
                     placeholder={t('registration.address')}
-
+                    className={showValidation && validationErrors.addressStreet ? 'border-red-500' : ''}
                   />
-                </LockableInput>
+                  {showValidation && validationErrors.addressStreet && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.addressStreet}</p>
+                  )}
+                </div>
 
-                <LockableInput
-                  fieldName="addressCity"
-                  label={t('registration.city')}
-                  required={true}
-                  maxLength={100}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.city')} *
+                  </label>
+                  <Input
+                    value={formData.addressCity || ''}
+                    onChange={(e) => updateField('addressCity', e.target.value)}
+                    maxLength={100}
+                    className={showValidation && validationErrors.addressCity ? 'border-red-500' : ''}
+                  />
+                  {showValidation && validationErrors.addressCity && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.addressCity}</p>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <LockableInput
-                  fieldName="addressPostalCode"
-                  label={t('registration.postal_code')}
-                  maxLength={10}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.postal_code')}
+                  </label>
+                  <Input
+                    value={formData.addressPostalCode || ''}
+                    onChange={(e) => updateField('addressPostalCode', e.target.value)}
+                    maxLength={10}
+                  />
+                </div>
 
-                <LockableInput
-                  fieldName="addressCountry"
-                  label={t('registration.country')}
-                  required={true}
-                  maxLength={100}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.country')} *
+                  </label>
+                  <Input
+                    value={formData.addressCountry || ''}
+                    onChange={(e) => updateField('addressCountry', e.target.value)}
+                    maxLength={100}
+                    className={showValidation && validationErrors.addressCountry ? 'border-red-500' : ''}
+                  />
+                  {showValidation && validationErrors.addressCountry && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.addressCountry}</p>
+                  )}
+                </div>
               </div>
                 </CardContent>
               </CollapsibleContent>
@@ -793,13 +862,21 @@ export const RegistrationFormZustand: React.FC<RegistrationFormProps> = memo(({ 
                   </div>
                 </div>
 
-                <LockableInput
-                  fieldName="email"
-                  label={t('registration.email')}
-                  type="email"
-                  required={true}
-                  maxLength={100}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    {t('registration.email')} *
+                  </label>
+                  <Input
+                    type="email"
+                    value={formData.email || ''}
+                    onChange={(e) => updateField('email', e.target.value)}
+                    maxLength={100}
+                    className={showValidation && validationErrors.email ? 'border-red-500' : ''}
+                  />
+                  {showValidation && validationErrors.email && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
+                  )}
+                </div>
               </div>
             </CardContent>
             </Card>
