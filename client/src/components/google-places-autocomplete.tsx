@@ -170,13 +170,22 @@ export function GooglePlacesAutocomplete({
 
         if (!mounted) return;
 
-        // Try modern API first, fallback to legacy
+        // Try modern API first, fallback to legacy, then to our enhanced fallback
         try {
           initializeModernAutocomplete();
+          setUseFallback(false);
         } catch (modernError) {
           console.log('Modern API failed, trying legacy:', modernError);
-          if (mounted) {
-            initializeLegacyAutocomplete();
+          try {
+            if (mounted) {
+              initializeLegacyAutocomplete();
+              setUseFallback(false);
+            }
+          } catch (legacyError) {
+            console.log('Legacy API also failed, using enhanced fallback:', legacyError);
+            if (mounted) {
+              setUseFallback(true);
+            }
           }
         }
       } catch (error) {
@@ -192,11 +201,18 @@ export function GooglePlacesAutocomplete({
     if (!window.google?.maps) {
       loadGoogleMapsAPI();
     } else {
-      // Try modern API first, fallback to legacy
+      // Try modern API first, fallback to legacy, then to enhanced fallback
       try {
         initializeModernAutocomplete();
-      } catch (error) {
-        initializeLegacyAutocomplete();
+        setUseFallback(false);
+      } catch (modernError) {
+        try {
+          initializeLegacyAutocomplete();
+          setUseFallback(false);
+        } catch (legacyError) {
+          console.log('Both modern and legacy APIs failed, using enhanced fallback');
+          setUseFallback(true);
+        }
       }
     }
 
@@ -208,7 +224,7 @@ export function GooglePlacesAutocomplete({
     };
   }, []);
 
-  // Enhanced fallback with backend-powered Google Places autocomplete
+  // Enhanced fallback with client-side Google Places autocomplete
   const searchAddresses = async (query: string) => {
     if (query.length < 2) {
       setSuggestions([]);
@@ -216,22 +232,49 @@ export function GooglePlacesAutocomplete({
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const response = await apiRequest('GET', `/api/places/autocomplete?input=${encodeURIComponent(query)}`);
-      const data = await response.json();
-      
-      if (data.predictions) {
-        setSuggestions(data.predictions);
-        setShowSuggestions(true);
+    // Try using client-side Google Places API directly
+    if (window.google?.maps?.places?.AutocompleteService) {
+      setIsLoading(true);
+      try {
+        console.log('Using Google Places AutocompleteService for query:', query);
+        const service = new window.google.maps.places.AutocompleteService();
+        
+        service.getPlacePredictions(
+          {
+            input: query,
+            types: ['address']
+          },
+          (predictions, status) => {
+            console.log('Google Places response:', { status, predictions });
+            setIsLoading(false);
+            if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+              const mappedSuggestions = predictions.map((p: any) => ({
+                place_id: p.place_id,
+                description: p.description,
+                structured_formatting: p.structured_formatting
+              }));
+              console.log('Setting suggestions:', mappedSuggestions);
+              setSuggestions(mappedSuggestions);
+              setShowSuggestions(true);
+            } else {
+              console.log('No predictions or error status:', status);
+              setSuggestions([]);
+              setShowSuggestions(false);
+            }
+          }
+        );
+        return;
+      } catch (error) {
+        console.error('Client-side Google Places failed:', error);
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch address suggestions:', error);
-      setSuggestions([]);
-      setShowSuggestions(false);
-    } finally {
-      setIsLoading(false);
+    } else {
+      console.log('Google Places AutocompleteService not available, window.google:', !!window.google?.maps?.places);
     }
+
+    // Fallback to simple input without suggestions
+    setSuggestions([]);
+    setShowSuggestions(false);
   };
 
   const handleSuggestionSelect = (suggestion: PlacePrediction) => {
