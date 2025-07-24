@@ -551,6 +551,87 @@ export const SimpleRegistrationForm: React.FC<SimpleRegistrationFormProps> = ({
                 rows={3}
               />
             </div>
+
+            <div className="space-y-4">
+              <label className="block text-sm font-medium mb-2">
+                Payment Method *
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => updateField('paymentType', 'credit_card')}
+                  className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                    formData.paymentType === 'credit_card'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  title="Pay with Visa or Mastercard credit/debit card"
+                >
+                  <div className="flex space-x-1">
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Former_Visa_%28company%29_logo.svg/330px-Former_Visa_%28company%29_logo.svg.png" 
+                      alt="Visa" 
+                      className="h-6 w-auto"
+                      title="Visa credit/debit cards accepted"
+                    />
+                    <img 
+                      src="https://brand.mastercard.com/content/dam/mccom/brandcenter/thumbnails/mastercard_circles_92px_2x.png" 
+                      alt="Mastercard" 
+                      className="h-6 w-auto"
+                      title="Mastercard credit/debit cards accepted"
+                    />
+                  </div>
+                  <span className="text-sm font-medium">Credit Card</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => updateField('paymentType', 'cash')}
+                  className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                    formData.paymentType === 'cash'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  title="Pay with cash at reception"
+                >
+                  <CreditCard className="w-6 h-6" />
+                  <span className="text-sm font-medium">Cash</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => updateField('paymentType', 'bizum')}
+                  className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                    formData.paymentType === 'bizum'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  title="Pay instantly with Bizum mobile payment"
+                >
+                  <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/2/2b/Bizum.svg" 
+                    alt="Bizum" 
+                    className="h-6 w-auto"
+                    title="Bizum instant mobile payments"
+                  />
+                  <span className="text-sm font-medium">Bizum</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => updateField('paymentType', 'bank_transfer')}
+                  className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+                    formData.paymentType === 'bank_transfer'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  title="Pay via bank transfer or wire transfer"
+                >
+                  <CreditCard className="w-6 h-6" />
+                  <span className="text-sm font-medium">Bank Transfer</span>
+                </button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
