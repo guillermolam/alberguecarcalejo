@@ -18,6 +18,15 @@ echo "Building admin BFF..."
 cd ../admin-bff
 wasm-pack build --target web --out-dir pkg
 
+# Build country BFF
+echo "Building country BFF..."
+cd ../country-bff
+wasm-pack build --target web --out-dir pkg
+
+echo "Building backend Rust services..."
+cd ../../backend-rust
+./build.sh
+
 cd ../..
 
 echo "BFF modules built successfully!"

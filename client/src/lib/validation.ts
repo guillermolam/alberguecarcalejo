@@ -1,26 +1,35 @@
 import { z } from 'zod';
 
-// Backend validation API calls
+// BFF validation API calls
 async function validateDocumentAPI(documentType: string, documentNumber: string): Promise<{
   isValid: boolean;
   errorMessage?: string;
   normalizedNumber?: string;
 }> {
   try {
-    const response = await fetch('/api/validate/document', {
+    const response = await fetch('/api/bff/registration/validate/document', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ documentType, documentNumber })
     });
-    
+
     if (!response.ok) {
       if (response.status === 429) {
         return { isValid: false, errorMessage: 'Too many validation attempts. Please try again later.' };
       }
       throw new Error('Validation service error');
     }
-    
-    return await response.json();
+
+    const bffResponse = await response.json();
+    if (!bffResponse.success) {
+      return { isValid: false, errorMessage: bffResponse.error };
+    }
+
+    return {
+      isValid: bffResponse.data.is_valid,
+      normalizedNumber: bffResponse.data.normalized_number,
+      errorMessage: bffResponse.data.error_message
+    };
   } catch (error) {
     console.error('Document validation error:', error);
     return { isValid: false, errorMessage: 'Validation service temporarily unavailable' };
@@ -32,14 +41,23 @@ async function validateEmailAPI(email: string): Promise<{
   normalizedEmail?: string;
 }> {
   try {
-    const response = await fetch('/api/validate/email', {
+    const response = await fetch('/api/bff/registration/validate/email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
-    
+
     if (!response.ok) throw new Error('Email validation error');
-    return await response.json();
+
+    const bffResponse = await response.json();
+    if (!bffResponse.success) {
+      return { isValid: false };
+    }
+
+    return {
+      isValid: bffResponse.data.is_valid,
+      normalizedEmail: bffResponse.data.normalized_email
+    };
   } catch (error) {
     console.error('Email validation error:', error);
     return { isValid: false };
@@ -51,31 +69,28 @@ async function validatePhoneAPI(phone: string, countryCode: string): Promise<{
   normalizedPhone?: string;
 }> {
   try {
-    const response = await fetch('/api/validate/phone', {
+    const response = await fetch('/api/bff/registration/validate/phone', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, countryCode })
     });
-    
+
     if (!response.ok) throw new Error('Phone validation error');
-    return await response.json();
+
+    const bffResponse = await response.json();
+    if (!bffResponse.success) {
+      return { isValid: false };
+    }
+
+    return {
+      isValid: bffResponse.data.is_valid,
+      normalizedPhone: bffResponse.data.normalized_phone
+    };
   } catch (error) {
     console.error('Phone validation error:', error);
     return { isValid: false };
   }
 }
-
-// Country-specific phone validation patterns
-const PHONE_PATTERNS = {
-  'ESP': /^(\+34|0034|34)?[6789]\d{8}$/,
-  'FRA': /^(\+33|0033|33)?[67]\d{8}$/,
-  'DEU': /^(\+49|0049|49)?1[5-7]\d{8,9}$/,
-  'ITA': /^(\+39|0039|39)?3\d{8,9}$/,
-  'PRT': /^(\+351|00351|351)?9[1236]\d{7}$/,
-  'USA': /^(\+1|001|1)?[2-9]\d{2}[2-9]\d{2}\d{4}$/,
-  'GBR': /^(\+44|0044|44)?7\d{9}$/,
-  'DEFAULT': /^(\+\d{1,4})?[\s\-]?\d{7,15}$/
-};
 
 // Enhanced email validation using backend API - MANDATORY FIELD
 const emailSchema = z.string()
@@ -83,7 +98,7 @@ const emailSchema = z.string()
   .max(100, 'Email must be less than 100 characters')
   .email('Please enter a valid email address')
   .refine(async (email) => {
-    if (!email) return false; // Required field
+    if (!email) return false;
     const result = await validateEmailAPI(email);
     return result.isValid;
   }, 'Please enter a valid email address');
@@ -106,13 +121,13 @@ export const createDocumentSchema = (documentType: string) => {
     .min(1, 'Document number is required')
     .max(20, 'Document number must be less than 20 characters')
     .refine(async (docNumber) => {
-      if (!docNumber || !documentType) return true; // Skip validation if empty
+      if (!docNumber || !documentType) return true;
       const result = await validateDocumentAPI(documentType, docNumber);
       return result.isValid;
     }, `Please enter a valid ${documentType} number`);
 };
 
-// Birth date validation (1-150 years old)
+// Rest of validation schemas remain the same...
 export const birthDateSchema = z.string()
   .min(1, 'Birth date is required')
   .refine((date) => {
@@ -120,15 +135,14 @@ export const birthDateSchema = z.string()
     const today = new Date();
     const age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       return age >= 1 && age <= 150;
     }
-    
+
     return age >= 1 && age <= 150;
   }, 'Age must be between 1 and 150 years');
 
-// Text field validations
 export const nameSchema = z.string()
   .min(1, 'This field is required')
   .max(50, 'Name must be less than 50 characters')
@@ -149,7 +163,6 @@ export const postalCodeSchema = z.string()
   .max(10, 'Postal code must be less than 10 characters')
   .regex(/^[a-zA-Z0-9\s\-]+$/, 'Invalid postal code format');
 
-// Extract country code from country selection
 export const getCountryCode = (countryName: string): string => {
   const countryMap: Record<string, string> = {
     'España': 'ESP',
@@ -166,7 +179,7 @@ export const getCountryCode = (countryName: string): string => {
     'Reino Unido': 'GBR',
     'United Kingdom': 'GBR'
   };
-  
+
   return countryMap[countryName] || 'ESP';
 }
 
@@ -187,52 +200,51 @@ export const getCountryDialCode = (countryCode: string): string => {
     'NLD': '+31',
     'POL': '+48'
   };
-  
+
   return dialCodes[countryCode] || '+34';
 }
 
 export function validatePhoneForCountry(phone: string, countryCode: string): boolean {
   if (!phone) return false;
-  
+
   // Remove all non-digit characters for validation
   const cleanPhone = phone.replace(/\D/g, '');
-  
+
   switch (countryCode) {
     case 'ESP':
       // Spanish phone: 9 digits starting with 6, 7, 8, or 9
       return /^[6789]\d{8}$/.test(cleanPhone) || /^34[6789]\d{8}$/.test(cleanPhone);
-    
+
     case 'FRA':
       // French phone: 10 digits starting with 0, or with country code 33
       return /^0[1-9]\d{8}$/.test(cleanPhone) || /^33[1-9]\d{8}$/.test(cleanPhone);
-    
+
     case 'DEU':
       // German phone: variable length but typically 10-12 digits
       return /^0\d{9,11}$/.test(cleanPhone) || /^49\d{10,12}$/.test(cleanPhone);
-    
+
     case 'ITA':
       // Italian phone: typically 10 digits
       return /^3\d{9}$/.test(cleanPhone) || /^39\d{9,10}$/.test(cleanPhone);
-    
+
     case 'PRT':
       // Portuguese phone: 9 digits starting with 9
       return /^9\d{8}$/.test(cleanPhone) || /^351\d{9}$/.test(cleanPhone);
-    
+
     case 'GBR':
       // UK phone: 10-11 digits
       return /^0\d{9,10}$/.test(cleanPhone) || /^44\d{10,11}$/.test(cleanPhone);
-    
+
     case 'USA':
       // US phone: 10 digits
       return /^\d{10}$/.test(cleanPhone) || /^1\d{10}$/.test(cleanPhone);
-    
+
     default:
       // Generic validation: 7-15 digits
       return /^\d{7,15}$/.test(cleanPhone);
   }
 };
 
-// Registration form schema factory
 export const createRegistrationSchema = (documentType?: string, countryCode?: string) => {
   return z.object({
     firstName: nameSchema,

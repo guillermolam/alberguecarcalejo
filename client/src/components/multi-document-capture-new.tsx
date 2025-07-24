@@ -72,7 +72,7 @@ function MultiDocumentCapture({
   const requiresBothSides = (docType: string) => {
     return docType === "NIF" || docType === "NIE";
   };
-  
+
   // Update internal state when prop changes
   useEffect(() => {
     if (propDocumentType && propDocumentType !== selectedDocumentType) {
@@ -105,7 +105,7 @@ function MultiDocumentCapture({
     setError(null);
     setProcessingProgress(0);
     setCurrentSide("front");
-    
+
     // Notify parent component
     onDocumentTypeChange?.(value);
   };
@@ -210,6 +210,7 @@ function MultiDocumentCapture({
         currentSide,
       );
 
+      // Process with BFF OCR
       const result = await ocrBFFClient.processDocumentWithImage(
         imageDataUrl,
         selectedDocumentType,

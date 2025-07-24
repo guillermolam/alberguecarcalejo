@@ -44,6 +44,47 @@ pub struct RegistrationData {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct OCRProcessingRequest {
+    pub image_data: String,
+    pub document_type_hint: Option<String>,
+    pub document_side: Option<String>,
+}
+
+#[wasm_bindgen]
+pub async fn process_ocr_document(request: &str) -> Result<String, JsValue> {
+    console_log!("BFF: Processing OCR document");
+    
+    let request_data: OCRProcessingRequest = serde_json::from_str(request)
+        .map_err(|e| JsValue::from_str(&format!("Invalid OCR request: {}", e)))?;
+
+    match orchestrator::process_ocr_backend(&request_data).await {
+        Ok(result) => {
+            let response = BFFResponse {
+                success: true,
+                data: Some(result),
+                error: None,
+                rate_limited: false,
+                retry_after: None,
+            };
+            serde_json::to_string(&response)
+                .map_err(|e| JsValue::from_str(&format!("Response serialization error: {}", e)))
+        }
+        Err(e) => {
+            console_error!("BFF: OCR processing failed: {}", e);
+            let response = BFFResponse {
+                success: false,
+                data: None,
+                error: Some(e),
+                rate_limited: false,
+                retry_after: None,
+            };
+            serde_json::to_string(&response)
+                .map_err(|e| JsValue::from_str(&format!("Error response serialization error: {}", e)))
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PilgrimData {
     pub first_name: String,
     pub last_name_1: String,

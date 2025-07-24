@@ -186,6 +186,29 @@ pub async fn get_system_status() -> Result<Value, String> {
     make_api_request("GET", "/api/system/status", None).await
 }
 
+/// Process OCR document through backend
+pub async fn process_ocr_backend(request: &crate::OCRProcessingRequest) -> Result<Value, String> {
+    let payload = serde_json::to_value(request)
+        .map_err(|e| format!("Failed to serialize OCR request: {}", e))?;
+    
+    make_api_request("POST", "/api/ocr/process", Some(payload)).await
+}
+
+/// Validate document through backend
+pub async fn validate_document_backend(doc_type: &str, doc_number: &str) -> Result<Value, String> {
+    let payload = serde_json::json!({
+        "document_type": doc_type,
+        "document_number": doc_number
+    });
+    
+    make_api_request("POST", "/api/validate/document", Some(payload)).await
+}
+
+/// Get country information through backend
+pub async fn get_country_info(country_code: &str) -> Result<Value, String> {
+    make_api_request("GET", &format!("/api/countries/{}", country_code), None).await
+}
+
 /// Security wrapper for sensitive operations
 pub async fn secure_operation<F, T>(operation: F, operation_name: &str) -> Result<T, String>
 where
