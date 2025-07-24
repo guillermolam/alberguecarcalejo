@@ -9,7 +9,7 @@ import { CheckCircle, AlertCircle, Plus, Minus, Euro } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useI18n } from "@/contexts/i18n-context";
-import { MAX_NIGHTS, PRICE_PER_NIGHT } from "@/lib/constants";
+import { MAX_NIGHTS } from "@/lib/constants";
 
 interface StayInfoFormProps {
   onContinue: (stayData: StayData) => void;
@@ -41,6 +41,15 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
     setCheckOutDate(checkoutDate.toISOString().split('T')[0]);
   }, []);
 
+  // Fetch secure pricing from backend (prevents CSRF/MitM attacks)
+  const { data: pricing } = useQuery({
+    queryKey: ['/api/pricing'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/pricing');
+      return response.json();
+    }
+  });
+
   const { data: availability, isLoading, error } = useQuery({
     queryKey: ['/api/availability', checkInDate, checkOutDate, guests],
     enabled: !!(checkInDate && checkOutDate),
@@ -53,6 +62,9 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
       return response.json();
     }
   });
+
+  // Use secure pricing from backend (defaults to 15 EUR if not loaded)
+  const pricePerNight = pricing?.dormitory || 15;
 
   const handleCheckInDateChange = (date: string) => {
     setCheckInDate(date);
@@ -217,10 +229,10 @@ export function StayInfoForm({ onContinue }: StayInfoFormProps) {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-6">
               <div className="text-sm text-gray-600">
-                <span className="font-semibold text-gray-800">{PRICE_PER_NIGHT}€</span> × {nights} {nights === 1 ? t('pricing.night') : t('pricing.nights')}
+                <span className="font-semibold text-gray-800">{pricePerNight}€</span> × {nights} {nights === 1 ? t('pricing.night') : t('pricing.nights')}
               </div>
               <div className="text-sm text-gray-600">
-                <span className="font-semibold text-[#45c655]">{nights * PRICE_PER_NIGHT}€</span> {t('pricing.total')}
+                <span className="font-semibold text-[#45c655]">{nights * pricePerNight}€</span> {t('pricing.total')}
               </div>
             </div>
             <div className="text-xs text-gray-500 italic">

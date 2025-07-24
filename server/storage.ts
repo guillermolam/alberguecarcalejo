@@ -54,6 +54,9 @@ export interface IStorage {
   // GDPR/Cleanup operations
   runReservationCleanup(): Promise<number>;
   getReservationStats(): Promise<any>;
+  
+  // Pricing management
+  getPricing(): Promise<{dormitory: number, private: number, currency: string}>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -217,49 +220,62 @@ export class DatabaseStorage implements IStorage {
 
     const bedsToCreate = [];
     
-    // Room 1: 10 beds
+    // Room 1: 10 beds (dormitory beds at €15/night)
     for (let i = 1; i <= 10; i++) {
       bedsToCreate.push({
         bedNumber: i,
         roomNumber: 1,
         roomName: "Dormitorio 1",
+        roomType: "dormitory",
+        pricePerNight: "15.00", // Secure pricing stored in database
+        currency: "EUR",
         isAvailable: true,
         status: "available"
       });
     }
 
-    // Room 2: 10 beds
+    // Room 2: 10 beds (dormitory beds at €15/night)
     for (let i = 1; i <= 10; i++) {
       bedsToCreate.push({
         bedNumber: i,
         roomNumber: 2,
         roomName: "Dormitorio 2",
+        roomType: "dormitory",
+        pricePerNight: "15.00", // Secure pricing stored in database
+        currency: "EUR",
         isAvailable: true,
         status: "available"
       });
     }
 
-    // Room 3: 4 beds
+    // Room 3: 4 beds (dormitory beds at €15/night)
     for (let i = 1; i <= 4; i++) {
       bedsToCreate.push({
         bedNumber: i,
         roomNumber: 3,
         roomName: "Dormitorio 3",
+        roomType: "dormitory",
+        pricePerNight: "15.00", // Secure pricing stored in database
+        currency: "EUR",
         isAvailable: true,
         status: "available"
       });
     }
 
-    // Single room: 1 bed
+    // Single room: 1 bed (private room at €35/night)
     bedsToCreate.push({
       bedNumber: 1,
       roomNumber: 4,
       roomName: "Habitación Individual",
+      roomType: "private",
+      pricePerNight: "35.00", // Higher price for private room
+      currency: "EUR",
       isAvailable: true,
       status: "available"
     });
 
     await db.insert(beds).values(bedsToCreate);
+    console.log("✅ Bed inventory initialized: 25 beds with secure pricing");
   }
 
   async createPayment(payment: InsertPayment): Promise<Payment> {
@@ -385,6 +401,28 @@ export class DatabaseStorage implements IStorage {
     
     // Decrypt sensitive data before returning
     return GDPRDataHandler.decryptPilgrimData(pilgrim);
+  }
+
+  // Get secure pricing from database (prevents client-side tampering)
+  async getPricing(): Promise<{dormitory: number, private: number, currency: string}> {
+    // Get pricing from first available bed of each type (secure source)
+    const dormitoryBed = await db
+      .select({ pricePerNight: beds.pricePerNight, currency: beds.currency })
+      .from(beds)
+      .where(eq(beds.roomType, 'dormitory'))
+      .limit(1);
+    
+    const privateBed = await db
+      .select({ pricePerNight: beds.pricePerNight, currency: beds.currency })
+      .from(beds)
+      .where(eq(beds.roomType, 'private'))
+      .limit(1);
+
+    return {
+      dormitory: dormitoryBed.length > 0 ? parseFloat(dormitoryBed[0].pricePerNight || "15.00") : 15.00,
+      private: privateBed.length > 0 ? parseFloat(privateBed[0].pricePerNight || "35.00") : 35.00,
+      currency: dormitoryBed.length > 0 ? dormitoryBed[0].currency || "EUR" : "EUR"
+    };
   }
 }
 

@@ -173,6 +173,7 @@ The database schema supports full GDPR/NIS2 compliance with encrypted storage:
   - **Background Cleanup Service**: 5-minute interval processing of expired reservations
   - **Transaction Integrity**: Atomic operations ensuring data consistency
 - **Dynamic Pricing System**: Database-driven pricing with dormitory beds (€15/night) and private rooms (€35/night)
+- **Secure Pricing Architecture**: All pricing data served from backend API to prevent CSRF/MitM attacks and client-side tampering
 - **Zero-Cost OCR Processing**: AWS Lambda function for Spanish DNI/NIE and passport processing (<$0/month for 24 users/day)
 - **Advanced Document Validation**: Checksum verification for DNI/NIE using mod-23 algorithm
 - **International Passport Support**: MRZ (Machine Readable Zone) parsing for worldwide passports

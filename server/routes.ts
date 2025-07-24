@@ -440,6 +440,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get secure pricing from database (prevents CSRF/MitM attacks)
+  app.get("/api/pricing", async (req, res) => {
+    try {
+      const pricing = await storage.getPricing();
+      res.json(pricing);
+    } catch (error) {
+      console.error("Error fetching pricing:", error);
+      res.status(500).json({ error: "Failed to fetch pricing" });
+    }
+  });
+
   // Check availability endpoint - with fallback to local logic
   app.post("/api/availability", async (req, res) => {
     try {

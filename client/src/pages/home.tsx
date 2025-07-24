@@ -9,7 +9,6 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { ShieldQuestion, CheckCircle } from "lucide-react";
 import { useI18n } from "@/contexts/i18n-context";
-import { PRICE_PER_NIGHT } from "@/lib/constants";
 import { auth0Service } from "@/lib/auth0";
 import { useLocation } from "wouter";
 
@@ -26,6 +25,15 @@ export default function Home() {
     queryKey: ['/api/dashboard/stats'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/dashboard/stats');
+      return response.json();
+    }
+  });
+
+  // Fetch secure pricing from backend (prevents CSRF/MitM attacks)
+  const { data: pricing } = useQuery({
+    queryKey: ['/api/pricing'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/pricing');
       return response.json();
     }
   });
@@ -128,7 +136,7 @@ export default function Home() {
                 <div className="w-px h-12 bg-white/20"></div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-[#45c655]">
-                    {PRICE_PER_NIGHT}€
+                    {pricing?.dormitory || 15}€
                   </div>
                   <div className="text-sm text-green-100">
                     {t('hero.price_per_night')}

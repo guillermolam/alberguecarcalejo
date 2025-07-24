@@ -71,6 +71,8 @@ export const beds = pgTable("beds", {
   roomNumber: integer("room_number").notNull(),
   roomName: text("room_name").notNull(),
   roomType: text("room_type").default("dormitory"), // dormitory, private
+  pricePerNight: decimal("price_per_night", { precision: 10, scale: 2 }).notNull().default("15.00"), // Secure pricing stored in DB
+  currency: text("currency").default("EUR"),
   isAvailable: boolean("is_available").default(true),
   status: text("status").default("available"), // available, reserved, occupied, maintenance, cleaning
   reservedUntil: timestamp("reserved_until"), // When reservation expires
