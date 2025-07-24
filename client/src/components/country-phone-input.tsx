@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown } from 'lucide-react';
+import { CountrySelector } from './country-selector';
 import { countryBFFClient, type CountryInfo } from '@/lib/country-bff-client';
 import { useI18n } from '@/contexts/i18n-context';
 
@@ -19,19 +17,7 @@ interface CountryPhoneInputProps {
   error?: string;
 }
 
-// Common countries for the phone input
-const COMMON_COUNTRIES = [
-  { name: 'Spain', code: 'ESP' },
-  { name: 'France', code: 'FRA' },
-  { name: 'Portugal', code: 'PRT' },
-  { name: 'United Kingdom', code: 'GBR' },
-  { name: 'Germany', code: 'DEU' },
-  { name: 'Italy', code: 'ITA' },
-  { name: 'United States', code: 'USA' },
-  { name: 'Brazil', code: 'BRA' },
-  { name: 'Argentina', code: 'ARG' },
-  { name: 'Mexico', code: 'MEX' },
-];
+
 
 export function CountryPhoneInput({
   countryName,
@@ -85,62 +71,17 @@ export function CountryPhoneInput({
       </label>
       <div className="flex gap-2">
         {/* Country Selector with Flag and Code */}
-        <Select 
-          value={countryName || 'Spain'} 
-          onValueChange={(value) => {
-            onCountryChange?.(value);
-            fetchCountryInfo(value);
-          }}
-        >
-          <SelectTrigger className="min-w-[140px] max-w-[180px]">
-            <div className="flex items-center gap-2 overflow-hidden">
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-4 bg-gray-200 animate-pulse rounded"></div>
-                  <span className="text-sm text-gray-500">...</span>
-                </div>
-              ) : countryInfo ? (
-                <>
-                  <img 
-                    src={countryInfo.flag_url} 
-                    alt={`${countryInfo.country_name} flag`}
-                    className="w-5 h-4 object-cover rounded-sm flex-shrink-0"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                  />
-                  <span className="text-sm font-medium text-gray-700 truncate">
-                    {countryInfo.calling_code}
-                  </span>
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-4 bg-gray-200 rounded-sm"></div>
-                  <span className="text-sm text-gray-500">+--</span>
-                </div>
-              )}
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {COMMON_COUNTRIES.map((country) => (
-              <SelectItem key={country.code} value={country.name}>
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={`https://flagcdn.com/w320/${country.code.toLowerCase().slice(0, 2)}.png`}
-                    alt={`${country.name} flag`}
-                    className="w-5 h-4 object-cover rounded-sm"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                  />
-                  <span>{country.name}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="min-w-[200px] max-w-[250px]">
+          <CountrySelector
+            value={countryName || 'Spain'}
+            onCountryChange={(country) => {
+              onCountryChange?.(country.name);
+              fetchCountryInfo(country.name);
+            }}
+            placeholder="Select country..."
+            className="w-full"
+          />
+        </div>
 
         {/* Local Phone Number Input */}
         <div className="flex-1">
@@ -169,7 +110,7 @@ export function CountryPhoneInput({
       
       {countryInfo && (
         <div className="text-xs text-gray-500 mt-1">
-          Formato: {countryInfo.calling_code} + número local (sin código país)
+          Format: {countryInfo.calling_code} + local number (without country code)
         </div>
       )}
     </div>
