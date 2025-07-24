@@ -548,11 +548,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/register", async (req, res) => {
     try {
-      const { pilgrim, booking, payment } = completeRegistrationSchema.parse(req.body);
+      console.log("Registration request received:", JSON.stringify(req.body, null, 2));
+      
+      // Transform the request to match schema expectations
+      const { pilgrim, booking, payment } = req.body;
+      
+      // Map selectedBedId to bedAssignmentId if present
+      if (booking.selectedBedId) {
+        booking.bedAssignmentId = booking.selectedBedId;
+        delete booking.selectedBedId;
+      }
+      
+      // Ensure all required fields are present with proper types
+      const transformedData = {
+        pilgrim,
+        booking: {
+          ...booking,
+          totalAmount: payment.amount, // Ensure totalAmount is set
+          // Add required fields with defaults if missing
+          reservationExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
+          paymentDeadline: new Date(Date.now() + 2 * 60 * 60 * 1000) // 2 hours from now
+        },
+        payment
+      };
+      
+      console.log("Transformed data:", JSON.stringify(transformedData, null, 2));
+      
+      const validated = completeRegistrationSchema.parse(transformedData);
       
       // Try Rust backend first, fallback to local logic
       try {
-        const result = await wasmProxy.registerPilgrim(pilgrim, booking, payment);
+        const result = await wasmProxy.registerPilgrim(validated.pilgrim, validated.booking, validated.payment);
         res.json(result);
         return;
       } catch (backendError) {
@@ -562,15 +588,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fallback to legacy registration logic
       // Check if pilgrim already exists
       const existingPilgrim = await storage.getPilgrimByDocument(
-        pilgrim.documentType,
-        pilgrim.documentNumber
+        validated.pilgrim.documentType,
+        validated.pilgrim.documentNumber
       );
 
       let pilgrimRecord;
       if (existingPilgrim) {
         pilgrimRecord = existingPilgrim;
       } else {
-        pilgrimRecord = await storage.createPilgrim(pilgrim);
+        pilgrimRecord = await storage.createPilgrim(validated.pilgrim);
       }
 
       // Generate unique reference number
@@ -578,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create booking
       const bookingRecord = await storage.createBooking({
-        ...booking,
+        ...validated.booking,
         pilgrimId: pilgrimRecord.id,
         referenceNumber
       });
@@ -587,8 +613,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paymentAndBedResult = await bedManager.processPaymentAndAssignBed(
         bookingRecord.id,
         {
-          amount: parseFloat(payment.amount),
-          paymentType: payment.paymentType,
+          amount: parseFloat(validated.payment.amount),
+          paymentType: validated.payment.paymentType,
           receiptNumber: `REC-${bookingRecord.id}-${Date.now()}`
         }
       );
@@ -612,6 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
+      console.error("Registration error:", error);
       res.status(400).json({ 
         error: "Registration failed", 
         details: error instanceof Error ? error.message : "Unknown error" 
