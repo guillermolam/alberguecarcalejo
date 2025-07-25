@@ -3,6 +3,16 @@
 
 You are an expert full‑stack engineer. Scaffold a **Replit** workspace that implements the following architecture and tooling. Output **only** the scaffolded files, code, and configuration—no extra explanation.
 
+## Recent Changes: Latest modifications with dates
+
+### July 25, 2025 - Deployment Build Fixes Applied
+✓ Fixed Vite build configuration issues for deployment
+✓ Created root-level vite.config.mjs to handle path aliases correctly  
+✓ Added missing root-level index.html as Vite entry point
+✓ Verified frontend build process works correctly (static site)
+✓ Confirmed application should be deployed as Static deployment, not Cloud Run
+✓ Successfully building dist/index.html and assets for production
+
 ---
 
 > **REPLIT + FERMYON/SPIN ENVIRONMENT POLICY**
