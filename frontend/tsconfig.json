@@ -24,11 +24,23 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/pages/*": ["./src/pages/*"],
+      "@/store/*": ["./src/store/*"],
+      "@/contexts/*": ["./src/contexts/*"],
+      "@/utils/*": ["./src/utils/*"],
       "@assets/*": ["../tests/attached_assets/*"],
-      "@shared/*": ["../services/shared/*"],
-      "@wasm/*": ["../services/*"]
+      "@shared/*": ["../services/shared/src/*"],
+      "@wasm/*": ["../pkg/*"]
     }
   },
-  "include": ["src", "../services/shared/src"],
+  "include": [
+    "src",
+    "src/types/global.d.ts",
+    "../tests/attached_assets",
+    "../services/shared/src"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
