@@ -47,7 +47,6 @@ pub struct OccupancyStats {
 #[derive(Serialize, Deserialize)]
 pub struct Pricing {
     pub dormitory: i32,
-    pub private_room: i32,
 }
 
 #[http_component]
@@ -115,9 +114,9 @@ fn create_booking(_req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
 fn get_dashboard_stats() -> Result<impl IntoResponse> {
     let stats = DashboardStats {
         occupancy: OccupancyStats {
-            available: 24,
+            available: 16,
             occupied: 8,
-            total: 32,
+            total: 24,
         },
         today_bookings: 3,
         revenue: 4500,
@@ -132,7 +131,6 @@ fn get_dashboard_stats() -> Result<impl IntoResponse> {
 fn get_pricing() -> Result<impl IntoResponse> {
     let pricing = Pricing {
         dormitory: 15,
-        private_room: 35,
     };
     
     Ok(ResponseBuilder::new(StatusCode::OK)

@@ -22,9 +22,9 @@ app.use(express.json());
 app.get('/booking/dashboard/stats', (req, res) => {
   res.json({
     occupancy: {
-      available: 24,
+      available: 16,
       occupied: 8,
-      total: 32
+      total: 24
     },
     today_bookings: 3,
     revenue: 4500
@@ -33,8 +33,7 @@ app.get('/booking/dashboard/stats', (req, res) => {
 
 app.get('/booking/pricing', (req, res) => {
   res.json({
-    dormitory: 15,
-    private_room: 35
+    dormitory: 15
   });
 });
 
