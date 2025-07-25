@@ -257,10 +257,10 @@ export default function RegistrationForm() {
                 </div>
 
                 {/* Pricing Summary */}
-                <div className="bg-gray-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded-r-lg">
                   <div className="flex justify-between items-center mb-2">
-                    <div className="text-sm text-gray-600">
-                      <span className="font-semibold">15€</span> × {(() => {
+                    <div className="text-sm text-gray-700">
+                      <span className="font-semibold text-gray-900">15€</span> • {(() => {
                         const checkIn = form.watch('checkInDate');
                         const checkOut = form.watch('checkOutDate');
                         if (checkIn && checkOut) {
@@ -269,7 +269,7 @@ export default function RegistrationForm() {
                         return 2;
                       })()} noches
                     </div>
-                    <div className="text-lg font-bold text-green-600">
+                    <div className="text-lg font-bold text-gray-900">
                       {(() => {
                         const checkIn = form.watch('checkInDate');
                         const checkOut = form.watch('checkOutDate');
@@ -281,29 +281,29 @@ export default function RegistrationForm() {
                     </div>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-500">Pago a la llegada</span>
+                    <span className="text-gray-600">Pago a la llegada</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500">Métodos aceptados de pago</span>
+                      <span className="text-gray-600">Métodos aceptados de pago</span>
                       <div className="flex gap-1 items-center">
                         {/* Cash */}
-                        <div className="w-6 h-4 bg-green-500 rounded text-white text-xs flex items-center justify-center font-bold">€</div>
+                        <div className="w-6 h-4 bg-gray-600 rounded text-white text-xs flex items-center justify-center font-bold">€</div>
                         
                         {/* Visa Logo */}
-                        <div className="w-10 h-6 bg-white border rounded flex items-center justify-center">
-                          <div className="text-blue-700 font-bold text-xs italic tracking-wider">VISA</div>
+                        <div className="w-10 h-6 bg-white border border-gray-300 rounded flex items-center justify-center shadow-sm">
+                          <div className="text-blue-600 font-bold text-xs italic tracking-wider">VISA</div>
                         </div>
                         
                         {/* Mastercard Logo */}
-                        <div className="w-10 h-6 bg-white border rounded flex items-center justify-center">
+                        <div className="w-10 h-6 bg-white border border-gray-300 rounded flex items-center justify-center shadow-sm">
                           <div className="relative">
                             <div className="w-3 h-3 rounded-full bg-red-500 absolute"></div>
-                            <div className="w-3 h-3 rounded-full bg-yellow-400 absolute left-2"></div>
+                            <div className="w-3 h-3 rounded-full bg-orange-400 absolute left-1.5"></div>
                           </div>
                         </div>
                         
                         {/* Bizum Logo */}
-                        <div className="w-10 h-6 bg-white border rounded flex items-center justify-center">
-                          <div className="text-xs font-bold text-blue-600">bizum</div>
+                        <div className="w-10 h-6 bg-white border border-gray-300 rounded flex items-center justify-center shadow-sm">
+                          <div className="text-xs font-bold" style={{color: '#00A859'}}>bizum</div>
                         </div>
                       </div>
                     </div>
@@ -311,9 +311,9 @@ export default function RegistrationForm() {
                 </div>
 
                 {/* Availability Confirmation */}
-                <Alert className="border-green-200 bg-green-50">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">
+                <Alert className="border-gray-200 bg-gray-50">
+                  <CheckCircle className="h-4 w-4 text-gray-600" />
+                  <AlertDescription className="text-gray-700">
                     <strong>Disponibilidad confirmada</strong> - Hay camas disponibles para las fechas seleccionadas.
                   </AlertDescription>
                 </Alert>
@@ -622,11 +622,11 @@ export default function RegistrationForm() {
               )}
 
               {currentStep < steps.length - 1 ? (
-                <Button type="button" onClick={handleNext} className="bg-green-600 hover:bg-green-700">
+                <Button type="button" onClick={handleNext} className="bg-gray-700 hover:bg-gray-800 text-white">
                   Continuar
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
+                <Button type="submit" disabled={isSubmitting} className="bg-gray-700 hover:bg-gray-800 text-white">
                   {isSubmitting ? 'Procesando...' : 'Completar registro'}
                 </Button>
               )}
