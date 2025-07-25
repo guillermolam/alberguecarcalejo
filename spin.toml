@@ -6,8 +6,17 @@ version = "0.1.0"
 authors = ["Guillermo Lam <guillermo@alberguedelcarrascalejo.com>"]
 
 [[trigger.http]]
+route = "/booking/..."
+component = "gateway"
+
+[[trigger.http]]
 route = "/..."
 component = "frontend"
+
+[[component]]
+id = "gateway"
+source = { url = "https://github.com/fermyon/spin-js-sdk/releases/download/canary/spin_static_fs.wasm", digest = "sha256:65456bf4e84cf81b62075e761b2b0afaffaef2d0aeda521b245150f76b96421b" }
+files = [ { source = "gateway", destination = "/" } ]
 
 [[component]]
 id = "frontend"

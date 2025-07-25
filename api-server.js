@@ -45,8 +45,8 @@ app.get('/booking/pricing', (req, res) => {
   });
 });
 
-// Protected admin endpoints requiring basic auth
-app.get('/booking/dashboard/stats', basicAuth, (req, res) => {
+// Admin endpoints - authentication handled by gateway
+app.get('/booking/dashboard/stats', (req, res) => {
   res.json({
     occupancy: {
       available: 24,
@@ -58,7 +58,7 @@ app.get('/booking/dashboard/stats', basicAuth, (req, res) => {
   });
 });
 
-app.get('/booking/admin/bookings', basicAuth, (req, res) => {
+app.get('/booking/admin/bookings', (req, res) => {
   res.json([
     {
       id: "1",

@@ -17,7 +17,7 @@ export async function apiRequest(method: string, url: string, data?: any) {
     'Content-Type': 'application/json',
   };
   
-  // Add basic auth for admin endpoints
+  // Add basic auth for admin endpoints - gateway will validate
   if (url.includes('/dashboard/stats') || url.includes('/admin/')) {
     headers['Authorization'] = 'Basic ' + btoa('admin:admin');
   }

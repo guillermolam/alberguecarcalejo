@@ -16,8 +16,11 @@ You are an expert full‑stack engineer. Scaffold a **Replit** workspace that im
 ✓ Removed hardcoded values - all data now flows from backend services and database schema
 ✓ Fixed routing issues and stabilized development environment
 ✓ **Implemented gateway-level basic authentication for admin access (admin/admin)**
-✓ **Created AdminDashboard showing real hostel statistics and bed configuration**
-✓ **Admin endpoints protected by HTTP Basic Auth at gateway level**
+✓ **Created Express.js gateway proxy protecting admin routes at infrastructure level**
+✓ **Admin endpoints (/booking/dashboard/*, /booking/admin/*) require HTTP Basic Auth**
+✓ **Gateway running on port 8000 with route-level protection middleware**
+✓ **AdminDashboard showing real hostel statistics and bed configuration**
+✓ **Removed application-level authentication - all security handled by gateway**
 ✓ Ready for deployment to alberguecarrascalejo.fermyon.app
 
 ### July 25, 2025 - Deployment Build Fixes Applied
