@@ -60,7 +60,7 @@ export default function Home() {
 
   const handleAdminLogin = async () => {
     try {
-      await auth0Service.loginWithRedirect();
+      await auth0Service.login();
       // If successful, user will be redirected to /admin
     } catch (error) {
       console.error('Admin login failed:', error);

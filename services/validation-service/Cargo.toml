@@ -25,3 +25,4 @@ image = "0.23"
 regex = "1.0"
 tesseract-plumbing = { version = "0.4", optional = true }
 async-trait = { workspace = true }
+getrandom = { version = "0.2", features = ["js"] }

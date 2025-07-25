@@ -1,0 +1,10 @@
+/home/runner/workspace/target/wasm32-unknown-unknown/release/deps/libweezl-de50af4c818fb244.rmeta: /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/lib.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/decode.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/encode.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/error.rs
+
+/home/runner/workspace/target/wasm32-unknown-unknown/release/deps/libweezl-de50af4c818fb244.rlib: /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/lib.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/decode.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/encode.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/error.rs
+
+/home/runner/workspace/target/wasm32-unknown-unknown/release/deps/weezl-de50af4c818fb244.d: /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/lib.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/decode.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/encode.rs /home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/error.rs
+
+/home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/lib.rs:
+/home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/decode.rs:
+/home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/encode.rs:
+/home/runner/workspace/.local/share/.cargo/registry/src/index.crates.io-6f17d22bba15001f/weezl-0.1.10/src/error.rs:
