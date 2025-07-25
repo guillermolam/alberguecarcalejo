@@ -8,9 +8,9 @@ async function startServer() {
   console.log('📦 Frontend-only server with WASM backend services');
   
   const server = await createServer({
-    root: './client',
+    root: './frontend',
     server: {
-      port: parseInt(process.env.PORT || '80'),
+      port: parseInt(process.env.PORT || '5173'),
       host: '0.0.0.0',
       open: false
     },
@@ -19,8 +19,8 @@ async function startServer() {
     },
     resolve: {
       alias: {
-        '@': path.resolve('./client/src'),
-        '@assets': path.resolve('./attached_assets'),
+        '@': path.resolve('./frontend/src'),
+        '@assets': path.resolve('./tests/attached_assets'),
         '@shared': path.resolve('./shared'),
         '@wasm': path.resolve('./services')
       }
@@ -34,7 +34,7 @@ async function startServer() {
   server.printUrls();
   
   console.log('✅ WASM microservices architecture active');
-  console.log('🔧 Build WASM: ./scripts/cargo-build.sh');
+  console.log('🔧 Build WASM: bash scripts/build-wasm.sh');
   console.log('🚀 All backend logic runs in browser WASM');
 }
 

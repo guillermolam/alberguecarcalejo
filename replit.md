@@ -536,8 +536,15 @@ spin up --listen 0.0.0.0:80
 - Moved all test assets to tests/attached_assets/
 - Removed legacy config files: components.json, drizzle.config.ts, postcss.config.js, tailwind.config.ts, tsconfig.json, vite.config.ts
 - Removed legacy test files: README-Testing.md, jest.config.cjs, jest.config.js
+- **Moved server/ directory to frontend/server/** for proper frontend-only architecture
 - Created proper database/ directory for migrations
 - Maintained .github/ for CI/CD workflows
+
+**Frontend Server Integration:**
+- Frontend development server moved to frontend/server/index.ts
+- Updated to serve from frontend/ directory with proper WASM aliases
+- All backend logic runs through WASM microservices in browser
+- Created dev-replit.js script to bridge npm script limitations
 
 ---
 **Deliverables**: scaffolded repo folders, config files, sample code stubs, UI behaviour notes, admin console specs, and the scripts above.

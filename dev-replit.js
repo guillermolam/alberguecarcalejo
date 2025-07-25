@@ -43,8 +43,8 @@ async function main() {
     // Start the development server directly
     console.log("🚀 Starting server on port 5173...");
     
-    // Use tsx to run the server
-    await runCommand('npx', ['tsx', 'server/index.ts']);
+    // Use tsx to run the frontend server
+    await runCommand('npx', ['tsx', 'frontend/server/index.ts']);
   } catch (error) {
     console.error('Failed to start development server:', error.message);
     process.exit(1);
