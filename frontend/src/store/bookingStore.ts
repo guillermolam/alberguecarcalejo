@@ -1,80 +1,32 @@
-import { create } from 'zustand';
+import { create } from 'zustand'
 
-interface BookingData {
-  name: string;
-  email: string;
-  phone: string;
-  nationality: string;
-  documentType: string;
-  documentNumber: string;
-  checkIn: string;
-  checkOut: string;
-  bedType: string;
+interface BookingState {
+  isLoading: boolean
+  createBooking: (data: any) => Promise<void>
+  checkAvailability: (dates: { checkIn: Date; checkOut: Date }) => Promise<boolean>
 }
 
-interface BookingStore {
-  isLoading: boolean;
-  error: string | null;
-  currentBooking: BookingData | null;
-  createBooking: (data: BookingData) => Promise<void>;
-  checkAvailability: (checkIn: string, checkOut: string, bedType: string) => Promise<boolean>;
-  clearBooking: () => void;
-}
-
-export const useBookingStore = create<BookingStore>((set, get) => ({
+export const useBookingStore = create<BookingState>((set) => ({
   isLoading: false,
-  error: null,
-  currentBooking: null,
-
-  createBooking: async (data: BookingData) => {
-    set({ isLoading: true, error: null });
-    
+  createBooking: async (data) => {
+    set({ isLoading: true })
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock validation
-      if (!data.name || !data.email || !data.checkIn || !data.checkOut) {
-        throw new Error('Campos requeridos faltantes');
-      }
-
-      // Simulate successful booking creation
-      console.log('Booking created:', data);
-      
-      set({ 
-        currentBooking: data, 
-        isLoading: false,
-        error: null 
-      });
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Error creating booking',
-        isLoading: false 
-      });
-      throw error;
+      // TODO: Implement with WASM booking service
+      console.log('Creating booking:', data)
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Mock delay
+    } finally {
+      set({ isLoading: false })
     }
   },
-
-  checkAvailability: async (checkIn: string, checkOut: string, bedType: string) => {
-    set({ isLoading: true, error: null });
-    
+  checkAvailability: async (dates) => {
+    set({ isLoading: true })
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock availability check - always return true for demo
-      set({ isLoading: false });
-      return true;
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Error checking availability',
-        isLoading: false 
-      });
-      return false;
+      // TODO: Implement with WASM booking service
+      console.log('Checking availability:', dates)
+      await new Promise(resolve => setTimeout(resolve, 500)) // Mock delay
+      return true // Mock response
+    } finally {
+      set({ isLoading: false })
     }
-  },
-
-  clearBooking: () => {
-    set({ currentBooking: null, error: null });
-  },
-}));
+  }
+}))
