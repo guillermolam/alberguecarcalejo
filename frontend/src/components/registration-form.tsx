@@ -284,11 +284,27 @@ export default function RegistrationForm() {
                     <span className="text-gray-500">Pago a la llegada</span>
                     <div className="flex items-center gap-2">
                       <span className="text-gray-500">Métodos aceptados de pago</span>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 items-center">
+                        {/* Cash */}
                         <div className="w-6 h-4 bg-green-500 rounded text-white text-xs flex items-center justify-center font-bold">€</div>
-                        <div className="w-6 h-4 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">V</div>
-                        <div className="w-6 h-4 bg-red-500 rounded text-white text-xs flex items-center justify-center font-bold">M</div>
-                        <div className="w-6 h-4 bg-purple-500 rounded text-white text-xs flex items-center justify-center font-bold">B</div>
+                        
+                        {/* Visa Logo */}
+                        <div className="w-10 h-6 bg-white border rounded flex items-center justify-center">
+                          <div className="text-blue-700 font-bold text-xs italic tracking-wider">VISA</div>
+                        </div>
+                        
+                        {/* Mastercard Logo */}
+                        <div className="w-10 h-6 bg-white border rounded flex items-center justify-center">
+                          <div className="relative">
+                            <div className="w-3 h-3 rounded-full bg-red-500 absolute"></div>
+                            <div className="w-3 h-3 rounded-full bg-yellow-400 absolute left-2"></div>
+                          </div>
+                        </div>
+                        
+                        {/* Bizum Logo */}
+                        <div className="w-10 h-6 bg-white border rounded flex items-center justify-center">
+                          <div className="text-xs font-bold text-blue-600">bizum</div>
+                        </div>
                       </div>
                     </div>
                   </div>
