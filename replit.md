@@ -48,23 +48,24 @@ The application follows a zero-cost, modern full-stack architecture optimized fo
 - **Mobile-First Design**: Responsive design optimized for mobile devices
 
 ### Backend Architecture
-- **Rust WASM Services**: 
-  - **Database Service**: Secure PostgreSQL operations with date validation and error handling
-  - **Validation Service**: Spanish document validation (DNI/NIE/Passport) with checksums, email/phone validation
-  - **Country Service**: RESTCountries API integration with local caching and fallback data
-  - **Security Service**: Admin authentication with SHA-256 hashing and token generation
-  - **Rate Limiter**: Granular limits per operation (10 validations/5min, 3 registrations/hour, 5 OCR/10min)
-  - **Input Sanitization**: XSS prevention, buffer overflow protection, client fingerprinting
-  - **Cloudflare Workers Deployment**: Zero-cost, globally-distributed WASM with built-in TLS and routing
-- **Secure Bed Management Service**: TypeScript backend service with PostgreSQL integration
-  - **Automatic Bed Assignment**: Assigns beds automatically after payment confirmation
-  - **Real-time Availability**: Checks bed availability with date range validation
-  - **Payment Integration**: Processes payments and assigns beds atomically
-  - **Inventory Management**: Initializes and manages 24-bed inventory (Dormitorios A/B, Private rooms)
-  - **Security**: All bed operations secured and validated before database updates
-- **Express.js Proxy**: Minimal proxy layer routing requests to Rust WASM backend services
-- **Secure Database Access**: All database operations validated and secured through backend services
-- **Type-Safe Operations**: Serde serialization for request/response validation
+- **Express.js API Server**: Full-featured TypeScript backend with direct database access
+  - **PostgreSQL Integration**: Direct database operations via Drizzle ORM
+  - **Bed Management Service**: Automatic bed assignment after payment confirmation
+  - **Real-time Availability**: Bed availability checking with date range validation
+  - **Payment Integration**: Atomic payment processing and bed assignment
+  - **Inventory Management**: 24-bed inventory initialization and management
+  - **Reservation Cleanup**: Automated 2-hour timeout and cleanup service
+  - **Security Features**: Input validation, rate limiting, GDPR compliance
+- **API Endpoints**: Direct REST API serving frontend requests
+  - **Validation**: Document, email, and phone validation endpoints
+  - **OCR Processing**: Proxy to AWS Lambda Rust OCR service
+  - **Country Information**: RESTCountries API integration with fallback data
+  - **Authentication**: Admin session-based auth with SHA-256 hashing
+- **Future Enhancement**: Rust microservices exist in `backend/services/` for potential migration
+  - **OCR Service**: Rust-based document processing (deployed as AWS Lambda)
+  - **Validation Service**: Spanish document validation with checksums
+  - **Country Service**: Enhanced country data processing
+  - **Database Service**: Potential migration to Rust for performance
 
 ### Database Design
 The database schema supports full GDPR/NIS2 compliance with encrypted storage:
@@ -327,3 +328,17 @@ The system includes comprehensive testing infrastructure across multiple levels:
   - **API Clients**: `country-api-client.ts`, `ocr-api-client.ts` for clean client-side integration
 - **Benefits**: Simplified architecture, faster development, reduced complexity, direct API access
 - **Status**: BFF removal complete, all components updated, server running successfully
+
+### July 25, 2025 - Architecture Documentation Correction
+- **Corrected Backend Architecture Documentation**: 
+  - Updated documentation to reflect actual TypeScript Express.js server implementation
+  - Removed incorrect references to Rust WASM microservices architecture
+  - Clarified that Rust services exist in `backend/services/` but are not currently deployed
+  - Documented direct PostgreSQL access via Drizzle ORM in TypeScript server
+- **Current Reality vs Documentation**:
+  - **Reality**: Express.js server with direct database access handles all backend operations
+  - **Previous Docs**: Claimed Rust microservices with Cloudflare Workers deployment
+  - **AWS Lambda**: Only OCR service actually deployed as Rust Lambda function
+  - **Future Path**: Rust services available for potential future migration
+- **Benefits**: Accurate documentation matches working implementation
+- **Status**: Documentation corrected, server architecture properly documented
