@@ -16,10 +16,11 @@ export const getApiBaseUrl = (): string => {
     : 'http://localhost:8000';
 }
 
-// WASM service helper
+// WASM service helper with proper error handling
 export const loadWasmService = async (serviceName: string) => {
   try {
-    const wasmModule = await import(`@wasm/${serviceName}`);
+    // Use vite-ignore comment to suppress dynamic import warning
+    const wasmModule = await import(/* @vite-ignore */ `../../../pkg/${serviceName}`);
     return wasmModule;
   } catch (error) {
     console.warn(`Failed to load WASM service: ${serviceName}`, error);

@@ -1,117 +1,172 @@
--- Initial schema for Albergue del Carrascalejo
--- Creates core tables for pilgrim management, booking system, and bed inventory
+-- Initial schema for Albergue del Carrascalejo management system
+-- Based on services/shared/schema.ts types and requirements
 
--- Enable UUID extension (PostgreSQL only)
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Countries table for nationality validation
-CREATE TABLE countries (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    code VARCHAR(2) NOT NULL UNIQUE,
-    name VARCHAR(100) NOT NULL,
-    nationality VARCHAR(100) NOT NULL,
-    requires_visa BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Users table for authentication
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Pilgrims/guests table
+-- Pilgrims table with GDPR/NIS2 compliance (encrypted fields)
 CREATE TABLE pilgrims (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    document_type VARCHAR(20) NOT NULL CHECK (document_type IN ('DNI', 'NIE', 'PASSPORT')),
-    document_number VARCHAR(50) NOT NULL,
-    document_checksum_valid BOOLEAN DEFAULT FALSE,
-    full_name VARCHAR(200) NOT NULL,
-    email VARCHAR(255),
-    phone VARCHAR(50),
-    nationality_code VARCHAR(2) REFERENCES countries(code),
-    birth_date DATE,
-    emergency_contact VARCHAR(255),
-    emergency_phone VARCHAR(50),
-    -- OCR and validation data
-    document_confidence DECIMAL(3,2) DEFAULT 0.0,
-    ocr_extracted_data JSONB,
-    validation_status VARCHAR(20) DEFAULT 'pending' CHECK (validation_status IN ('pending', 'valid', 'invalid', 'manual_review')),
-    -- GDPR compliance
-    consent_marketing BOOLEAN DEFAULT FALSE,
-    consent_data_processing BOOLEAN DEFAULT TRUE,
-    data_retention_until DATE,
-    -- Timestamps
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    -- Unique constraint on document
-    UNIQUE(document_type, document_number)
+    id SERIAL PRIMARY KEY,
+    -- Encrypted personal data (marked with _encrypted suffix)
+    first_name_encrypted TEXT NOT NULL,
+    last_name_1_encrypted TEXT NOT NULL,
+    last_name_2_encrypted TEXT,
+    birth_date_encrypted TEXT NOT NULL,
+    document_type VARCHAR(50) NOT NULL,
+    document_number_encrypted TEXT NOT NULL,
+    document_support VARCHAR(100),
+    gender VARCHAR(10) NOT NULL,
+    nationality VARCHAR(100),
+    phone_encrypted TEXT NOT NULL,
+    email_encrypted TEXT,
+    address_country VARCHAR(100) NOT NULL,
+    address_street_encrypted TEXT NOT NULL,
+    address_street_2_encrypted TEXT,
+    address_city_encrypted TEXT NOT NULL,
+    address_postal_code VARCHAR(20) NOT NULL,
+    address_province VARCHAR(100),
+    address_municipality_code VARCHAR(20),
+    id_photo_url TEXT,
+    language VARCHAR(10) DEFAULT 'es',
+    -- GDPR compliance fields
+    consent_given BOOLEAN DEFAULT TRUE,
+    consent_date TIMESTAMP DEFAULT NOW(),
+    data_retention_until TIMESTAMP,
+    last_access_date TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Beds and rooms
+-- Beds table for room and bed management
 CREATE TABLE beds (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    bed_number INTEGER NOT NULL UNIQUE,
-    room_type VARCHAR(20) NOT NULL CHECK (room_type IN ('dorm_a', 'dorm_b', 'private')),
-    bed_type VARCHAR(20) DEFAULT 'single' CHECK (bed_type IN ('single', 'bunk_top', 'bunk_bottom')),
-    status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'occupied', 'reserved', 'maintenance')),
-    max_occupancy INTEGER DEFAULT 1,
-    price_per_night DECIMAL(10,2) NOT NULL,
-    amenities JSONB DEFAULT '[]',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id SERIAL PRIMARY KEY,
+    bed_number INTEGER NOT NULL,
+    room_number INTEGER NOT NULL,
+    room_name VARCHAR(100) NOT NULL,
+    room_type VARCHAR(50) DEFAULT 'dormitory', -- dormitory, private
+    price_per_night DECIMAL(10,2) NOT NULL DEFAULT 15.00,
+    currency VARCHAR(10) DEFAULT 'EUR',
+    is_available BOOLEAN DEFAULT TRUE,
+    status VARCHAR(50) DEFAULT 'available', -- available, reserved, occupied, maintenance, cleaning
+    reserved_until TIMESTAMP,
+    last_cleaned_at TIMESTAMP,
+    maintenance_notes TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Bookings/reservations
+-- Bookings table
 CREATE TABLE bookings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    pilgrim_id UUID NOT NULL REFERENCES pilgrims(id) ON DELETE CASCADE,
-    bed_id UUID NOT NULL REFERENCES beds(id),
+    id SERIAL PRIMARY KEY,
+    pilgrim_id INTEGER REFERENCES pilgrims(id) NOT NULL,
+    reference_number VARCHAR(100) NOT NULL UNIQUE,
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
-    nights INTEGER GENERATED ALWAYS AS (check_out_date - check_in_date) STORED,
+    number_of_nights INTEGER NOT NULL,
+    number_of_persons INTEGER DEFAULT 1,
+    number_of_rooms INTEGER DEFAULT 1,
+    has_internet BOOLEAN DEFAULT FALSE,
+    status VARCHAR(50) DEFAULT 'reserved', -- reserved, confirmed, checked_in, checked_out, cancelled, expired
+    bed_assignment_id INTEGER REFERENCES beds(id),
+    estimated_arrival_time VARCHAR(20),
+    notes TEXT,
     total_amount DECIMAL(10,2) NOT NULL,
-    status VARCHAR(20) DEFAULT 'reserved' CHECK (status IN ('reserved', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'expired')),
-    payment_status VARCHAR(20) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'refunded', 'failed')),
-    payment_method VARCHAR(20) CHECK (payment_method IN ('cash', 'card', 'transfer', 'online')),
-    -- Government submission (Spain MIR)
-    mir_submission_id VARCHAR(100),
-    mir_submission_status VARCHAR(20) DEFAULT 'pending' CHECK (mir_submission_status IN ('pending', 'submitted', 'confirmed', 'failed')),
-    mir_submitted_at TIMESTAMP WITH TIME ZONE,
-    -- Expiry management (2-hour window)
-    expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '2 hours'),
-    -- Special requests and notes
-    special_requests TEXT,
-    admin_notes TEXT,
-    -- Timestamps
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    -- Ensure no double bookings
-    EXCLUDE USING gist (
-        bed_id WITH =,
-        daterange(check_in_date, check_out_date, '[)') WITH &&
-    ) WHERE (status != 'cancelled' AND status != 'expired')
+    -- Reservation timeout fields (2-hour window)
+    reservation_expires_at TIMESTAMP NOT NULL,
+    payment_deadline TIMESTAMP NOT NULL,
+    auto_cleanup_processed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Payments tracking
+-- Payments table
 CREATE TABLE payments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    booking_id INTEGER REFERENCES bookings(id) NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
-    currency CHAR(3) DEFAULT 'EUR',
-    payment_method VARCHAR(20) NOT NULL,
-    payment_provider VARCHAR(50), -- 'stripe', 'cash', 'bank_transfer'
-    provider_transaction_id VARCHAR(255),
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'refunded')),
-    receipt_url VARCHAR(500),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    processed_at TIMESTAMP WITH TIME ZONE
+    payment_type VARCHAR(50) NOT NULL, -- efect, tarjeta, bizum, transferencia
+    payment_status VARCHAR(50) DEFAULT 'awaiting_payment', -- awaiting_payment, completed, failed, cancelled, expired
+    currency VARCHAR(10) DEFAULT 'EUR',
+    receipt_number VARCHAR(100),
+    payment_date TIMESTAMP,
+    payment_deadline TIMESTAMP NOT NULL,
+    transaction_id VARCHAR(255),
+    gateway_response JSONB, -- For card payments
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Triggers for updated_at timestamps
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
+-- Pricing table for dynamic pricing
+CREATE TABLE pricing (
+    id SERIAL PRIMARY KEY,
+    room_type VARCHAR(50) NOT NULL, -- dormitory, private
+    bed_type VARCHAR(50) NOT NULL, -- shared, private
+    price_per_night DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(10) DEFAULT 'EUR',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
-CREATE TRIGGER update_pilgrims_updated_at BEFORE UPDATE ON pilgrims
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Government submissions table for SOAP API compliance
+CREATE TABLE government_submissions (
+    id SERIAL PRIMARY KEY,
+    booking_id INTEGER REFERENCES bookings(id) NOT NULL,
+    xml_content TEXT NOT NULL,
+    submission_status VARCHAR(50) DEFAULT 'pending', -- pending, success, failed
+    response_data JSONB,
+    attempts INTEGER DEFAULT 0,
+    last_attempt TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
 
-CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Insert default pricing data
+INSERT INTO pricing (room_type, bed_type, price_per_night, currency) VALUES
+('dormitory', 'shared', 15.00, 'EUR'),
+('private', 'private', 35.00, 'EUR');
+
+-- Insert default bed configuration
+INSERT INTO beds (bed_number, room_number, room_name, room_type, price_per_night) VALUES
+-- Dormitory A (12 beds)
+(1, 1, 'Dormitorio A', 'dormitory', 15.00),
+(2, 1, 'Dormitorio A', 'dormitory', 15.00),
+(3, 1, 'Dormitorio A', 'dormitory', 15.00),
+(4, 1, 'Dormitorio A', 'dormitory', 15.00),
+(5, 1, 'Dormitorio A', 'dormitory', 15.00),
+(6, 1, 'Dormitorio A', 'dormitory', 15.00),
+(7, 1, 'Dormitorio A', 'dormitory', 15.00),
+(8, 1, 'Dormitorio A', 'dormitory', 15.00),
+(9, 1, 'Dormitorio A', 'dormitory', 15.00),
+(10, 1, 'Dormitorio A', 'dormitory', 15.00),
+(11, 1, 'Dormitorio A', 'dormitory', 15.00),
+(12, 1, 'Dormitorio A', 'dormitory', 15.00),
+-- Dormitory B (10 beds)
+(1, 2, 'Dormitorio B', 'dormitory', 15.00),
+(2, 2, 'Dormitorio B', 'dormitory', 15.00),
+(3, 2, 'Dormitorio B', 'dormitory', 15.00),
+(4, 2, 'Dormitorio B', 'dormitory', 15.00),
+(5, 2, 'Dormitorio B', 'dormitory', 15.00),
+(6, 2, 'Dormitorio B', 'dormitory', 15.00),
+(7, 2, 'Dormitorio B', 'dormitory', 15.00),
+(8, 2, 'Dormitorio B', 'dormitory', 15.00),
+(9, 2, 'Dormitorio B', 'dormitory', 15.00),
+(10, 2, 'Dormitorio B', 'dormitory', 15.00),
+-- Private rooms (2 beds each)
+(1, 3, 'Habitación Privada 1', 'private', 35.00),
+(2, 3, 'Habitación Privada 1', 'private', 35.00),
+(1, 4, 'Habitación Privada 2', 'private', 35.00),
+(2, 4, 'Habitación Privada 2', 'private', 35.00);
+
+-- Create indexes for performance
+CREATE INDEX idx_bookings_pilgrim_id ON bookings(pilgrim_id);
+CREATE INDEX idx_bookings_status ON bookings(status);
+CREATE INDEX idx_bookings_dates ON bookings(check_in_date, check_out_date);
+CREATE INDEX idx_beds_status ON beds(status);
+CREATE INDEX idx_beds_room ON beds(room_number, room_name);
+CREATE INDEX idx_payments_booking_id ON payments(booking_id);
+CREATE INDEX idx_payments_status ON payments(payment_status);

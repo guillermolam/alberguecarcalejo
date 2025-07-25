@@ -5,13 +5,14 @@ import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Calendar, Users, Bed, MapPin, Clock } from "lucide-react";
 import { formatPrice } from "../lib/utils";
-// Type definition for Room (matching the WASM service)
+// Import types from database schema (when available)
+
+// Room aggregation type for display
 type Room = {
   id: string;
   name: string;
   type: string;
-  beds?: number;
-  capacity?: number;
+  beds: number;
   price: number;
   available: number;
   amenities: string[];

@@ -1,0 +1,42 @@
+To migrate your shared TypeScript schema (`shared/schema.ts`) into your new `database/` folder (as canonical SQL migrations and schema definitions), follow this three‑stage plan:
+
+## 1. Extract and Translate Types into SQL
+
+1. **Inventory All Types & Constraints**
+
+   * Open `shared/schema.ts` and list each type, enum, and field decorator—e.g. `Pilgrim`, `Booking`, `BedType`, required fields, unique constraints, default values.
+2. **Design SQL Equivalents**
+
+   * For each interface or class, draft a `CREATE TABLE` statement with matching column names and SQL types (`VARCHAR`, `DATE`, `BOOLEAN`, etc.).
+   * Translate TypeScript enums into SQL `ENUM` types (Postgres) or simple `VARCHAR` with a `CHECK` constraint listing allowed values.
+3. **Write Initial Migration**
+
+   * In `database/migrations/001_init_schema.sql`, define your complete schema: tables, columns, primary keys, foreign keys, indexes, and any sequences or default values.
+
+## 2. Generate Drizzle & SQLx Artifacts
+
+1. **Update `drizzle.config.ts`**
+
+   * Point it to your new `database/migrations` folder and your NeonDB connection.
+   * Run `drizzle-kit generate` to produce TypeScript types for your SQL schema—this ensures your frontend code can consume the same shape.
+2. **Prepare SQLx Offline Data**
+
+   * For Rust services, run `cargo sqlx prepare -- --lib` (or similar) to scan the new `migrations/` and emit `sqlx-data.json`.
+   * This ensures your Rust queries are checked against the freshly defined schema.
+
+## 3. Deprecate & Remove `shared/schema.ts`
+
+1. **Point Consumers to SQL‑Generated Types**
+
+   * In your frontend and gateway code, switch imports from `shared/schema.ts` to the generated types (e.g. from `drizzle-kit`) or to the Rust‑compiled WASM bindings for shared DTOs.
+2. **Run Integration Tests**
+
+   * Execute your E2E suites and Rust service tests to confirm that data fetched, written, and validated still matches the original shapes.
+3. **Delete Legacy File**
+
+   * Once everything passes, remove `shared/schema.ts` from `services/shared/` to avoid drift.
+4. **Lock in Documentation**
+
+   * Update `database/README.md` to note that the SQL migrations are now the single source of truth for all data shapes.
+
+By systematically extracting type information, translating to SQL, generating matching client/server types, and then retiring the old TS schema file, you ensure a single, authoritative schema in your `database/` folder that drives both your frontend typings and your Rust backend models.
