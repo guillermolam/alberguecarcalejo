@@ -48,10 +48,10 @@ const registrationSchema = z.object({
 type RegistrationFormData = z.infer<typeof registrationSchema>;
 
 const steps = [
+  { id: 'dates', title: 'Fechas', description: 'Selecciona tu estancia', icon: Calendar },
   { id: 'personal', title: 'Datos Personales', description: 'Información básica', icon: User },
   { id: 'documents', title: 'Documentación', description: 'Captura de documentos', icon: FileText },
-  { id: 'booking', title: 'Reserva', description: 'Fechas y preferencias', icon: Calendar },
-  { id: 'payment', title: 'Pago', description: 'Confirmación', icon: CreditCard },
+  { id: 'payment', title: 'Confirmación', description: 'Finalizar reserva', icon: CreditCard },
 ];
 
 export default function RegistrationForm() {
@@ -88,17 +88,17 @@ export default function RegistrationForm() {
     let fieldsToValidate: (keyof RegistrationFormData)[] = [];
     
     switch (currentStep) {
-      case 0: // Personal info
+      case 0: // Dates
+        fieldsToValidate = ['checkInDate', 'checkOutDate'];
+        break;
+      case 1: // Personal info
         fieldsToValidate = ['firstName', 'lastName1', 'birthDate', 'gender', 'nationality'];
         break;
-      case 1: // Documents
+      case 2: // Documents
         fieldsToValidate = ['documentType', 'documentNumber'];
         break;
-      case 2: // Booking
-        fieldsToValidate = ['checkInDate', 'checkOutDate', 'phone', 'addressCountry', 'addressStreet', 'addressCity', 'addressPostalCode'];
-        break;
       case 3: // Payment
-        fieldsToValidate = ['consentGiven'];
+        fieldsToValidate = ['phone', 'addressCountry', 'addressStreet', 'addressCity', 'addressPostalCode', 'consentGiven'];
         break;
     }
 
@@ -146,8 +146,55 @@ export default function RegistrationForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Step 0: Personal Information */}
+            {/* Step 0: Date Selection */}
             {currentStep === 0 && (
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="checkInDate">Fecha de entrada *</Label>
+                    <Input
+                      id="checkInDate"
+                      type="date"
+                      {...form.register('checkInDate')}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                    {form.formState.errors.checkInDate && (
+                      <p className="text-sm text-destructive mt-1">
+                        {form.formState.errors.checkInDate.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="checkOutDate">Fecha de salida *</Label>
+                    <Input
+                      id="checkOutDate"
+                      type="date"
+                      {...form.register('checkOutDate')}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                    {form.formState.errors.checkOutDate && (
+                      <p className="text-sm text-destructive mt-1">
+                        {form.formState.errors.checkOutDate.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <h3 className="font-semibold text-green-800">Disponibilidad confirmada</h3>
+                  </div>
+                  <p className="text-green-700 text-sm">
+                    Hay camas disponibles para las fechas seleccionadas.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 1: Personal Information */}
+            {currentStep === 1 && (
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="firstName">Nombre *</Label>
@@ -235,8 +282,8 @@ export default function RegistrationForm() {
               </div>
             )}
 
-            {/* Step 1: Documents */}
-            {currentStep === 1 && (
+            {/* Step 2: Documents */}
+            {currentStep === 2 && (
               <div className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -282,8 +329,8 @@ export default function RegistrationForm() {
               </div>
             )}
 
-            {/* Step 2: Booking Details */}
-            {currentStep === 2 && (
+            {/* Step 3: Final Details & Payment */}
+            {currentStep === 3 && (
               <div className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
