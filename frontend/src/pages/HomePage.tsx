@@ -9,15 +9,14 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center" style={{backgroundColor: 'hsl(var(--albergue-dark-green))'}}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white"/>
-                <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" fill="none"/>
-                <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" fill="none"/>
+            <div className="w-10 h-10 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="3" fill="#9CA65A"/>
+                <path d="M12 2L22 12L12 22L2 12L12 2Z" stroke="#9CA65A" strokeWidth="2" fill="none"/>
               </svg>
             </div>
             <div>
-              <h1 className="font-bold text-lg text-gray-900">Albergue Del Carrascalejo</h1>
+              <span className="font-bold text-lg text-gray-900">Albergue Del Carrascalejo</span>
             </div>
           </div>
           
@@ -41,14 +40,14 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4">
         {/* Hero Section with Sage Green Background */}
-        <div style={{backgroundColor: 'hsl(var(--albergue-dark-green))'}} className="text-white py-12 px-8 mb-8">
+        <div style={{backgroundColor: 'hsl(var(--albergue-dark-green))'}} className="text-white py-12 px-8 mb-8 -mx-4">
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">
+            <h1 className="text-4xl font-bold mb-4">
               Bienvenido Peregrino
             </h1>
-            <p className="opacity-90 mb-6">
+            <p className="text-lg opacity-90 mb-6">
               Registro rápido y seguro para tu estancia en el Camino
             </p>
             
