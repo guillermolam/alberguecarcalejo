@@ -1,13 +1,29 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Calendar, Users, Bed, MapPin, Clock } from "lucide-react";
+import { formatPrice } from "../lib/utils";
+import type { Room } from "../../shared/schema";
 
 export default function BookingPage() {
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
 
-  const rooms = [
+  const { data: rooms = [], isLoading } = useQuery<Room[]>({
+    queryKey: ["/api/rooms"],
+    queryFn: () => fetch("/api/rooms").then(res => res.json()),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Cargando habitaciones...</div>
+      </div>
+    );
+  }
+
+  const mockRooms = [
     {
       id: "dorm-a",
       name: "Dormitorio A",
@@ -46,6 +62,9 @@ export default function BookingPage() {
     }
   ];
 
+  // Use actual rooms data if available, otherwise fall back to mock data
+  const displayRooms = rooms.length > 0 ? rooms : mockRooms;
+
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
@@ -75,7 +94,7 @@ export default function BookingPage() {
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">Habitaciones Disponibles</h2>
         <div className="grid md:grid-cols-2 gap-4">
-          {rooms.map((room) => (
+          {displayRooms.map((room) => (
             <Card 
               key={room.id} 
               className={`cursor-pointer transition-colors ${
@@ -85,7 +104,10 @@ export default function BookingPage() {
                     ? "opacity-50" 
                     : "hover:border-primary/50"
               }`}
-              onClick={() => room.available > 0 && setSelectedRoom(room.id)}
+              onClick={() => {
+                const isAvailable = room.available !== undefined ? room.available > 0 : room.available;
+                if (isAvailable) setSelectedRoom(room.id);
+              }}
             >
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -94,7 +116,9 @@ export default function BookingPage() {
                     <CardDescription>{room.type}</CardDescription>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold">€{room.price}</div>
+                    <div className="text-2xl font-bold">
+                      {room.pricePerNight ? formatPrice(room.pricePerNight) : `€${room.price}`}
+                    </div>
                     <div className="text-sm text-muted-foreground">por noche</div>
                   </div>
                 </div>
@@ -103,23 +127,25 @@ export default function BookingPage() {
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1">
                     <Bed className="h-4 w-4" />
-                    <span className="text-sm">{room.beds} camas</span>
+                    <span className="text-sm">{room.capacity || room.beds} camas</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
-                    <span className="text-sm">{room.available} disponibles</span>
+                    <span className="text-sm">
+                      {room.available !== undefined ? room.available : (room.available ? "Disponible" : "No disponible")} 
+                    </span>
                   </div>
                 </div>
                 
                 <div className="flex flex-wrap gap-1">
-                  {room.amenities.map((amenity) => (
+                  {(room.amenities || []).map((amenity) => (
                     <Badge key={amenity} variant="outline" className="text-xs">
-                      {amenity}
+                      {typeof amenity === 'string' ? amenity : JSON.stringify(amenity)}
                     </Badge>
                   ))}
                 </div>
 
-                {room.available === 0 && (
+                {((room.available !== undefined && room.available === 0) || !room.available) && (
                   <Badge variant="destructive" className="w-fit">
                     No disponible
                   </Badge>
