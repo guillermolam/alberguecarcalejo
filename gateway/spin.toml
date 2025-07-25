@@ -16,13 +16,43 @@ source = "target/wasm32-wasi/release/gateway.wasm"
 allowed_outbound_hosts = [
   "https://*",
   "http://*",
+  "http://localhost:5173",
   "booking-service.internal",
   "validation-service.internal", 
   "country-service.internal",
   "security-service.internal",
   "rate-limiter-service.internal"
 ]
-environment = { RUST_LOG = "info" }
+environment = { 
+  RUST_LOG = "info",
+  JWT_SECRET = "{{ jwt_secret }}",
+  VITE_DEV_SERVER = "http://localhost:5173"
+}
 
 [component.gateway.build]
 command = "cargo build --target wasm32-wasi --release"
+
+# Microservice components
+[[trigger.http]]
+component = "booking-service"
+route = "/internal/booking/..."
+
+[component.booking-service]
+source = "../services/booking-service/target/wasm32-wasi/release/booking_service.wasm"
+environment = { RUST_LOG = "info" }
+
+[[trigger.http]]
+component = "validation-service"
+route = "/internal/validation/..."
+
+[component.validation-service]
+source = "../services/validation-service/target/wasm32-wasi/release/validation_service.wasm"
+environment = { RUST_LOG = "info" }
+
+[[trigger.http]]
+component = "country-service"
+route = "/internal/country/..."
+
+[component.country-service]
+source = "../services/country-service/target/wasm32-wasi/release/country_service.wasm"
+environment = { RUST_LOG = "info" }

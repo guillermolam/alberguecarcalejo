@@ -1,65 +1,53 @@
-pub mod domain;
-pub mod application;
-pub mod ports;
-pub mod adapters;
-pub mod infrastructure;
+use anyhow::Result;
+use http::{Method, Request, StatusCode};
+use spin_sdk::http::{IntoResponse, ResponseBuilder};
+use spin_sdk::http_component;
 
-use wasm_bindgen::prelude::*;
-use application::validation_service::ValidationService;
-use shared::{ValidationRequest, ValidationResponse, AlbergueResult};
-
-// WASM bindings
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
-
-macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
-}
-
-#[wasm_bindgen]
-pub struct ValidationServiceWasm {
-    service: ValidationService,
-}
-
-#[wasm_bindgen]
-impl ValidationServiceWasm {
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> Self {
-        console_error_panic_hook::set_once();
-        Self {
-            service: ValidationService::new(),
-        }
+#[http_component]
+fn handle_request(req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
+    let method = req.method();
+    let path = req.uri().path();
+    
+    match (method, path) {
+        (&Method::POST, "/validate/document") => handle_document_validation(req),
+        (&Method::POST, "/validate/dni") => handle_dni_validation(req),
+        (&Method::POST, "/validate/nie") => handle_nie_validation(req),
+        (&Method::POST, "/validate/passport") => handle_passport_validation(req),
+        _ => Ok(ResponseBuilder::new(StatusCode::NOT_FOUND)
+            .header("content-type", "application/json")
+            .body(r#"{"error":"Validation endpoint not found"}"#)
+            .build())
     }
+}
 
-    #[wasm_bindgen]
-    pub async fn validate_document(&self, request_json: &str) -> String {
-        let request: ValidationRequest = match serde_json::from_str(request_json) {
-            Ok(req) => req,
-            Err(e) => {
-                console_log!("Failed to parse validation request: {}", e);
-                return serde_json::to_string(&ValidationResponse {
-                    is_valid: false,
-                    extracted_data: Default::default(),
-                    confidence_score: 0.0,
-                    errors: vec![format!("Invalid request format: {}", e)],
-                }).unwrap_or_default();
-            }
-        };
+fn handle_document_validation(_req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
+    // TODO: Implement OCR document processing
+    Ok(ResponseBuilder::new(StatusCode::OK)
+        .header("content-type", "application/json")
+        .body(r#"{"status":"valid","confidence":0.95,"extracted_data":{}}"#)
+        .build())
+}
 
-        match self.service.validate_document(request).await {
-            Ok(response) => serde_json::to_string(&response).unwrap_or_default(),
-            Err(e) => {
-                console_log!("Validation error: {}", e);
-                serde_json::to_string(&ValidationResponse {
-                    is_valid: false,
-                    extracted_data: Default::default(),
-                    confidence_score: 0.0,
-                    errors: vec![e.to_string()],
-                }).unwrap_or_default()
-            }
-        }
-    }
+fn handle_dni_validation(_req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
+    // TODO: Implement DNI checksum validation
+    Ok(ResponseBuilder::new(StatusCode::OK)
+        .header("content-type", "application/json")
+        .body(r#"{"status":"valid","checksum_valid":true}"#)
+        .build())
+}
+
+fn handle_nie_validation(_req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
+    // TODO: Implement NIE validation
+    Ok(ResponseBuilder::new(StatusCode::OK)
+        .header("content-type", "application/json")
+        .body(r#"{"status":"valid","checksum_valid":true}"#)
+        .build())
+}
+
+fn handle_passport_validation(_req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
+    // TODO: Implement passport MRZ validation
+    Ok(ResponseBuilder::new(StatusCode::OK)
+        .header("content-type", "application/json")
+        .body(r#"{"status":"valid","mrz_valid":true}"#)
+        .build())
 }

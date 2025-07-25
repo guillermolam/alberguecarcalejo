@@ -1,0 +1,147 @@
+# Database Configuration
+
+This directory contains the dual database setup for the Albergue del Carrascalejo project, supporting both local development and production deployment.
+
+## Database Strategy
+
+### Local Development (NeonDB)
+- **Primary DB**: NeonDB (PostgreSQL-compatible, serverless)
+- **Configuration**: Use `NEON_DATABASE_URL` in Replit Secrets
+- **Full features**: Triggers, constraints, extensions, JSON types
+- **Schema**: `schemas/postgres.sql`
+- **Migration**: `scripts/migrate-postgres.sh`
+
+### Production Deployment (Spin/Fermyon)
+- **Primary DB**: SQLite (required for Fermyon free tier)
+- **Configuration**: Local SQLite file in WASM component
+- **Limited features**: Basic constraints, JSON as TEXT
+- **Schema**: `schemas/sqlite.sql`
+- **Migration**: `scripts/migrate-sqlite.sh`
+
+## Directory Structure
+
+```
+database/
+├── schemas/
+│   ├── postgres.sql         # PostgreSQL schema for NeonDB
+│   └── sqlite.sql           # SQLite schema for Spin deployment
+├── scripts/
+│   ├── migrate-postgres.sh  # Setup NeonDB with seed data
+│   └── migrate-sqlite.sh    # Setup SQLite for deployment
+├── migrations/              # Drizzle migrations (auto-generated)
+└── README.md               # This file
+```
+
+## Setup Instructions
+
+### 1. Local Development Setup
+
+```bash
+# Set your NeonDB connection string in Replit Secrets
+# NEON_DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
+
+# Run PostgreSQL migration
+bash database/scripts/migrate-postgres.sh
+```
+
+### 2. Production Deployment Setup
+
+```bash
+# Create SQLite database for Spin deployment
+bash database/scripts/migrate-sqlite.sh
+
+# Copy database to booking service
+cp albergue.db services/booking-service/
+```
+
+## Database Schema
+
+### Core Tables
+
+- **pilgrims**: Guest information with document validation
+- **beds**: 24 beds (12 dorm A + 10 dorm B + 2 private rooms)
+- **bookings**: Reservations with 2-hour expiry window
+- **payments**: Payment tracking with multiple providers
+- **notifications**: Multi-channel notification log
+- **audit_log**: GDPR/NIS2 compliance logging
+- **countries**: Nationality validation and visa requirements
+- **pricing**: Dynamic pricing with seasonal adjustments
+
+### Key Features
+
+- **Document Validation**: OCR confidence scoring, checksum validation
+- **Government Integration**: Spain MIR v3.1.2 submission tracking
+- **Multi-channel Notifications**: WhatsApp → SMS → Email → Telegram
+- **GDPR Compliance**: Consent tracking, data retention, audit logs
+- **Dynamic Pricing**: Seasonal rates, special events
+- **Automatic Expiry**: 2-hour booking window with cleanup
+
+## Cross-Database Compatibility
+
+### Data Types
+- **PostgreSQL**: UUID, JSONB, TIMESTAMP WITH TIME ZONE
+- **SQLite**: TEXT (UUID as string), TEXT (JSON as string), TEXT (ISO datetime)
+
+### Features
+- **PostgreSQL**: Advanced constraints, triggers, exclusion constraints
+- **SQLite**: Basic constraints, simple triggers, application-side validation
+
+### Migration Strategy
+1. Develop on PostgreSQL (full feature set)
+2. Test migration compatibility regularly
+3. Deploy to SQLite (subset of features)
+4. Use shared/db.rs for cross-platform abstractions
+
+## Environment Variables
+
+### Required
+- `NEON_DATABASE_URL`: PostgreSQL connection (development)
+- `DATABASE_URL`: Fallback database connection
+- `SQLITE_DATABASE`: SQLite path (deployment)
+
+### Optional
+- `RUST_LOG`: Logging level
+- `MAX_CONNECTIONS`: Connection pool size
+- `CONNECTION_TIMEOUT`: Database timeout seconds
+
+## Migration Workflow
+
+### Adding New Features
+1. Update `schemas/postgres.sql` with new tables/columns
+2. Update `schemas/sqlite.sql` with SQLite-compatible version
+3. Test both schemas with sample data
+4. Run migrations in development and staging
+5. Update `shared/src/db.rs` with new types/functions
+
+### Database Version Control
+- Schema files are version controlled
+- Migration scripts are idempotent
+- Seed data is consistent across environments
+- Backup strategy includes both development and production
+
+## Troubleshooting
+
+### Connection Issues
+```bash
+# Test PostgreSQL connection
+psql "$NEON_DATABASE_URL" -c "SELECT version();"
+
+# Test SQLite connection
+sqlite3 albergue.db ".schema"
+```
+
+### Migration Issues
+```bash
+# Reset PostgreSQL (development only)
+psql "$NEON_DATABASE_URL" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+bash database/scripts/migrate-postgres.sh
+
+# Reset SQLite
+rm albergue.db
+bash database/scripts/migrate-sqlite.sh
+```
+
+### Performance Monitoring
+- PostgreSQL: Use NeonDB dashboard for query analysis
+- SQLite: Use EXPLAIN QUERY PLAN for optimization
+- Both: Monitor connection pool usage and query performance
