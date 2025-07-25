@@ -2,7 +2,19 @@ import { Router } from "@fermyon/spin-sdk";
 
 const router = new Router();
 
-// API Routes - Proxy to microservices
+// Booking service routes - matching frontend API calls
+router.get("/booking/dashboard/stats", async (req, res) => {
+  const response = await fetch("http://booking-service.internal/dashboard/stats");
+  const data = await response.json();
+  res.json(data);
+});
+
+router.get("/booking/pricing", async (req, res) => {
+  const response = await fetch("http://booking-service.internal/pricing");
+  const data = await response.json();
+  res.json(data);
+});
+
 router.get("/api/bookings", async (req, res) => {
   const response = await fetch("http://booking-service.internal/bookings");
   const data = await response.json();
