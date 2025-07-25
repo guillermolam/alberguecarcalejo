@@ -127,40 +127,37 @@ CREATE TABLE government_submissions (
 
 -- Insert default pricing data
 INSERT INTO pricing (room_type, bed_type, price_per_night, currency) VALUES
-('dormitory', 'shared', 15.00, 'EUR'),
-('private', 'private', 35.00, 'EUR');
+('dormitory', 'shared', 15.00, 'EUR');
 
--- Insert default bed configuration
+-- Insert default bed configuration: 3 bunkhouses with 4 double bunk beds each (24 total beds)
 INSERT INTO beds (bed_number, room_number, room_name, room_type, price_per_night) VALUES
--- Dormitory A (12 beds)
-(1, 1, 'Dormitorio A', 'dormitory', 15.00),
-(2, 1, 'Dormitorio A', 'dormitory', 15.00),
-(3, 1, 'Dormitorio A', 'dormitory', 15.00),
-(4, 1, 'Dormitorio A', 'dormitory', 15.00),
-(5, 1, 'Dormitorio A', 'dormitory', 15.00),
-(6, 1, 'Dormitorio A', 'dormitory', 15.00),
-(7, 1, 'Dormitorio A', 'dormitory', 15.00),
-(8, 1, 'Dormitorio A', 'dormitory', 15.00),
-(9, 1, 'Dormitorio A', 'dormitory', 15.00),
-(10, 1, 'Dormitorio A', 'dormitory', 15.00),
-(11, 1, 'Dormitorio A', 'dormitory', 15.00),
-(12, 1, 'Dormitorio A', 'dormitory', 15.00),
--- Dormitory B (10 beds)
-(1, 2, 'Dormitorio B', 'dormitory', 15.00),
-(2, 2, 'Dormitorio B', 'dormitory', 15.00),
-(3, 2, 'Dormitorio B', 'dormitory', 15.00),
-(4, 2, 'Dormitorio B', 'dormitory', 15.00),
-(5, 2, 'Dormitorio B', 'dormitory', 15.00),
-(6, 2, 'Dormitorio B', 'dormitory', 15.00),
-(7, 2, 'Dormitorio B', 'dormitory', 15.00),
-(8, 2, 'Dormitorio B', 'dormitory', 15.00),
-(9, 2, 'Dormitorio B', 'dormitory', 15.00),
-(10, 2, 'Dormitorio B', 'dormitory', 15.00),
--- Private rooms (2 beds each)
-(1, 3, 'Habitación Privada 1', 'private', 35.00),
-(2, 3, 'Habitación Privada 1', 'private', 35.00),
-(1, 4, 'Habitación Privada 2', 'private', 35.00),
-(2, 4, 'Habitación Privada 2', 'private', 35.00);
+-- Bunkhouse 1: 4 double bunk beds (8 beds total)
+(1, 1, 'Litera 1', 'dormitory', 15.00), -- Top bunk
+(2, 1, 'Litera 1', 'dormitory', 15.00), -- Bottom bunk
+(3, 1, 'Litera 2', 'dormitory', 15.00), -- Top bunk
+(4, 1, 'Litera 2', 'dormitory', 15.00), -- Bottom bunk
+(5, 1, 'Litera 3', 'dormitory', 15.00), -- Top bunk
+(6, 1, 'Litera 3', 'dormitory', 15.00), -- Bottom bunk
+(7, 1, 'Litera 4', 'dormitory', 15.00), -- Top bunk
+(8, 1, 'Litera 4', 'dormitory', 15.00), -- Bottom bunk
+-- Bunkhouse 2: 4 double bunk beds (8 beds total)
+(1, 2, 'Litera 5', 'dormitory', 15.00), -- Top bunk
+(2, 2, 'Litera 5', 'dormitory', 15.00), -- Bottom bunk
+(3, 2, 'Litera 6', 'dormitory', 15.00), -- Top bunk
+(4, 2, 'Litera 6', 'dormitory', 15.00), -- Bottom bunk
+(5, 2, 'Litera 7', 'dormitory', 15.00), -- Top bunk
+(6, 2, 'Litera 7', 'dormitory', 15.00), -- Bottom bunk
+(7, 2, 'Litera 8', 'dormitory', 15.00), -- Top bunk
+(8, 2, 'Litera 8', 'dormitory', 15.00), -- Bottom bunk
+-- Bunkhouse 3: 4 double bunk beds (8 beds total)
+(1, 3, 'Litera 9', 'dormitory', 15.00), -- Top bunk
+(2, 3, 'Litera 9', 'dormitory', 15.00), -- Bottom bunk
+(3, 3, 'Litera 10', 'dormitory', 15.00), -- Top bunk
+(4, 3, 'Litera 10', 'dormitory', 15.00), -- Bottom bunk
+(5, 3, 'Litera 11', 'dormitory', 15.00), -- Top bunk
+(6, 3, 'Litera 11', 'dormitory', 15.00), -- Bottom bunk
+(7, 3, 'Litera 12', 'dormitory', 15.00), -- Top bunk
+(8, 3, 'Litera 12', 'dormitory', 15.00); -- Bottom bunk
 
 -- Create indexes for performance
 CREATE INDEX idx_bookings_pilgrim_id ON bookings(pilgrim_id);
