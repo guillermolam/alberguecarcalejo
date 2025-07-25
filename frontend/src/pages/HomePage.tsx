@@ -1,4 +1,7 @@
+import { useState } from "react";
 import RegistrationForm from "../components/registration-form";
+import AdminLogin from "../components/AdminLogin";
+import AdminDashboard from "../components/AdminDashboard";
 import { User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../lib/queryClient";
@@ -6,10 +9,24 @@ import { useI18n } from "../contexts/i18n-context";
 
 export default function HomePage() {
   const { t } = useI18n();
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   
   const handleAdminAccess = () => {
-    // Placeholder for admin access - could navigate to admin panel or show login
-    alert('Funcionalidad de administración próximamente disponible');
+    setShowAdminLogin(true);
+  };
+
+  const handleAdminLogin = () => {
+    setShowAdminLogin(false);
+    setIsAdminLoggedIn(true);
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminLoggedIn(false);
+  };
+
+  const handleCancelLogin = () => {
+    setShowAdminLogin(false);
   };
   
   const { data: dashboardStats } = useQuery({
@@ -52,6 +69,12 @@ export default function HomePage() {
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Show admin dashboard if logged in
+  if (isAdminLoggedIn) {
+    return <AdminDashboard onLogout={handleAdminLogout} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Header */}
@@ -142,6 +165,14 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <RegistrationForm />
       </div>
+
+      {/* Admin Login Modal */}
+      {showAdminLogin && (
+        <AdminLogin 
+          onLogin={handleAdminLogin}
+          onCancel={handleCancelLogin}
+        />
+      )}
     </div>
   );
 }
