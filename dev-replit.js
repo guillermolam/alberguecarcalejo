@@ -10,8 +10,7 @@ const __dirname = dirname(__filename);
 console.log("🚀 Starting Albergue Management System...");
 
 try {
-  // Change to frontend directory and run vite from there
-  process.chdir('frontend');
+  // Run vite from root directory with client as source
   execSync("npx vite --host 0.0.0.0 --port 5173", { stdio: "inherit" });
 } catch (error) {
   console.error("❌ Failed to start development server:", error.message);
