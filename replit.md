@@ -5,6 +5,13 @@ You are an expert full‑stack engineer. Scaffold a **Replit** workspace that im
 
 ## Recent Changes: Latest modifications with dates
 
+### July 25, 2025 - Home Page Layout Restored
+✓ Restored original simple home page layout 
+✓ Replaced complex multi-step form with clean hero section
+✓ Added feature cards grid (Ubicación, Reserva Online, Información)  
+✓ Maintained navigation header with logo and admin access
+✓ Simplified user experience with clear call-to-action buttons
+
 ### July 25, 2025 - Deployment Build Fixes Applied
 ✓ Fixed Vite build configuration issues for deployment
 ✓ Created root-level vite.config.mjs to handle path aliases correctly  
