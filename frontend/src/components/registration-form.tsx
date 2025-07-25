@@ -43,6 +43,14 @@ const registrationSchema = z.object({
   
   // Legal
   consentGiven: z.boolean().refine(val => val === true, 'Debes aceptar el tratamiento de datos'),
+}).refine((data) => {
+  // Ensure check-out is at least one day after check-in
+  const checkIn = new Date(data.checkInDate);
+  const checkOut = new Date(data.checkOutDate);
+  return checkOut > checkIn;
+}, {
+  message: 'La fecha de salida debe ser posterior a la fecha de entrada (mínimo 1 noche)',
+  path: ['checkOutDate']
 });
 
 type RegistrationFormData = z.infer<typeof registrationSchema>;
@@ -64,6 +72,8 @@ export default function RegistrationForm() {
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
+  const dayAfterTomorrow = new Date(today);
+  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
@@ -71,8 +81,8 @@ export default function RegistrationForm() {
       gender: undefined,
       documentType: undefined,
       consentGiven: false,
-      checkInDate: today.toISOString().split('T')[0],
-      checkOutDate: tomorrow.toISOString().split('T')[0],
+      checkInDate: tomorrow.toISOString().split('T')[0],
+      checkOutDate: dayAfterTomorrow.toISOString().split('T')[0],
     },
   });
 
@@ -175,7 +185,17 @@ export default function RegistrationForm() {
                       <Input
                         type="date"
                         {...form.register('checkOutDate')}
-                        min={form.watch('checkInDate') || new Date().toISOString().split('T')[0]}
+                        min={(() => {
+                          const checkInDate = form.watch('checkInDate');
+                          if (checkInDate) {
+                            const minCheckOut = new Date(checkInDate);
+                            minCheckOut.setDate(minCheckOut.getDate() + 1);
+                            return minCheckOut.toISOString().split('T')[0];
+                          }
+                          const tomorrow = new Date();
+                          tomorrow.setDate(tomorrow.getDate() + 1);
+                          return tomorrow.toISOString().split('T')[0];
+                        })()}
                         className="w-full"
                       />
                     </div>
