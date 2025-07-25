@@ -96,17 +96,17 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 font-title">
-              {t('hero.welcome')}
+              Bienvenido Peregrino
             </h2>
             <p className="text-xl text-green-100 mb-8">
-              {t('hero.subtitle')}
+              {dashboardStats?.occupancy?.available || 24} beds, {pricing?.dormitory || 15}€
             </p>
             
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
               <div className="flex items-center justify-center space-x-4 text-lg">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-[hsl(75,25%,75%)]">
-                    {dashboardStats?.occupancy?.available || 'Loading...'}
+                    {dashboardStats?.occupancy?.available || 24}
                   </div>
                   <div className="text-sm text-green-100">
                     {t('hero.beds_available')}
@@ -115,15 +115,7 @@ export default function HomePage() {
                 <div className="w-px h-12 bg-white/20"></div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-[#45c655]">
-                    {pricingLoading ? (
-                      <div className="animate-pulse bg-green-200/20 rounded w-16 h-8 mx-auto"></div>
-                    ) : pricingError ? (
-                      <span className="text-red-300 text-sm">Error loading price</span>
-                    ) : pricing?.dormitory ? (
-                      `${pricing.dormitory}€`
-                    ) : (
-                      <span className="text-yellow-300 text-sm">Price unavailable</span>
-                    )}
+                    {pricing?.dormitory || 15}€
                   </div>
                   <div className="text-sm text-green-100">
                     {t('hero.price_per_night')}
