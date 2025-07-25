@@ -6,7 +6,9 @@ members = [
     "services/validation-service",
     "services/country-service",
     "services/security-service",
-    "services/rate-limiter-service"
+    "services/rate-limiter-service",
+    "services/notification-service",
+    "services/info-on-arrival-service"
 ]
 resolver = "2"
 
