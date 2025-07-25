@@ -5,20 +5,51 @@ name = "alberguecarrascalejo"
 version = "0.1.0"
 authors = ["Guillermo Lam <guillermo@alberguedelcarrascalejo.com>"]
 
+[variables]
+auth0_domain = { required = true }
+auth0_client_id = { required = true }
+auth0_client_secret = { required = true }
+booking_api_url = { default = "http://localhost:3001" }
+reviews_api_url = { default = "http://localhost:3002" }
+
+[[trigger.http]]
+route = "/login"
+component = "gateway"
+
+[[trigger.http]]
+route = "/callback"
+component = "gateway"
+
+[[trigger.http]]
+route = "/logout"
+component = "gateway"
+
 [[trigger.http]]
 route = "/booking/..."
+component = "gateway"
+
+[[trigger.http]]
+route = "/reviews/..."
+component = "gateway"
+
+[[trigger.http]]
+route = "/health"
 component = "gateway"
 
 [[trigger.http]]
 route = "/..."
 component = "frontend"
 
-[[component]]
-id = "gateway"
-source = { url = "https://github.com/fermyon/spin-js-sdk/releases/download/canary/spin_static_fs.wasm", digest = "sha256:65456bf4e84cf81b62075e761b2b0afaffaef2d0aeda521b245150f76b96421b" }
-files = [ { source = "gateway", destination = "/" } ]
+[component.gateway]
+source = "gateway/component.wasm"
+allowed_outbound_hosts = [ "https://{{ auth0_domain }}", "{{ booking_api_url }}", "{{ reviews_api_url }}" ]
+[component.gateway.variables]
+auth0_domain = "{{ auth0_domain }}"
+auth0_client_id = "{{ auth0_client_id }}"
+auth0_client_secret = "{{ auth0_client_secret }}"
+booking_api_url = "{{ booking_api_url }}"
+reviews_api_url = "{{ reviews_api_url }}"
 
-[[component]]
-id = "frontend"
+[component.frontend]
 source = { url = "https://github.com/fermyon/spin-fileserver/releases/download/v0.0.3/spin_static_fs.wasm", digest = "sha256:5bf5abc1f6b93f4e5b6e4b6b7b9e3e1d6b5b2b2b8a8a8a8a8a8a8a8a8a8a8a8a" }
 files = [ { source = "frontend/dist", destination = "/" } ]
