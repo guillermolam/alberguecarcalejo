@@ -1,69 +1,61 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type Language = 'es' | 'en' | 'fr' | 'de' | 'pt';
+// Spain's official languages (sorted A-Z within the official group)
+const SPAIN_OFFICIAL_LANGUAGES = ['ca', 'eu', 'gl', 'es', 'val'] as const;
+
+// All supported languages with their native names
+export const LANGUAGES = [
+  // Spain's official languages first (A-Z sorted)
+  { code: 'ca', name: 'Català', nativeName: 'Català' },
+  { code: 'eu', name: 'Euskera', nativeName: 'Euskera' },
+  { code: 'gl', name: 'Galego', nativeName: 'Galego' },
+  { code: 'es', name: 'Español', nativeName: 'Español' },
+  { code: 'val', name: 'Valencià', nativeName: 'Valencià' },
+  // Other languages (A-Z sorted)
+  { code: 'zh', name: 'Chinese', nativeName: '中文' },
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch' },
+  { code: 'ja', name: 'Japanese', nativeName: '日本語' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
+] as const;
+
+type Language = typeof LANGUAGES[number]['code'];
 
 interface I18nContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  availableLanguages: typeof LANGUAGES;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-// Basic translations
+// Import all translation files
+import { translations_es } from './i18n-es';
+import { translations_en } from './i18n-en';
+import { translations_de } from './i18n-de';
+import { translations_eu } from './i18n-eu';
+import { translations_fr } from './i18n-fr';
+import { translations_ja } from './i18n-ja';
+import { translations_ca } from './i18n-ca';
+import { translations_gl } from './i18n-gl';
+import { translations_val } from './i18n-val';
+import { translations_zh } from './i18n-zh';
+
+// Consolidated translations object
 const translations: Record<Language, Record<string, string>> = {
-  es: {
-    'welcome': 'Bienvenido',
-    'booking': 'Reserva',
-    'admin': 'Administración',
-    'name': 'Nombre',
-    'email': 'Email',
-    'checkin': 'Entrada',
-    'checkout': 'Salida',
-    'submit': 'Enviar',
-    'cancel': 'Cancelar',
-    'save': 'Guardar',
-    'loading': 'Cargando...',
-  },
-  en: {
-    'welcome': 'Welcome',
-    'booking': 'Booking',
-    'admin': 'Administration',
-    'name': 'Name',
-    'email': 'Email',
-    'checkin': 'Check-in',
-    'checkout': 'Check-out',
-    'submit': 'Submit',
-    'cancel': 'Cancel',
-    'save': 'Save',
-    'loading': 'Loading...',
-  },
-  fr: {
-    'welcome': 'Bienvenue',
-    'booking': 'Réservation',
-    'admin': 'Administration',
-    'name': 'Nom',
-    'email': 'Email',
-    'checkin': 'Arrivée',
-    'checkout': 'Départ',
-    'submit': 'Soumettre',
-    'cancel': 'Annuler',
-    'save': 'Sauvegarder',
-    'loading': 'Chargement...',
-  },
-  de: {
-    'welcome': 'Willkommen',
-    'booking': 'Buchung',
-    'admin': 'Verwaltung',
-    'name': 'Name',
-    'email': 'Email',
-    'checkin': 'Check-in',
-    'checkout': 'Check-out',
-    'submit': 'Senden',
-    'cancel': 'Abbrechen',
-    'save': 'Speichern',
-    'loading': 'Laden...',
-  },
+  es: translations_es,
+  en: translations_en,
+  de: translations_de,
+  eu: translations_eu,
+  fr: translations_fr,
+  ja: translations_ja,
+  ca: translations_ca,
+  gl: translations_gl,
+  val: translations_val,
+  zh: translations_zh,
   pt: {
     'welcome': 'Bem-vindo',
     'booking': 'Reserva',
@@ -95,7 +87,12 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
   };
 
   return (
-    <I18nContext.Provider value={{ language, setLanguage, t }}>
+    <I18nContext.Provider value={{ 
+      language, 
+      setLanguage, 
+      t, 
+      availableLanguages: LANGUAGES 
+    }}>
       {children}
     </I18nContext.Provider>
   );
