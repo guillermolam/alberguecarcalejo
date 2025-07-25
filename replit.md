@@ -531,5 +531,13 @@ spin up --listen 0.0.0.0:80
 - Documentation updated to use `bash scripts/` prefix
 - Created comprehensive scripts/README.md for guidance
 
+**Root Directory Cleanup:**
+- Only essential monorepo files kept at root: .replit, Cargo.toml, package.json, spin.toml, build-wasm.sh, README.md
+- Moved all test assets to tests/attached_assets/
+- Removed legacy config files: components.json, drizzle.config.ts, postcss.config.js, tailwind.config.ts, tsconfig.json, vite.config.ts
+- Removed legacy test files: README-Testing.md, jest.config.cjs, jest.config.js
+- Created proper database/ directory for migrations
+- Maintained .github/ for CI/CD workflows
+
 ---
 **Deliverables**: scaffolded repo folders, config files, sample code stubs, UI behaviour notes, admin console specs, and the scripts above.
