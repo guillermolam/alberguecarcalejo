@@ -1,12 +1,8 @@
 [workspace]
 members = [
     "shared",
-    "gateway", 
     "services/validation-service",
-    "services/booking-service",
-    "services/country-service", 
-    "services/security-service",
-    "services/rate-limiter-service"
+    "services/booking-service"
 ]
 resolver = "2"
 
@@ -22,7 +18,7 @@ console_error_panic_hook = "0.1"
 wee_alloc = "0.4"
 anyhow = "1.0"
 thiserror = "1.0"
-uuid = { version = "1.0", features = ["v4", "wasm-bindgen"] }
+uuid = { version = "1.0", features = ["v4", "wasm-bindgen", "serde"] }
 chrono = { version = "0.4", features = ["serde", "wasm-bindgen"] }
 reqwest = { version = "0.11", features = ["json"] }
 async-trait = "0.1"

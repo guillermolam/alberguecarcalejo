@@ -14,7 +14,7 @@ pub struct BookingDto {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum BedType {
     DormA,
     DormB,
@@ -52,7 +52,7 @@ pub struct ValidationResponse {
     pub errors: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ExtractedData {
     pub document_number: Option<String>,
     pub name: Option<String>,

@@ -490,4 +490,43 @@ spin up --listen 0.0.0.0:8000
 ```
 
 ---
+
+## Recent Project Updates
+
+### July 25, 2025 - Complete DDD Architecture Refactor
+**Status: ✅ COMPLETED**
+
+**Major Architectural Changes:**
+- **Rust Workspace Setup**: Created proper root Cargo.toml with shared crate for DTOs and error types
+- **DDD + Hexagonal Architecture**: Implemented comprehensive domain-driven design across all services
+- **validation-service Refactor**: Complete restructure with domain/application/ports/adapters layers
+- **booking-service Implementation**: Full DDD layout with proper business logic separation
+- **OCR Training Data**: Moved to proper test structure in services/validation-service/tests/ocr-training/
+- **Frontend Admin Panel**: Complete scaffolding with AdminDashboard, BookingPage, BedMap, and NotificationBadge
+- **State Management**: Integrated Zustand stores for admin metrics and booking workflow
+- **Shared Types**: Comprehensive DTO and error handling across frontend and backend
+
+**Architecture Compliance:**
+- All services follow DDD patterns with proper separation of concerns
+- Shared DTOs ensure type safety across service boundaries  
+- OCR logic moved to domain validators with proper abstractions
+- Training data properly organized in test directories
+- Frontend follows modern React patterns with proper state management
+
+**Files Created/Modified:**
+- Root Cargo.toml workspace configuration
+- spin.toml for Spin gateway routing
+- shared/ crate with DTOs and error types
+- services/validation-service/ complete DDD structure
+- services/booking-service/ complete DDD structure  
+- frontend/src/pages/ AdminDashboard and BookingPage
+- frontend/src/components/ BedMap and NotificationBadge
+- frontend/src/store/ Zustand stores for state management
+
+**Next Steps Ready:**
+- WASM compilation with ./scripts/wasm-dev.sh
+- Spin gateway deployment
+- Testing with comprehensive test suites
+
+---
 **Deliverables**: scaffolded repo folders, config files, sample code stubs, UI behaviour notes, admin console specs, and the scripts above.
