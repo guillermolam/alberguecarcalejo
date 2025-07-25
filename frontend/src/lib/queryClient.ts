@@ -11,6 +11,8 @@ export const queryClient = new QueryClient({
 
 // API request utility
 export async function apiRequest(method: string, url: string, data?: any) {
+  console.log(`API Request: ${method} ${url}`);
+  
   const options: RequestInit = {
     method,
     headers: {
@@ -22,5 +24,13 @@ export async function apiRequest(method: string, url: string, data?: any) {
     options.body = JSON.stringify(data);
   }
 
-  return fetch(url, options);
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    console.error(`API Error: ${response.status} ${response.statusText} for ${url}`);
+    throw new Error(`API request failed: ${response.statusText}`);
+  }
+  
+  console.log(`API Success: ${response.status} for ${url}`);
+  return response;
 }

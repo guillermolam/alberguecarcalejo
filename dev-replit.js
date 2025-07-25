@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { execSync } from "child_process";
+import { spawn } from "child_process";
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -9,10 +9,20 @@ const __dirname = dirname(__filename);
 // Development script for Replit environment
 console.log("🚀 Starting Albergue Management System...");
 
-try {
-  // Run vite from frontend directory
-  execSync("cd frontend && npx vite --host 0.0.0.0 --port 5173", { stdio: "inherit" });
-} catch (error) {
-  console.error("❌ Failed to start development server:", error.message);
-  process.exit(1);
-}
+// Start the Vite development server for frontend
+const viteProcess = spawn("npx", ["vite", "--host", "0.0.0.0", "--port", "5173"], {
+  cwd: "frontend",
+  stdio: "inherit"
+});
+
+// Handle process cleanup
+process.on('SIGINT', () => {
+  console.log('\n🛑 Shutting down servers...');
+  viteProcess.kill();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  viteProcess.kill();
+  process.exit(0);
+});

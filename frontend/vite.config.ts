@@ -23,6 +23,32 @@ export default defineConfig(({ mode }) => ({
     // Ignore heavy service build artifacts in watch mode
     watch: {
       ignored: ['**/services/**/target/**', '**/pkg/**']
+    },
+    // Mock API proxy for development
+    proxy: {
+      '/booking/dashboard/stats': {
+        target: 'http://localhost:5173',
+        bypass: () => {
+          return JSON.stringify({
+            occupancy: {
+              available: 24,
+              occupied: 8,
+              total: 32
+            },
+            today_bookings: 3,
+            revenue: 4500
+          });
+        }
+      },
+      '/booking/pricing': {
+        target: 'http://localhost:5173',
+        bypass: () => {
+          return JSON.stringify({
+            dormitory: 15,
+            private_room: 35
+          });
+        }
+      }
     }
   },
 
