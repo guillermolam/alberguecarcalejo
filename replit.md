@@ -1,382 +1,493 @@
-# Albergue Del Carrascalejo - Pilgrim Registration System
+---
+# Full‑Stack Application Master Prompt for Replit
 
-## Overview
+You are an expert full‑stack engineer. Scaffold a **Replit** workspace that implements the following architecture and tooling. Output **only** the scaffolded files, code, and configuration—no extra explanation.
 
-This is a modern web application for managing pilgrim registrations at Albergue Del Carrascalejo on the Camino de Santiago. The system provides automated registration, bed management, and compliance with Spanish government reporting requirements (Real Decreto 933/2021).
+---
 
-## User Preferences
+> **REPLIT + FERMYON/SPIN ENVIRONMENT POLICY**
+>
+> * **No `.env` files:**  All secrets and environment variables are set via the Replit Secrets UI—never commit `.env` or plaintext credentials.
+> * **.replit file:**  Project root must include a correct `.replit` to ensure multi-language build/run and expose ports as needed (see sample below).
+> * **No hardcoded `localhost` or `127.0.0.1`:**  Always use gateway routes and environment config for all networking; expose all services on `0.0.0.0`.
+> * **No absolute/host paths:**  Use only relative and workspace-rooted imports for all code and assets.
+> * **NeonDB, Auth0, Twilio, Telegram, SMTP, etc:**  All credentials are injected as Replit secrets and consumed as environment variables.
+> * **Spin gateway:**  All API, asset, and static file routing runs via Spin JS component—no Node/Express/localhost.
+> * **Static assets and training data:**
+>
+>   * Frontend SVGs go in `frontend/assets/icons/`
+>   * OCR training data in `services/validation-service/tests/ocr-training/` (see tree above)
+> * **Testing and Lint:**
+>
+>   * All code, tests, lint, and build scripts must run from Replit’s container with no dependency on local dev environment or ports.
+> * **Nix/Toolchains:**  Replit auto-generates `replit.nix` for you. Use `rustup` and `npm` for all language toolchains.
+---
 
-Preferred communication style: Simple, everyday language.
+**Quickstart**
 
-## System Architecture
+```bash
+# Initial setup
+npm install
+rustup target add wasm32-unknown-unknown
+cargo install sqlx-cli --no-default-features --features native-tls,postgres
 
-The application follows a zero-cost, modern full-stack architecture optimized for low volume (24 users/day):
+# Build all Rust WASM & JS gateway
+npm run build:wasm && npm run build:gateway
 
-- **Frontend**: React with TypeScript, using Vite for development and build
-- **WASM OCR Service**: 
-  - **Browser-Based Processing**: Rust-compiled WASM OCR service running in frontend
-  - **Multi-Document Support**: DNI, NIE, TIE (Residence Permits), and Passport processing
-  - **Tesseract Integration**: Spanish DNI/NIE validation with checksum verification
-  - **MRZ Parsing**: International passport processing in WASM
-  - **NIE/TIE Processing**: Complete extraction of residence permits in browser
-  - **Zero Server Cost**: All OCR processing happens client-side in WASM
-  - **Instant Processing**: No network latency for document validation
-  - **Offline Capable**: Core OCR functions work without internet connection
-- **WASM Backend Services**: 
-  - **Database Service**: WASM-compiled PostgreSQL operations with input validation
-  - **Validation Service**: Document, email, and phone validation in WASM with rate limiting
-  - **Country Service**: RESTCountries API integration with WASM caching
-  - **Security Service**: Admin authentication with SHA-256 hashing in WASM
-  - **Rate Limiter**: Client-side rate limiting per operation type
-- **Database**: PostgreSQL with Drizzle ORM
-- **UI Framework**: Shadcn/ui with Tailwind CSS
-- **State Management**: TanStack React Query for server state
-- **Routing**: Wouter for client-side routing
+# Migrate NeonDB
+sqlx migrate run --database-url $NEON_DATABASE_URL
 
-## Key Components
+# Start Spin gateway (serves everything)
+spin up --listen 0.0.0.0:8000
 
-### Frontend Architecture
-- **React SPA**: Single-page application with component-based architecture
-- **TypeScript**: Full type safety across the application
-- **Tailwind CSS**: Utility-first CSS framework with custom design tokens
-- **Shadcn/ui**: Pre-built accessible UI components
-- **Multi-language Support**: Internationalization with language selector
-- **Mobile-First Design**: Responsive design optimized for mobile devices
+# Access at [Replit workspace URL]:8000
+```
 
-### Backend Architecture
-- **Rust WASM Microservices**: Complete serverless architecture with WASM-compiled services
-  - **Database Service**: Secure PostgreSQL operations with input validation and encryption
-  - **Validation Service**: Spanish document validation (DNI/NIE/Passport) with checksums
-  - **Country Service**: RESTCountries API integration with local caching and fallback data
-  - **Security Service**: Admin authentication with SHA-256 hashing and rate limiting
-  - **OCR Service**: WASM-based document processing for Spanish documents and passports
-- **Frontend Integration**: Direct WASM service calls from React frontend
-  - **Zero Server Architecture**: No Express.js or Node.js backend required
-  - **Client-Side Processing**: All validation and OCR processing in browser WASM
-  - **Direct Database Access**: WASM services connect directly to PostgreSQL
-  - **Real-time Processing**: Instant document validation and data extraction
-- **Performance Benefits**: 
-  - **Zero Cold Start**: WASM services load instantly in browser
-  - **Offline Capable**: Core validation works without network connectivity
-  - **Reduced Latency**: No server round-trips for validation and OCR
-  - **Resource Efficient**: Client-side processing reduces server costs
+---
 
-### Database Design
-The database schema supports full GDPR/NIS2 compliance with encrypted storage:
-- **Pilgrims**: GDPR-compliant encrypted personal data storage
-  - Encrypted fields: firstName, lastName1, lastName2, birthDate, documentNumber, phone, email, address fields
-  - Compliance tracking: consentGiven, consentDate, dataRetentionUntil, lastAccessDate
-- **Bookings**: Advanced reservation management with automated timeout
-  - Status tracking: reserved → confirmed/expired with automatic transitions
-  - Reservation expiry: 2-hour timeout with automatic cleanup triggers
-  - Payment deadlines: Strict enforcement with automated cancellation
-- **Beds**: Physical bed inventory with reservation state management
-  - Enhanced status tracking: available, reserved, occupied, maintenance, cleaning
-  - Temporal reservations: reservedUntil timestamps for automatic release
-- **Payments**: Financial transaction records with deadline enforcement
-  - Payment status: awaiting_payment → completed/cancelled/expired
-  - Deadline tracking: 2-hour payment windows with automatic expiration
-- **Government Submissions**: Compliance tracking for Spanish authorities
-- **PostgreSQL Triggers**: Database-level automation for reservation cleanup
+**For all contributors:**
 
-### Authentication & Security
-- **GDPR/NIS2 Compliance**: Full European data protection regulation compliance
-  - **AES-256-GCM Encryption**: All personal data encrypted at rest in database
-  - **Data Retention Policies**: 7-year automatic retention for Spanish hospitality regulations
-  - **Consent Management**: Explicit consent tracking with timestamps
-  - **Access Logging**: All personal data access logged with timestamps
-  - **Right to Erasure**: Secure data deletion with memory overwriting
-- **Multi-layered Security**: Rust-WASM BFF modules provide enhanced input validation and rate limiting
-- **Admin Authentication**: Session-based auth with SHA-256 hashing and progressive lockouts (5min after 3 failures, 30min after 5+ failures)
-- **Rate Limiting**: Granular limits per operation type:
-  - Document validation: 10 per 5 minutes
-  - Registration: 3 per hour
-  - OCR processing: 5 per 10 minutes
-  - Admin auth: 5 per hour
-  - Admin operations: 50 per hour
-  - Admin exports: 10 per hour
-- **Input Sanitization**: XSS prevention, SQL injection protection, buffer overflow safeguards
-- **Document Validation**: Backend-verified Spanish DNI/NIE/Passport validation with checksums to prevent CSRF attacks
-- **Client Fingerprinting**: Enhanced browser-based identification for abuse detection
-- **Security Monitoring**: Automated behavior detection, developer tools detection, suspicious timing analysis
-- **Data Protection**: Compliance with Spanish regulations and GDPR
-- **Automatic Government Reporting**: Secure XML submissions with retry logic
+* Never use `.env` files—**all secrets are managed in Replit**.
+* Never reference `localhost` or hardcoded ports—**always bind to `0.0.0.0` and use Spin routing**.
+* Keep all build, test, and run commands container-portable.
+* Add all new microservices to both `Cargo.toml` `[workspace]` members and `spin.toml`.
 
-## Data Flow
 
-1. **Registration Process**:
-   - Pilgrim enters stay dates → secure availability check via bed manager
-   - Photo capture and OCR processing for document verification (independent front/back upload)
-   - Form completion with personal details auto-populated from OCR
-   - Payment information collection
-   - **Automatic bed assignment after payment confirmation** via secure backend service
-   - Atomic transaction: payment processing + bed assignment + booking confirmation
-   - Automatic government submission
+## 1. Architecture Overview
 
-2. **Admin Management**:
-   - Dashboard with occupancy statistics
-   - Bed status management
-   - Booking oversight
-   - Compliance monitoring
+| Layer | Tech / Library | Notes |
+|-------|----------------|-------|
+| **Frontend** | React + TypeScript · **Vite.js** · **Tailwind CSS** | SPA, mobile‑first, utility‑first styling |
+| **Component Docs** | **Storybook.js** | Interactive component catalog & CI visual‑diffs |
+| **API Gateway (BFF)** | **Spin JS Component** | Auth0 JWT validation → rate‑limit → `outbound_http` to Rust services |
+| **Microservices** | Rust → **WASM** · DDD + Hexagonal | `booking‑service`, `validation‑service`, `country‑service`, `security‑service`, `rate‑limiter‑service` |
+| **Database** | **NeonDB** (serverless Postgres) | Accessed via `sqlx`; global connection pool |
+| **External SOAP** | SES Hospedajes `/comunicacion` | HTTP Basic Auth; MIR v3.1.2 schema |
+| **Auth** | Auth0 (OIDC) | Gateway validates, services re‑check JWT claims |
+| **Observability** | **vite‑plugin‑inspect**, k6, Lighthouse | Bundle analyzer, API load tests |
+| **Lint‑Format‑QA** | eslint · **stylelint** · prettier · rustfmt + **clippy** | All enforced in CI |
+| **Notifications** | **Email (Nodemailer/Resend)** · **Twilio WhatsApp → SMS fail‑over** · **Telegram Bot (Telegraf)** | Sends transactional messages to pilgrims & owners |
 
-## External Dependencies
+---
 
-### Core Dependencies
-- **@neondatabase/serverless**: PostgreSQL connection pooling
-- **drizzle-orm**: Type-safe database ORM
-- **@tanstack/react-query**: Server state management
-- **wouter**: Lightweight React router
-- **zod**: Runtime type validation
+## 2. Project Structure (ASCII Tree)
 
-### UI Dependencies
-- **@radix-ui/***: Accessible UI primitives
-- **tailwindcss**: CSS framework
-- **lucide-react**: Icon library
-- **react-hook-form**: Form management
+```text
+.
+├── frontend/
+│   ├── assets/
+│   │   └── icons/        # Custom SVGs for Tailwind plugin
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── index.tsx
+│   ├── .storybook/
+│   │   ├── main.ts
+│   │   └── preview.ts
+│   ├── tests/            # React‑Testing‑Library + Jest
+│   ├── sw.ts             # Service‑worker for offline kiosk mode
+│   ├── tailwind.config.ts
+│   ├── vite.config.ts
+│   └── stylelint.config.cjs
+│
+├── gateway/
+│   ├── component.ts       # Spin JS gateway component (Auth0, routing)
+│   └── tests/
+│
+├── services/
+│   ├── booking-service/
+│   │   ├── src/{domain,application,ports,adapters,infrastructure}
+│   │   └── tests/
+│   ├── validation-service/
+│   │   ├── src/{domain,application,ports,adapters,infrastructure}
+│   │   └── tests/
+│   │       └── ocr-training/
+│   │           ├── dni-nif/
+│   │           ├── passports/
+│   │           └── nie-tie/
+│   ├── country-service/
+│   │   ├── src/{domain,application,ports,adapters,infrastructure}
+│   │   └── tests/
+│   ├── security-service/
+│   │   ├── src/{domain,application,ports,adapters,infrastructure}
+│   │   └── tests/
+│   └── rate-limiter-service/
+│       ├── src/{domain,application,ports,adapters,infrastructure}
+│       └── tests/
+│
+├── shared/               # Common DTOs / error types
+│   └── src/lib.rs
+│
+├── database/migrations/
+│
+├── tests/
+│   ├── api/      # Supertest
+│   ├── e2e/      # TestCafe suites
+│   └── perf/     # k6 scripts
+│
+├── Cargo.toml   # Workspace root
+├── package.json
+└── README.md
+```
 
-### Specialized Services
-- **tesseract.js**: OCR for document processing
-- **date-fns**: Date manipulation utilities
-- **connect-pg-simple**: PostgreSQL session store
+---
 
-## Deployment Strategy
+## 3. Frontend Directives
 
-### Development
-- Vite dev server with HMR for frontend
-- tsx for TypeScript execution in development
-- Database migrations via Drizzle Kit
+- **Static Assets**: SVG icons from `frontend/assets/icons` via a Tailwind plugin; OCR training images loaded at test‑runtime from `services/validation-service/tests/ocr-training/**`.
+- **Vite.js** dev server with HMR → `npm run dev`.
+- **vite‑plugin‑inspect**: import in `vite.config.ts` and include `inspect()` in the plugin array.
+- **Tailwind CSS**: `content` array includes `src/**/*` and `assets/icons/*.svg`.
+- **Storybook.js**: run with `npm run storybook` for live docs and `npm run storybook:build` for static export.
+- **Testing**: Jest + **@testing‑library/react** in `frontend/tests` (`npm run test:ui`).
+- **State Management**: Global UI state with **Zustand**; server state via React Query.
+- **Formatting & Lint**: `eslint`, `prettier`, `stylelint` (`npm run lint:ui`).
+- **Performance**: Lighthouse CI (`npm run perf:lh`).
 
-### Production Build
-- Vite builds optimized static assets
-- esbuild bundles server code for Node.js
-- Single deployment artifact with both client and server
+---
 
-### Environment Configuration
-- Database connection via `DATABASE_URL` environment variable
-- Government API configuration via `ESTABLISHMENT_CODE`
-- Replit-specific optimizations for cloud deployment
+## 4. API Gateway – Spin JS Component
 
-### Testing Infrastructure
-- **Comprehensive Test Suite**: Complete end-to-end testing framework implemented
-  - **API Integration Tests**: Full validation of 6 core endpoints (100% pass rate)
-  - **TestCafe E2E Tests**: Complete registration flow automation
-  - **DNI OCR Testing**: Validated document processing with real test data
-  - **Performance Monitoring**: Response time tracking and benchmarking
-  - **Error Handling**: Comprehensive validation and failure scenario testing
-- **Test Coverage**: 
-  - Document upload and OCR processing (✅ Validated)
-  - Form validation and completion (✅ Tested)
-  - Payment processing simulation (✅ Ready)
-  - Bed assignment verification (✅ Implemented)
-  - Government compliance testing (✅ Configured)
-  - Admin dashboard integration (✅ Available)
+```ts
+// gateway/component.ts
+// Spin SDK style (QuickJS runtime)
+import { Router } from "@fermyon/spin-sdk";
+import { jwtVerify } from "jose";
 
-### Key Features
-- **Comprehensive Document Processing**: Full support for Spanish DNI, NIE (Foreign Identity Numbers), TIE (Residence Permits), and international passports
-  - **NIE Processing**: Extracts X/Y/Z-format foreign identity numbers with validation
-  - **TIE Processing**: Complete residence permit data extraction including work authorization status
-  - **Document Classification**: Automatic detection and routing for different permit types
-  - **Dual Number Extraction**: Handles documents with both NIE and TIE numbers
-- **GDPR/NIS2 Compliance System**: Full European data protection compliance implemented
-  - **Encrypted Data at Rest**: AES-256-GCM encryption for all personal data in database
-  - **Data Retention Management**: Automatic 7-year retention period for hospitality records
-  - **Consent Tracking**: Explicit consent recording with timestamps
-  - **Data Access Logging**: Last access tracking for all personal data queries
-  - **Right to be Forgotten**: Secure data deletion capabilities
-- **Automated Reservation Management**: 2-hour reservation timeout with automated cleanup
-  - **PostgreSQL Triggers**: Database-level automated cleanup for expired reservations
-  - **Bed Inventory Restoration**: Automatic bed release on reservation expiration
-  - **Payment Deadline Enforcement**: Strict 2-hour payment window with auto-cancellation
-  - **Background Cleanup Service**: 5-minute interval processing of expired reservations
-  - **Transaction Integrity**: Atomic operations ensuring data consistency
-- **Dynamic Pricing System**: Database-driven pricing with dormitory beds (€15/night) and private rooms (€35/night)
-- **Secure Pricing Architecture**: All pricing data served from backend API to prevent CSRF/MitM attacks and client-side tampering
-- **Zero-Cost OCR Processing**: AWS Lambda function for Spanish DNI, NIE, TIE, and passport processing (<$0/month for 24 users/day)
-- **Advanced Document Validation**: Checksum verification for DNI/NIE using mod-23 algorithm
-- **International Passport Support**: MRZ (Machine Readable Zone) parsing for worldwide passports
-- **Intelligent Document Classification**: Automatic document type detection and routing
-- **Spanish Residence Permit Support**: Complete TIE (Tarjeta de Identidad de Extranjero) processing
-  - **Work Authorization Detection**: Automatic extraction of employment permission status
-  - **Dual Document Numbers**: Extracts both TIE permit numbers and associated NIE numbers
-  - **Multiple Permit Types**: Handles student visas, work permits, EU registration certificates
-  - **Expiry Date Extraction**: Automatic validation period detection for permit renewals
-- **Smart Rotation Detection**: Multi-algorithm rotation correction system with binarization/thresholding for optimal OCR accuracy
-  - **Projection Method**: Variance-based rotation detection using document projections
-  - **Text Orientation**: Gradient-based text line detection for proper alignment
-  - **Edge Detection**: Sobel filter-based edge analysis for document orientation
-  - **Hough Transform**: Line detection for precise angle correction
-  - **Preprocessing Pipeline**: Gaussian blur and binarization before rotation detection
-  - **Confidence Scoring**: Weighted algorithm selection based on detection confidence
-- **Secure Bed Management**: Backend service automatically assigns beds after payment confirmation
-- **Automatic Bed Initialization**: Sets up 24-bed inventory (Dormitorios A/B, Private rooms) on first run
-- **Payment-to-Bed Integration**: Atomic transactions ensuring payment success before bed assignment
-- **Government Compliance**: Automated XML submission to Spanish authorities
-- **Independent Document Upload**: Separate front/back upload areas for DNI/NIE processing with responsive layout
-- **Multi-Document Support**: Handles DNI, NIE, Passport, and Other Documents with file type validation
-- **Multi-language Support**: Interface available in 10+ languages with localized date formats
-- **Real-time Availability**: Secure bed availability checking via backend service
-- **Mobile Optimized**: Touch-friendly interface for tablet/phone use with side-by-side desktop layout
-- **Enhanced Phone Input**: Country-aware phone validation with flag display and separated local/country code input
-- **Global Address Support**: Worldwide address autocomplete for international pilgrims
-- **Country Information Service**: RESTCountries API integration with local caching and fallback data
-- **Modern Google Places Integration**: PlaceAutocompleteElement (March 2025+ compliant) with legacy fallback
-- **Google Places API Integration**: BFF-integrated Google Places API with server-side key management and fallback support
-- **Collapsible Smart Cards**: Progressive form disclosure with OCR confidence-based card states
-  - **Personal Information Card**: User icon, confidence-based collapse behavior (≥90% = collapsed with checkmark)
-  - **Address Information Card**: Map pin icon, Google Places autocomplete integration
-  - **Contact Information Card**: Phone icon, split country code/phone number fields
-  - **Payment Information Card**: Credit card icon, always visible for checkout flow
-- **Field-Level Security**: Individual padlock controls for OCR-populated fields with manual override capability
-- **Intelligent Birth Date Processing**: Automatic DD/MM/YYYY to YYYY-MM-DD conversion for date inputs
-- **Advanced Form Validation**: Email validation, phone validation with country codes, file size limits
+const router = new Router();
 
-The application is designed as a self-contained kiosk system that can run on tablets or computers at the albergue entrance, allowing pilgrims to register themselves while ensuring compliance with Spanish hospitality regulations.
+router.get("/api/stats", async (_, res) => {
+  const stats = await fetch("http://booking-service.internal/stats").then(r => r.json());
+  res.json(stats);
+});
 
-## Testing Status
+export default async function handleRequest(request: Request): Promise<Response> {
+  // 1. JWT validation (Auth0)
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "") || "";
+  await jwtVerify(token, /* JWKS lookup here */);
 
-The system includes comprehensive testing infrastructure across multiple levels:
+  // 2. Route match
+  return router.handle(request);
+}
+```
 
-### API Testing (100% Pass Rate)
-- **✅ Core Endpoints**: All 6 endpoints validated (health, availability, OCR, validation, pricing, stats)
-- **✅ Performance**: Response times < 100ms for API calls, < 3s for OCR processing
-- **✅ Error Handling**: Complete validation for edge cases and invalid inputs
+### spin.toml Snippet
+```toml
+[application]
+name = "albergue-app"
+version = "0.1.0"
+authors = ["Guillermo Lam <guillermo@…>"]
 
-### Component Testing (Enzyme + Jest)
-- **✅ React Components**: 5 major component test suites with 160+ test cases
-  - App, MultiDocumentCapture, RegistrationForm, CountryPhoneInput, LanguageSelector
-- **✅ Coverage**: 92% average test coverage across all components
-- **✅ Integration**: Provider setup, context integration, user interaction testing
+[[component]]
+id = "gateway"
+source = "gateway/component.wasm"
+allowed_http_hosts = ["http://booking-service.internal"]
+[component.trigger]
+type = "http"
+route = "/api/..."
 
-### End-to-End Testing (TestCafe)
-- **✅ Document Processing**: Comprehensive test suites for all document types
-  - `testcafe-nie-documents.js`: NIE X/Y/Z format processing and validation
-  - `testcafe-residence-permits.js`: TIE residence permit data extraction and work authorization
-  - `testcafe-international-passports.js`: Multi-country passport MRZ parsing
-  - `testcafe-document-formats.js`: PDF/DOCX document handling and file validation
-- **✅ Complete Flow**: Full registration workflow validation
-  - `testcafe-full-registration-flow.js`: End-to-end process with notifications and bed management
-- **✅ Critical Validations**: Bed availability, payment processing, success screen verification
+[[component]]
+id = "booking-service"
+source = "services/booking-service/target/wasm32-wasi/release/booking_service.wasm"
+[component.trigger]
+type = "http"
+route = "/booking/..."
+```
 
-### Specialized Document Testing
-- **✅ NIE Processing**: X/Y/Z format validation with checksum verification
-- **✅ TIE Permits**: Work authorization detection, dual number extraction
-- **✅ International Passports**: US, Chinese, Russian, Barbados passport processing
-- **✅ File Formats**: PDF with DNI photos, DOCX with passport images
-- **✅ Error Recovery**: Graceful handling of poor quality images and manual entry fallbacks
+Gateway logic now runs as **Spin** JS, no localhost/port assumptions.
 
-### Test Infrastructure
-- **Test Runner**: `run-comprehensive-testcafe.js` - Automated execution of all test suites
-- **Browser Coverage**: Chrome headless with cross-browser capability
-- **Performance Monitoring**: Individual test timeouts and duration tracking
-- **Comprehensive Reporting**: Detailed results with success rates and category breakdown
+---
 
-**Key Test Files**: 
-- API: `test-dni-api.js`
-- Components: `tests/enzyme-components/*.test.tsx`
-- E2E: `tests/testcafe-*.js`
-- Documentation: `README-Testing.md`, `enzyme-test-summary.md`
+## 5. Rust Workspace & Shared Crate
 
-## Recent Changes
+```toml
+# Cargo.toml (root)
+[workspace]
+members = [
+  "shared",
+  "services/*"
+]
+```
 
-### July 25, 2025 - Deployment ESM Fixes
-- **Fixed ESBuild CommonJS Format Incompatibility**: 
-  - Created `build-production.js` script with proper ESM format configuration
-  - Added external package exclusions for `lightningcss` and `../pkg` to resolve module resolution errors
-  - Added CommonJS compatibility shims (`__dirname`, `__filename`, `require`) for bundled dependencies
-  - Server build now uses `format: 'esm'` instead of default CommonJS
-- **ESM Configuration Updates**:
-  - `package.json` already properly configured with `"type": "module"`
-  - `tsconfig.json` already using `"module": "ESNext"` and `"moduleResolution": "bundler"`
-  - Server files already using `import.meta.dirname` instead of `__dirname`
-- **Deployment Build Process**:
-  - Client build: `npm run build:client` (works correctly)
-  - Server build: `node build-production.js` (new ESM-compatible process)
-  - Production server verified working with health checks and static file serving
-- **Status**: Deployment compatibility issues resolved, ready for Replit deployment
+`shared/src/lib.rs` holds common DTOs:
+```rust
+pub mod dto {
+  use serde::{Serialize, Deserialize};
 
-### July 25, 2025 - Test Structure Reorganization
-- **Reorganized TestCafe Structure**: 
-  - Moved empty TestCafe output folders (`videos/`, `screenshots/`, `reports/`) into `tests/e2e/outputs/`
-  - Consolidated all TestCafe E2E tests under `tests/e2e/testcafe/` directory
-  - Updated test runners to use new paths: `tests/e2e/testcafe/testcafe-*.js`
-  - Created comprehensive `tests/README.md` documenting the complete testing structure
-- **Test Organization**:
-  - **API Tests**: `tests/api/` - Integration testing for all endpoints
-  - **Component Tests**: `tests/enzyme-components/` - React component unit tests 
-  - **E2E Tests**: `tests/e2e/testcafe/` - All TestCafe end-to-end testing
-  - **Test Runners**: `tests/runners/` - Automated execution scripts
-  - **Outputs**: `tests/e2e/outputs/` - TestCafe reports, screenshots, videos
-- **Benefits**: Cleaner project structure, better test organization, removed scattered TestCafe files
-- **Status**: Test structure reorganized, all paths updated, ready for execution
+  #[derive(Serialize, Deserialize)]
+  pub struct BookingDto { pub id: uuid::Uuid, /* … */ }
+}
+```
+Every service depends on `shared = { path = "../../shared" }`.
 
-### July 25, 2025 - BFF Architecture Cleanup  
-- **Removed BFF (Backend For Frontend) Architecture**: 
-  - Deleted legacy `api/` folder and `build-bff.sh` script
-  - Removed all BFF client files (`*-bff-client.ts`) from `client/src/lib/`
-  - Replaced BFF API calls with direct Express.js API endpoints
-  - Updated server routes to handle validation, OCR, and country info directly
-- **New Direct API Architecture**:
-  - **Validation Endpoints**: `/api/validate/document`, `/api/validate/email`, `/api/validate/phone`
-  - **OCR Processing**: `/api/ocr/process` - Direct proxy to AWS Lambda OCR service
-  - **Country Information**: `/api/country/info` - RESTCountries API integration with fallback data
-  - **API Clients**: `country-api-client.ts`, `ocr-api-client.ts` for clean client-side integration
-- **Benefits**: Simplified architecture, faster development, reduced complexity, direct API access
-- **Status**: BFF removal complete, all components updated, server running successfully
+### JWT Middleware Stub (Rust)
+```rust
+// services/<name>/src/infrastructure/auth.rs
+use axum::{middleware::Next, http::Request, response::Response};
+use jsonwebtoken::{decode, DecodingKey, Validation};
 
-### July 25, 2025 - Architecture Documentation Correction
-- **Corrected Backend Architecture Documentation**: 
-  - Updated documentation to reflect actual TypeScript Express.js server implementation
-  - Removed incorrect references to Rust WASM microservices architecture
-  - Clarified that Rust services exist in `backend/services/` but are not currently deployed
-  - Documented direct PostgreSQL access via Drizzle ORM in TypeScript server
-- **Current Reality vs Documentation**:
-  - **Reality**: Express.js server with direct database access handles all backend operations
-  - **Previous Docs**: Claimed Rust microservices with Cloudflare Workers deployment
-  - **AWS Lambda**: Only OCR service actually deployed as Rust Lambda function
-  - **Future Path**: Rust services available for potential future migration
-- **Benefits**: Accurate documentation matches working implementation
-- **Status**: Documentation corrected, server architecture properly documented
+pub async fn auth<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, axum::Error> {
+    let token = req.headers()
+        .get("authorization")
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or("")
+        .strip_prefix("Bearer ")
+        .unwrap_or("");
 
-### July 25, 2025 - Complete Rust WASM Microservices Implementation
-- **Replaced Express.js Server with Rust WASM Architecture**:
-  - Removed entire `server/` folder with TypeScript Express.js backend
-  - Created complete Rust microservices workspace with 5 WASM services
-  - Built comprehensive Cargo.toml configurations for workspace and individual services
-  - Implemented WASM integration layer (`frontend/wasm-services.ts`) for frontend-WASM communication
-- **Complete WASM Services Suite**:
-  - **Database Service**: PostgreSQL operations with encryption and validation
-  - **Validation Service**: Spanish DNI/NIE/Passport validation with checksums
-  - **Country Service**: RESTCountries API integration with fallback data
-  - **Security Service**: Authentication, rate limiting, and session management
-  - **OCR Service**: Browser-based document processing replacing AWS Lambda
-- **Pure Frontend + WASM Architecture**:
-  - Zero Node.js backend - all logic runs in browser WASM
-  - Direct WASM service calls from React frontend
-  - Created `build-wasm.sh` script for compiling Rust services to WebAssembly
-  - Updated documentation to remove all Express.js references
-- **Benefits Achieved**:
-  - Zero server costs for backend processing
-  - Instant processing with no network latency
-  - Offline-capable core functionality
-  - Enhanced security with client-side validation
-- **Status**: Complete Rust WASM microservices architecture implemented and running
+    decode::<serde_json::Value>(token, &DecodingKey::from_rsa_pem(include_bytes!("../../jwks.pem")).unwrap(), &Validation::default())
+        .map_err(|_| axum::Error::new("unauthorized"))?;
+    next.run(req).await
+}
+```
 
-### July 25, 2025 - Package.json Cargo Integration
-- **Created Comprehensive Cargo Integration Scripts**:
-  - Cannot directly edit package.json due to security restrictions
-  - Created `scripts/cargo-build.sh` for complete Cargo integration
-  - Created `scripts/wasm-dev.sh` for development workflow
-  - Scripts provide all necessary Cargo commands for WASM development
-- **Cargo Build Features**:
-  - **Full Pipeline**: `./scripts/cargo-build.sh all` - complete build with checks
-  - **Quick Development**: `./scripts/wasm-dev.sh quick` - fast WASM builds
-  - **Code Quality**: Integrated cargo check, test, fmt, clippy
-  - **WASM Tools**: Automatic wasm-pack installation and setup
-  - **Service Testing**: Individual service testing capabilities
-- **Development Workflow Integration**:
-  - Scripts replace need for package.json modifications
-  - Comprehensive error handling and colored output
-  - Watch mode for automatic rebuilds on code changes
-  - Direct integration with npm development server
-- **Benefits**: Complete Cargo ecosystem integration without package.json modifications
-- **Status**: Cargo build scripts created and ready for WASM development
+---
+
+## 6. Database (NeonDB)
+
+- Migrations in `database/migrations`.
+- Connection via `NEON_DATABASE_URL`.
+- Install CLI once:
+```bash
+cargo install sqlx-cli --no-default-features --features native-tls,postgres
+```
+
+---
+
+## 7. Build, Deploy & Notification Dependencies (`package.json`)
+
+jsonc
+{
+  "scripts": {
+    // Frontend
+    "dev": "cd frontend && vite",
+    "build:frontend": "cd frontend && vite build",
+    "storybook": "cd frontend && storybook dev -p 6006",
+    "storybook:build": "cd frontend && storybook build",
+    "lint:ui": "cd frontend && eslint src --ext .ts,.tsx && stylelint \"**/*.{css,scss}\"",
+    "test:ui": "cd frontend && jest",
+    "perf:lh": "lighthouse http://localhost:4173 --preset=desktop --output-path=./lh-report.html",
+
+    // Gateway
+    
+    
+
+    // Rust / WASM
+    "build:wasm": "npm-run-all --parallel build:wasm:*",
+    "build:wasm:booking": "wasm-pack build services/booking-service --target web --out-dir pkg/booking",
+    "build:wasm:validation": "wasm-pack build services/validation-service --target web --out-dir pkg/validation",
+    "build:wasm:country": "wasm-pack build services/country-service --target web --out-dir pkg/country",
+    "build:wasm:security": "wasm-pack build services/security-service --target web --out-dir pkg/security",
+    "build:wasm:rate": "wasm-pack build services/rate-limiter-service --target web --out-dir pkg/rate",
+
+    // k6 & E2E
+    "perf:k6": "k6 run tests/perf/api-load.js",
+    "test:e2e": "testcafe chrome tests/e2e",
+
+    // Lint & Clippy
+    "lint:rs": "cargo fmt -- --check && cargo clippy --all-targets -- -D warnings"
+  },
+  "devDependencies": {
+    "vite": "^5.0.4",
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite-plugin-inspect": "^0.8.2",
+    "tailwindcss": "^3.4.4",
+    "storybook": "^8.0.0",
+    "eslint": "^9.0.0",
+    "stylelint": "^15.0.0",
+    "prettier": "^3.2.0",
+    "jest": "^30.1.0",
+    "@testing-library/react": "^15.1.0",
+    "lighthouse": "^12.3.0",
+    "k6": "^0.49.0",
+    "npm-run-all": "^4.1.5",
+    "wasm-pack": "*",
+    "typescript": "^5.5.0",
+    "@fermyon/spin-sdk": "^1.0.0",
+    "jose": "^5.3.0",
+    "nodemailer": "^6.9.4",
+    "telegraf": "^4.17.0",
+    "twilio": "^4.15.1",
+    "@openapi-contrib/openapi-diff": "^5.0.0"
+  }
+}
+```
+
+---
+
+## 8. Type‑Safety & Anti‑Hallucination Safeguards
+To minimise runtime surprises and data‑shape hallucinations between layers, we enforce:
+1. **Strict TS config** (`noImplicitAny`, `exactOptionalPropertyTypes`).
+2. DTOs auto‑generated from Rust via **ts-rs** and consumed in the frontend.
+3. **Zod** runtime validation for every fetch.
+4. ESLint rule `switch-exhaustiveness-check` to catch missing `switch` cases.
+5. Nightly **OpenAPI diff** check using `@openapi-contrib/openapi-diff` (fails build on drift).
+6. Env‑var guard utility—`loadEnv("TWILIO_SID")` throws if undefined.
+
+---
+
+## 9. Testing, QA & CI/CD Pipeline
+
+| Layer | Tooling | Script |
+|-------|---------|--------|
+| **Unit / UI** | Jest + @testing‑library/react (`frontend/tests`) | `npm run test:ui` |
+| **API** | Jest + Supertest (`tests/api`) | `npm run test:api` |
+| **E2E** | TestCafe (`tests/e2e`) | `npm run test:e2e` |
+| **Perf (UI)** | Lighthouse CLI | `npm run perf:lh` |
+| **Perf (API)** | k6 (`tests/perf`) | `npm run perf:k6` |
+| **Lint UI** | eslint + stylelint | `npm run lint:ui` |
+| **Lint Rust** | cargo fmt + clippy | `npm run lint:rs` |
+
+CI must fail on any lint, clippy, or test error.
+
+---
+
+## 11. GitHub Actions Workflows
+We will maintain **four** separate workflow files under `.github/workflows/` to keep jobs modular and cache‑efficient:
+
+| Workflow | Trigger | Jobs | Artifacts / Deploy | Filename |
+|----------|---------|------|--------------------|----------|
+| **`lint-test.yaml`** | `push`, `pull_request` to any branch | 1. **Setup** (cache Node & Rust)  2. **lint-ui** (`eslint`, `stylelint`)  3. **lint-rs** (`cargo fmt`, `clippy`)  4. **test-ui** (Jest)  5. **test-api** (Jest/Supertest) | JUnit + coverage reports | `.github/workflows/lint-test.yaml` |
+| **`build-wasm.yaml`** | `push` to `main` or tag `v*` | Matrix over each Rust service → `wasm-pack build --release` | Upload WASM `pkg/<service>.wasm` artifacts | `.github/workflows/build-wasm.yaml` |
+| **`spin-deploy.yaml`** | `workflow_run` when **build-wasm** succeeds on `main` | 1. Download artifacts  2. `spin build`  3. `spin deploy --confirm` to Fermyon Cloud | Deployed app URL in job summary | `.github/workflows/spin-deploy.yaml` |
+| **`perf-audit.yaml`** | nightly `schedule` (cron) | 1. `spin up` ➜ wait  2. k6 load test  3. Lighthouse CLI against `$DEPLOY_URL` | HTML reports uploaded as build artifacts; Slack/Telegram bot alert if KPIs fail | `.github/workflows/perf-audit.yaml` |
+
+### Shared Strategy
+- **Composite Action** `.github/actions/setup-env` installs Rust, `wasm-pack`, Node, `sqlx-cli`, Spin.
+- **Caching** with `actions/cache` keyed by `package-lock.json` and `Cargo.lock` to accelerate builds.
+- **Secrets**: Auth0 domain, NeonDB token, Twilio, Telegram bots stored as repo secrets; injected via `env:`.
+- **Fail‑Fast**: `continue-on-error: false` across matrix builds so CI exits early.
+
+### Why four workflows?
+1. **lint-test** is fast, runs on every PR.  
+2. **build-wasm** is heavier; only runs on merge or version tags.  
+3. **spin-deploy** isolates deployment credentials and can be re‑triggered manually.  
+4. **perf-audit** runs off‑peak to keep usage under free CI minutes.
+
+
+---
+
+## 10. UI Behaviour, Business Rules & Notifications, Business Rules & Notifications
+
+### 10.1 Booking Constraints
+- **Single‑Person Booking**: UI enforces `numPersonas = 1`; multi‑traveller paths are hidden.
+- **2‑Hour Reservation Window**: A countdown timer (toast + progress bar) shows time left to complete payment before auto‑expiry.
+- **Document Capture Workflow**: Dual‑pane drag‑and‑drop for front/back images. OCR auto‑populates form; fields collapse with ✅ icon when ≥ 90 % confidence, else remain open for manual edit.
+- **Validation Sequence**:
+  1. Client‑side Zod schema → immediate errors.
+  2. Call **validation‑service** (`/validate/document`) for checksum / MRZ verification.
+  3. If OK, enable **payment** panel.
+
+### 10.2 Bed Management Logic
+- **Inventory**: 24 beds → Dorm A (12), Dorm B (10), 2 private rooms.
+- **Availability Check**: On date pick, frontend calls `/api/availability?from=…&to=…`; disabled dates show as grey.
+- **Auto‑Assignment**: After successful Stripe‑like payment token, gateway POSTs to `booking‑service`; service selects first available bed matching dorm preference.
+- **Status Chips**: `available` (green), `reserved` (amber), `occupied` (red), `maintenance` (grey).
+- **Admin Dashboard**: Drag‑and‑drop bed card to move guest (fires PATCH `/beds/{id}`; optimistic UI).
+
+### 10.3 Payment & Expiry Rules
+- **Deadline**: 2 h from reservation; cron in `rate‑limiter‑service` triggers cancellation and bed release.
+- **Price Matrix**: Dorm bed €15/night, private room €35/night. UI shows dynamic pricing from `/pricing?date=…` not hard‑coded.
+
+### 10.4 Government Submission
+- On booking completion, `booking‑service` sends SOAP `altaParteHospedaje`; retries with exponential backoff (max 3).
+- Submission result (OK / Fault) stored; UI shows badge.
+
+### 10.5 Notifications Workflow
+| Event | Recipient | Channel Priority | Content |
+|-------|-----------|------------------|---------|
+| **Reservation Created** | Pilgrim | 1️⃣ WhatsApp (Twilio) → 2️⃣ SMS (fallback) → 3️⃣ Email | Reservation ID, 2‑hour payment window, bed type, link to payment page |
+| | Owner | Telegram group + Email | New booking alert with guest name, dates, bed assigned |
+| **Payment Confirmed** | Pilgrim | WhatsApp → Email | Payment receipt, bed assignment, check‑in instructions |
+| | Owner | Telegram group | Payment success summary |
+| **Reservation Expired / Cancelled** | Pilgrim | Email | Cancellation notice & re‑booking link |
+| | Owner | Telegram | Bed auto‑released notification |
+
+Implementation details:
+- **Twilio SDK** used inside `notification-service` adapter; WhatsApp template IDs configured in env.
+- SMS sent automatically if WhatsApp API returns `template_not_approved` or no read receipt within 30 s.
+- **nodemailer** (or Resend) sends transactional HTML emails via SMTP‑over‑Neon.
+- **Telegraf** bot posts to `@carrascalejo_admins` channel.
+- All notifications are idempotent; status stored in `notifications` table.
+
+### 10.6 Success Page Cards
+After payment, the UI shows four `Card` components (grid layout):
+1. **“Qué ver en Mérida”** – link list to Roman theatre, Alcazaba, museum.
+2. **“El Carrascalejo – Curiosidades”** – fun facts about the village & Camino milestones.
+3. **“Emergencias”** – 112, local health centre, Guardia Civil phone.
+4. **“Mapa & Ruta”** – embedded OpenStreetMap iframe with hostel pin and next‑stage directions.
+
+Cards are fetched from `/api/info/cards` allowing Markdown updates without redeploy.
+
+### 10.7 Key Feature Matrix (from Functional Spec)
+| Category | Feature | Where Implemented |
+|----------|---------|-------------------|
+| **Document Processing** | DNI/NIE checksum, MRZ parsing, smart‑rotation detection (projection + Hough), confidence scoring | `validation-service` + frontend WASM helpers |
+| | Offline OCR fallback (WASM) | Frontend bundle via `tesseract.js` |
+| **Compliance** | AES‑256‑GCM encrypted PII, consent tracking, 7‑year retention, right‑to‑erasure | `database` schema + `security-service` |
+| **Reservation Automation** | 2‑hour timeout, PostgreSQL triggers, background cleanup every 5 min | `booking-service` + Neon triggers |
+| **Dynamic Pricing** | `pricing` table (€15 dorm, €35 private room) editable by admin; served via `/pricing?date=…` | `booking-service` (read‑only) + admin console |
+| **Field‑Level Security** | Padlock toggle on OCR‑filled inputs | React component state (`<SecureInput>`) |
+| **Multi‑language UI** | i18n JSON, fallback locale, date localisation | React i18next setup |
+| **Offline Kiosk Mode** | Service Worker caches WASM + assets; core validation runs locally | `frontend/sw.ts` |
+| **GDPR/NIS2 Logging** | Every PII read/write logged to `audit_log` table | `security-service` trigger & Neon log pipeline |
+| **Advanced Validation** | Phone (+ country code), email regex + MX check, address autocomplete via Google Places | `validation-service` endpoints |
+| **Analytics / Observability** | Hubble (if on K8s), Spin metrics, k6 + Lighthouse nightly audit | `perf-audit.yaml` workflow |
+
+---
+
+## 11. Back‑Office Admin Console
+
+### 11.1 Purpose
+A secure dashboard for hostel owners to **register cash payments**, **manage/modify bookings**, monitor **bed occupancy**, and view **live metrics** (revenue, nationality mix, average stay length, SOAP submission status).
+
+### 11.2 Tech Stack
+- Re‑uses React + Tailwind in `frontend/` under route prefix `/admin`.
+- Charts rendered with **Recharts** (already lean, tree‑shaken).
+- Access gated by Auth0 role `hostel_owner`; JWT claim `role=admin` verified by Spin gateway.
+- API endpoints:
+  - `GET /admin/metrics` – aggregates from `booking-service`, `rate-limiter-service`, RESTCountries cache.
+  - `PATCH /admin/bookings/:id` – modify dates, bed, status.
+  - `POST /admin/payments/cash` – registers cash payment, triggers receipt notification.
+
+### 11.3 UI Panels
+| Panel | Components | Description |
+|-------|------------|-------------|
+| **Dashboard Home** | KPI cards, revenue chart, occupancy gauge | Snapshot of today + next 7 days |
+| **Bookings Table** | DataGrid with inline edit | Filter by date, status; CSV export |
+| **Bed Map** | Drag‑and‑drop bed grid | Visual assign / swap beds using same chips as public UI |
+| **Payments** | Cash payment form, list of pending payments | Auto‑completes booking ID; generates PDF receipt via `pdfmake` |
+| **Logs & Submissions** | Timeline of SOAP submissions & audit logs | Badge colour shows latest status |
+
+### 11.4 Notifications Integration
+- Cash payment entry triggers the **Payment Confirmed** notification flow (WhatsApp/SMS/Email) but marks channel `cash=true`.
+- Dashboard top bar shows unread notification count sourced from `notifications` table.
+
+### 11.5 CI Considerations
+- `lint-test.yaml` adds `npm run test:ui -- --testPathPattern admin` to verify admin components.
+- Lighthouse in `perf-audit.yaml` hits `/admin` route for PWA compliance.
+
+### 11.6 Future Ideas (optional)
+- BI export to CSV/Excel.
+- Daily email summary to owner at 06:00 CET (schedules via `perf-audit.yaml`).
+- QR‑code check‑in scanner to mark pilgrims as “arrived”.
+
+---
+
+## 9. Running in Replit (Spin)
+
+```bash
+# 1. Install Node deps & Rust toolchains
+npm install && rustup target add wasm32-unknown-unknown
+
+# 2. Install sqlx‑cli
+cargo install sqlx-cli --no-default-features --features native-tls,postgres
+
+# 3. Build all WASM components and Spin gateway
+npm run build:wasm && npm run build:gateway
+
+# 4. Start application via Spin (bind to all interfaces for Replit)
+spin up --listen 0.0.0.0:8000
+```
+
+---
+**Deliverables**: scaffolded repo folders, config files, sample code stubs, UI behaviour notes, admin console specs, and the scripts above.
