@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
     watch: {
       ignored: ['**/services/**/target/**', '**/pkg/**']
     },
-    // Proxy API calls through Spin gateway (with auth protection)
+    // Proxy API calls through services
     proxy: {
       '/booking': {
         target: 'http://localhost:8000',
@@ -34,6 +34,10 @@ export default defineConfig(({ mode }) => ({
             console.log('Gateway connection failed, check Spin service');
           });
         }
+      },
+      '/reviews': {
+        target: 'http://localhost:3002',
+        changeOrigin: true
       }
     }
   },

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import RegistrationForm from "../components/registration-form";
 import AdminDashboard from "../components/AdminDashboard";
+import ReviewsSection from "../components/ReviewsSection";
 import { User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../lib/queryClient";
@@ -136,7 +137,7 @@ export default function HomePage() {
                     {dashboardStats?.occupancy?.available || 24}
                   </div>
                   <div className="text-sm text-green-100">
-                    {t('hero.beds_available')}
+                    camas disponibles
                   </div>
                 </div>
                 <div className="w-px h-12 bg-white/20"></div>
@@ -145,7 +146,7 @@ export default function HomePage() {
                     {pricing?.dormitory || 15}€
                   </div>
                   <div className="text-sm text-green-100">
-                    {t('hero.price_per_night')}
+                    por noche
                   </div>
                 </div>
               </div>
@@ -154,11 +155,13 @@ export default function HomePage() {
         </div>
       </section>
         
+      {/* Reviews Section */}
+      <ReviewsSection />
+
       {/* Registration Form */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <RegistrationForm />
       </div>
-
 
     </div>
   );

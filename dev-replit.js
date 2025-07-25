@@ -19,6 +19,11 @@ const gatewayProcess = spawn("node", ["gateway-proxy.js"], {
   stdio: "inherit"
 });
 
+// Start Reviews API service
+const reviewsProcess = spawn("node", ["api-reviews.js"], {
+  stdio: "inherit"
+});
+
 // Wait a moment then start Vite
 setTimeout(() => {
   const viteProcess = spawn("npx", ["vite", "--host", "0.0.0.0", "--port", "5173"], {
@@ -31,6 +36,7 @@ setTimeout(() => {
     console.log('\n🛑 Shutting down servers...');
     apiProcess.kill();
     gatewayProcess.kill();
+    reviewsProcess.kill();
     viteProcess.kill();
     process.exit(0);
   });
@@ -38,6 +44,7 @@ setTimeout(() => {
   process.on('SIGTERM', () => {
     apiProcess.kill();
     gatewayProcess.kill();
+    reviewsProcess.kill();
     viteProcess.kill();
     process.exit(0);
   });

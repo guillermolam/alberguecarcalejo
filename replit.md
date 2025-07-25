@@ -21,6 +21,9 @@ You are an expert full‑stack engineer. Scaffold a **Replit** workspace that im
 ✓ **Gateway running on port 8000 with route-level protection middleware**
 ✓ **AdminDashboard showing real hostel statistics and bed configuration**
 ✓ **Removed application-level authentication - all security handled by gateway**
+✓ **Implemented reviews system fetching from Google Reviews and Booking.com APIs**
+✓ **Reviews section displays authentic guest feedback with ratings and verification**
+✓ **Replaced redundant availability display with valuable social proof content**
 ✓ Ready for deployment to alberguecarrascalejo.fermyon.app
 
 ### July 25, 2025 - Deployment Build Fixes Applied
