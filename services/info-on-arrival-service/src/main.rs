@@ -70,6 +70,30 @@ impl InfoOnArrivalService {
     }
 
     #[wasm_bindgen]
+    pub async fn get_restaurants(&self) -> Result<String, JsValue> {
+        self.service
+            .get_restaurants_eat()
+            .await
+            .map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+
+    #[wasm_bindgen]
+    pub async fn get_taxis(&self) -> Result<String, JsValue> {
+        self.service
+            .get_taxi_services()
+            .await
+            .map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+
+    #[wasm_bindgen]
+    pub async fn get_car_rentals(&self) -> Result<String, JsValue> {
+        self.service
+            .get_car_rentals()
+            .await
+            .map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+
+    #[wasm_bindgen]
     pub async fn update_card_content(&self, card_id: &str, content: &str) -> Result<String, JsValue> {
         self.service
             .update_card_content(card_id, content)

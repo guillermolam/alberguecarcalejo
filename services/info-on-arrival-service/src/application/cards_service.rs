@@ -243,35 +243,204 @@ Este pequeño pueblo de apenas 300 habitantes guarda secretos fascinantes:
         Ok(serde_json::to_string(&map_card)?)
     }
 
+    pub async fn get_restaurants_eat(&self) -> AlbergueResult<String> {
+        // Try to get cached content first
+        if let Ok(cached_card) = self.storage.get_card_by_type(CardType::RestaurantsEat).await {
+            if !cached_card.is_cache_expired() {
+                return Ok(serde_json::to_string(&cached_card)?);
+            }
+        }
+
+        // Create restaurants card with official data from Turismo Mérida
+        let restaurants_card = InfoCard::new(
+            CardType::RestaurantsEat,
+            "Dónde y qué comer cerca".to_string(),
+            "Restaurantes recomendados en Mérida con cocina tradicional extremeña:".to_string(),
+        )
+        .with_links(vec![
+            InfoLink {
+                title: "Restaurante Rex Numitor".to_string(),
+                url: "https://turismomerida.org/donde-comer/".to_string(),
+                description: Some("Cocina extremeña junto al Teatro Romano. Especialidad en carnes ibéricas y migas extremeñas.".to_string()),
+                link_type: LinkType::Restaurant,
+                phone: Some("+34 924 314 261".to_string()),
+                address: Some("Calle de José Ramón Mélida, 06800 Mérida".to_string()),
+                rating: Some(4.3),
+                price_range: Some("25-35€ por persona".to_string()),
+            },
+            InfoLink {
+                title: "Tabula Calda".to_string(),
+                url: "https://www.tabulacalda.com/".to_string(),
+                description: Some("Restaurante romano temático con ambiente histórico. Ideal para cenar tras visitar los monumentos.".to_string()),
+                link_type: LinkType::Restaurant,
+                phone: Some("+34 924 304 512".to_string()),
+                address: Some("Calle Romero Leal, 11, 06800 Mérida".to_string()),
+                rating: Some(4.5),
+                price_range: Some("30-40€ por persona".to_string()),
+            },
+            InfoLink {
+                title: "Mesón El Asador".to_string(),
+                url: "https://turismomerida.org/donde-comer/".to_string(),
+                description: Some("Asador tradicional con cordero y cochinillo. Ambiente familiar y precios moderados.".to_string()),
+                link_type: LinkType::Restaurant,
+                phone: Some("+34 924 315 028".to_string()),
+                address: Some("Avenida de Extremadura, 6, 06800 Mérida".to_string()),
+                rating: Some(4.2),
+                price_range: Some("20-30€ por persona".to_string()),
+            },
+            InfoLink {
+                title: "Casa Benito".to_string(),
+                url: "https://turismomerida.org/donde-comer/".to_string(),
+                description: Some("Bar de tapas tradicional frecuentado por locales. Perfecto para almorzar económico.".to_string()),
+                link_type: LinkType::Restaurant,
+                phone: Some("+34 924 300 076".to_string()),
+                address: Some("Calle San Francisco, 3, 06800 Mérida".to_string()),
+                rating: Some(4.4),
+                price_range: Some("10-15€ por persona".to_string()),
+            },
+        ])
+        .with_priority(4)
+        .with_source_url("https://turismomerida.org/donde-comer/".to_string());
+
+        self.storage.save_card(restaurants_card.clone()).await?;
+        Ok(serde_json::to_string(&restaurants_card)?)
+    }
+
+    pub async fn get_taxi_services(&self) -> AlbergueResult<String> {
+        if let Ok(cached_card) = self.storage.get_card_by_type(CardType::TaxiServices).await {
+            if !cached_card.is_cache_expired() {
+                return Ok(serde_json::to_string(&cached_card)?);
+            }
+        }
+
+        let taxi_card = InfoCard::new(
+            CardType::TaxiServices,
+            "Servicios de Taxi".to_string(),
+            "Servicios de taxi disponibles 24 horas en Mérida y alrededores:".to_string(),
+        )
+        .with_links(vec![
+            InfoLink {
+                title: "Radio Taxi Mérida".to_string(),
+                url: "https://www.radiotaximerida.es/".to_string(),
+                description: Some("Servicio principal de taxi 24 horas. Tarifas oficiales y conductores profesionales.".to_string()),
+                link_type: LinkType::Taxi,
+                phone: Some("+34 924 371 111".to_string()),
+                address: Some("Mérida centro".to_string()),
+                rating: Some(4.1),
+                price_range: Some("Desde Carrascalejo: ~35-45€".to_string()),
+            },
+            InfoLink {
+                title: "Taxi Mérida 24h".to_string(),
+                url: "https://meridavisitas.com/taxi-merida-24-horas/".to_string(),
+                description: Some("Servicio alternativo con reservas por WhatsApp. Especializado en traslados aeropuerto.".to_string()),
+                link_type: LinkType::Taxi,
+                phone: Some("+34 924 372 070".to_string()),
+                address: Some("Toda la zona metropolitana".to_string()),
+                rating: Some(4.0),
+                price_range: Some("Aeropuerto Badajoz: ~60€".to_string()),
+            },
+            InfoLink {
+                title: "Taxi Almendralejo".to_string(),
+                url: "tel:+34924661234".to_string(),
+                description: Some("Para traslados directos desde Almendralejo (más cercano a Carrascalejo).".to_string()),
+                link_type: LinkType::Taxi,
+                phone: Some("+34 924 661 234".to_string()),
+                address: Some("Almendralejo".to_string()),
+                rating: Some(3.9),
+                price_range: Some("Desde Carrascalejo: ~15-20€".to_string()),
+            },
+        ])
+        .with_priority(6)
+        .with_source_url("https://www.radiotaximerida.es/".to_string());
+
+        self.storage.save_card(taxi_card.clone()).await?;
+        Ok(serde_json::to_string(&taxi_card)?)
+    }
+
+    pub async fn get_car_rentals(&self) -> AlbergueResult<String> {
+        if let Ok(cached_card) = self.storage.get_card_by_type(CardType::CarRentals).await {
+            if !cached_card.is_cache_expired() {
+                return Ok(serde_json::to_string(&cached_card)?);
+            }
+        }
+
+        let car_rental_card = InfoCard::new(
+            CardType::CarRentals,
+            "Alquiler de Coches".to_string(),
+            "Empresas de alquiler de vehículos en Mérida para continuar tu viaje:".to_string(),
+        )
+        .with_links(vec![
+            InfoLink {
+                title: "Hertz Mérida".to_string(),
+                url: "https://www.hertz.es/p/alquiler-de-coches/espana/merida".to_string(),
+                description: Some("Oficina en el centro de Mérida. Amplia flota desde económicos hasta SUV.".to_string()),
+                link_type: LinkType::CarRental,
+                phone: Some("+34 924 317 203".to_string()),
+                address: Some("Avenida de Portugal, 15, 06800 Mérida".to_string()),
+                rating: Some(4.2),
+                price_range: Some("Desde 25€/día económico".to_string()),
+            },
+            InfoLink {
+                title: "Europcar Mérida".to_string(),
+                url: "https://www.europcar.es/".to_string(),
+                description: Some("Situada cerca de la estación de tren. Buenos precios para alquileres de varios días.".to_string()),
+                link_type: LinkType::CarRental,
+                phone: Some("+34 924 305 842".to_string()),
+                address: Some("Calle Cardero, 40, 06800 Mérida".to_string()),
+                rating: Some(4.0),
+                price_range: Some("Desde 22€/día económico".to_string()),
+            },
+            InfoLink {
+                title: "Avis Badajoz (Aeropuerto)".to_string(),
+                url: "https://www.avis.es/".to_string(),
+                description: Some("Para recoger en el aeropuerto de Badajoz si llegas en vuelo. Traslado necesario.".to_string()),
+                link_type: LinkType::CarRental,
+                phone: Some("+34 924 420 734".to_string()),
+                address: Some("Aeropuerto de Badajoz, 06195 Badajoz".to_string()),
+                rating: Some(4.1),
+                price_range: Some("Desde 30€/día + traslado".to_string()),
+            },
+            InfoLink {
+                title: "Autocares Leda (Alternativa)".to_string(),
+                url: "https://www.leda.es/".to_string(),
+                description: Some("Autobuses regulares Mérida-Madrid-Barcelona si prefieres transporte público.".to_string()),
+                link_type: LinkType::Website,
+                phone: Some("+34 924 371 616".to_string()),
+                address: Some("Estación de Autobuses, Mérida".to_string()),
+                rating: Some(3.8),
+                price_range: Some("Madrid: 20-35€ según horario".to_string()),
+            },
+        ])
+        .with_priority(5)
+        .with_source_url("https://www.hertz.es/".to_string());
+
+        self.storage.save_card(car_rental_card.clone()).await?;
+        Ok(serde_json::to_string(&car_rental_card)?)
+    }
+
     pub async fn get_all_info_cards(&self) -> AlbergueResult<String> {
         let mut all_cards = Vec::new();
 
-        // Get all card types
-        if let Ok(card) = self.get_merida_attractions().await {
-            if let Ok(parsed) = serde_json::from_str::<InfoCard>(&card) {
-                all_cards.push(parsed);
+        // Get all card types - including new ones
+        let card_methods = vec![
+            self.get_merida_attractions(),
+            self.get_carrascalejo_info(),
+            self.get_emergency_contacts(),
+            self.get_route_map("almendralejo"),
+            self.get_restaurants_eat(),
+            self.get_taxi_services(),
+            self.get_car_rentals(),
+        ];
+
+        for card_future in card_methods {
+            if let Ok(card_json) = card_future.await {
+                if let Ok(parsed) = serde_json::from_str::<InfoCard>(&card_json) {
+                    all_cards.push(parsed);
+                }
             }
         }
 
-        if let Ok(card) = self.get_carrascalejo_info().await {
-            if let Ok(parsed) = serde_json::from_str::<InfoCard>(&card) {
-                all_cards.push(parsed);
-            }
-        }
-
-        if let Ok(card) = self.get_emergency_contacts().await {
-            if let Ok(parsed) = serde_json::from_str::<InfoCard>(&card) {
-                all_cards.push(parsed);
-            }
-        }
-
-        if let Ok(card) = self.get_route_map("almendralejo").await {
-            if let Ok(parsed) = serde_json::from_str::<InfoCard>(&card) {
-                all_cards.push(parsed);
-            }
-        }
-
-        // Sort by priority
+        // Sort by priority (highest first)
         all_cards.sort_by(|a, b| b.priority.cmp(&a.priority));
 
         Ok(serde_json::to_string(&all_cards)?)

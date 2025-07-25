@@ -28,6 +28,9 @@ pub enum CardType {
     LocalEvents,
     CaminoTips,
     TransportInfo,
+    RestaurantsEat,
+    TaxiServices,
+    CarRentals,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -36,6 +39,10 @@ pub struct InfoLink {
     pub url: String,
     pub description: Option<String>,
     pub link_type: LinkType,
+    pub phone: Option<String>,
+    pub address: Option<String>,
+    pub rating: Option<f32>,
+    pub price_range: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,6 +53,11 @@ pub enum LinkType {
     Map,
     SocialMedia,
     Emergency,
+    Restaurant,
+    Taxi,
+    CarRental,
+    Accommodation,
+    Tourism,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
