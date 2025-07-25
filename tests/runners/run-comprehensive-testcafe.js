@@ -13,27 +13,27 @@ const path = require('path');
 // Test files to run in sequence
 const testFiles = [
   {
-    file: 'tests/testcafe-nie-documents.js',
+    file: 'tests/e2e/testcafe/testcafe-nie-documents.js',
     description: '🆔 NIE Document Processing Tests',
     timeout: 300000 // 5 minutes
   },
   {
-    file: 'tests/testcafe-residence-permits.js',
+    file: 'tests/e2e/testcafe/testcafe-residence-permits.js',
     description: '🏠 Spanish Residence Permit (TIE) Tests',
     timeout: 300000
   },
   {
-    file: 'tests/testcafe-international-passports.js',
+    file: 'tests/e2e/testcafe/testcafe-international-passports.js',
     description: '🌍 International Passport Processing Tests',
     timeout: 400000 // 6.7 minutes - passports take longer
   },
   {
-    file: 'tests/testcafe-document-formats.js',
+    file: 'tests/e2e/testcafe/testcafe-document-formats.js',
     description: '📄 Document Format Tests (PDF, DOCX)',
     timeout: 200000 // 3.3 minutes
   },
   {
-    file: 'tests/testcafe-full-registration-flow.js',
+    file: 'tests/e2e/testcafe/testcafe-full-registration-flow.js',
     description: '🎯 Complete Registration Flow with Notifications',
     timeout: 600000 // 10 minutes - full flow test
   }
