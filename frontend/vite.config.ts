@@ -68,19 +68,9 @@ export default defineConfig(({ mode }) => ({
   },
 
   build: {
-    outDir: path.resolve(__dirname, '../dist'),
+    outDir: 'dist',
     emptyOutDir: true,
-    sourcemap: mode === 'development',
-    rollupOptions: {
-      // Code splitting for WASM services if needed
-      output: {
-        manualChunks(id) {
-          if (id.includes('pkg/')) {
-            return 'wasm-services'
-          }
-        }
-      }
-    }
+    sourcemap: mode === 'development'
   },
 
   define: {

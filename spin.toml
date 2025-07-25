@@ -1,16 +1,15 @@
 spin_manifest_version = 2
 
 [application]
-name = "albergue-app"
+name = "alberguecarrascalejo"
 version = "0.1.0"
 authors = ["Guillermo Lam <guillermo@alberguedelcarrascalejo.com>"]
 
 [[trigger.http]]
-route = "/api/..."
-component = "gateway"
+route = "/..."
+component = "frontend"
 
 [[component]]
-id = "gateway"
-source = "gateway/spin_component.js"
-[component.build]
-command = "npm run build:gateway"
+id = "frontend"
+source = { url = "https://github.com/fermyon/spin-fileserver/releases/download/v0.0.3/spin_static_fs.wasm", digest = "sha256:5bf5abc1f6b93f4e5b6e4b6b7b9e3e1d6b5b2b2b8a8a8a8a8a8a8a8a8a8a8a8a" }
+files = [ { source = "frontend/dist", destination = "/" } ]
