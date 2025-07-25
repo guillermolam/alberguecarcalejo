@@ -2,8 +2,11 @@
 members = [
     "gateway",
     "services/shared",
+    "services/booking-service", 
     "services/validation-service",
-    "services/booking-service"
+    "services/country-service",
+    "services/security-service",
+    "services/rate-limiter-service"
 ]
 resolver = "2"
 

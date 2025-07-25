@@ -1,0 +1,28 @@
+spin_manifest_version = 2
+
+[application]
+name = "albergue-gateway"
+version = "0.1.0"
+authors = ["Albergue Development Team"]
+description = "API Gateway for Albergue del Carrascalejo"
+
+# Gateway component - main HTTP router
+[[trigger.http]]
+component = "gateway"
+route = "/..."
+
+[component.gateway]
+source = "target/wasm32-wasi/release/gateway.wasm"
+allowed_outbound_hosts = [
+  "https://*",
+  "http://*",
+  "booking-service.internal",
+  "validation-service.internal", 
+  "country-service.internal",
+  "security-service.internal",
+  "rate-limiter-service.internal"
+]
+environment = { RUST_LOG = "info" }
+
+[component.gateway.build]
+command = "cargo build --target wasm32-wasi --release"

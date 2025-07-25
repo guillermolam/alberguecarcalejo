@@ -8,11 +8,11 @@ fn handle_request(req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
     let method = req.method();
     let path = req.uri().path();
     
-    // TODO: Implement booking service endpoints
+    // TODO: Implement rate limiter service endpoints
     match (method, path) {
         _ => Ok(ResponseBuilder::new(StatusCode::NOT_IMPLEMENTED)
             .header("content-type", "application/json")
-            .body(r#"{"message":"Booking service - under development"}"#)
+            .body(r#"{"message":"Rate limiter service - under development"}"#)
             .build())
     }
 }
