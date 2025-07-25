@@ -1,66 +1,29 @@
-import React, { useState } from "react"
-import { cn } from "@/lib/utils"
+import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
 
-interface PopoverProps {
-  children: React.ReactNode
-}
+import { cn } from "../../lib/utils"
 
-interface PopoverContextType {
-  open: boolean
-  setOpen: (open: boolean) => void
-}
+const Popover = PopoverPrimitive.Root
 
-const PopoverContext = React.createContext<PopoverContextType | undefined>(undefined)
+const PopoverTrigger = PopoverPrimitive.Trigger
 
-const Popover = ({ children }: PopoverProps) => {
-  const [open, setOpen] = useState(false)
-  
-  return (
-    <PopoverContext.Provider value={{ open, setOpen }}>
-      <div className="relative">
-        {children}
-      </div>
-    </PopoverContext.Provider>
-  )
-}
-
-const PopoverTrigger = ({ className, children, asChild, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }) => {
-  const context = React.useContext(PopoverContext)
-  
-  if (asChild) {
-    return <>{children}</>
-  }
-  
-  return (
-    <button
-      className={className}
-      onClick={() => context?.setOpen(!context.open)}
-      {...props}
-    >
-      {children}
-    </button>
-  )
-}
-
-const PopoverContent = ({ className, children, align = "center", sideOffset = 4, ...props }: React.HTMLAttributes<HTMLDivElement> & { align?: string; sideOffset?: number }) => {
-  const context = React.useContext(PopoverContext)
-  
-  if (!context?.open) return null
-  
-  return (
-    <div
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
       className={cn(
-        "absolute z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
-        "data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        "top-full mt-1",
+        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         className
       )}
       {...props}
-    >
-      {children}
-    </div>
-  )
-}
+    />
+  </PopoverPrimitive.Portal>
+))
+PopoverContent.displayName = PopoverPrimitive.Content.displayName
 
 export { Popover, PopoverTrigger, PopoverContent }

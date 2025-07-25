@@ -65,5 +65,156 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+}
+
+/* Enhanced styles for the restored booking system */
+@layer components {
+  .booking-stepper {
+    @apply flex items-center justify-between w-full;
+  }
+  
+  .booking-step {
+    @apply flex items-center relative;
+  }
+  
+  .booking-step-icon {
+    @apply w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium;
+  }
+  
+  .booking-step-icon.active {
+    @apply bg-primary border-primary text-primary-foreground;
+  }
+  
+  .booking-step-icon.completed {
+    @apply bg-green-600 border-green-600 text-white;
+  }
+  
+  .booking-step-icon.pending {
+    @apply bg-muted border-muted-foreground text-muted-foreground;
+  }
+  
+  .document-capture-area {
+    @apply border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center transition-colors hover:border-muted-foreground/50;
+  }
+  
+  .document-capture-area.drag-active {
+    @apply border-primary bg-primary/5;
+  }
+  
+  .bed-selection-grid {
+    @apply grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2;
+  }
+  
+  .bed-button {
+    @apply relative h-16 w-16 p-1 flex flex-col items-center justify-center border-2 rounded-md transition-all;
+  }
+  
+  .bed-button.available {
+    @apply bg-green-50 border-green-300 hover:bg-green-100 hover:border-green-400;
+  }
+  
+  .bed-button.occupied {
+    @apply bg-red-50 border-red-300 cursor-not-allowed;
+  }
+  
+  .bed-button.selected {
+    @apply bg-primary border-primary text-primary-foreground;
+  }
+  
+  .registration-form {
+    @apply space-y-6;
+  }
+  
+  .form-section {
+    @apply space-y-4;
+  }
+  
+  .form-row {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+  }
+  
+  /* Country selector enhancements */
+  .country-selector {
+    @apply w-full justify-between;
+  }
+  
+  .country-flag {
+    @apply text-base mr-2;
+  }
+  
+  /* Document processing feedback */
+  .document-confidence-high {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .document-confidence-medium {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .document-confidence-low {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  /* Responsive improvements */
+  @media (max-width: 640px) {
+    .booking-stepper {
+      @apply flex-col space-y-4;
+    }
+    
+    .bed-selection-grid {
+      @apply grid-cols-3;
+    }
+    
+    .form-row {
+      @apply grid-cols-1;
+    }
+  }
+}
+
+/* Animation enhancements */
+@layer utilities {
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .pulse-success {
+    animation: pulseSuccess 0.6s ease-in-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseSuccess {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
   }
 }
