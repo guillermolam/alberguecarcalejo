@@ -1,9 +1,3 @@
-interface OCRProcessingRequest {
-  image_data: string;
-  document_type_hint?: string;
-  document_side?: 'front' | 'back';
-}
-
 interface ComprehensiveOCRResult {
   firstName?: string;
   lastName1?: string;
@@ -26,28 +20,28 @@ interface ComprehensiveOCRResult {
   errors: string[];
 }
 
-export class OCRBFFClient {
+export class OCRAPIClient {
   private baseUrl = '/api';
 
   async processDocument(
     imageFile: File,
     context?: { documentType?: string; documentSide?: 'front' | 'back' }
   ): Promise<ComprehensiveOCRResult> {
-    console.log('=== PROCESSING DOCUMENT VIA BFF ===');
+    console.log('Processing document via direct API...');
 
     try {
       // Convert file to base64
       const base64Data = await this.fileToBase64(imageFile);
 
-      const request: OCRProcessingRequest = {
+      const request = {
         image_data: base64Data,
         document_type_hint: context?.documentType,
         document_side: context?.documentSide,
       };
 
-      console.log('Sending OCR request to BFF...');
+      console.log('Sending OCR request to API...');
 
-      const response = await fetch(`${this.baseUrl}/bff/registration/ocr`, {
+      const response = await fetch(`${this.baseUrl}/ocr/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,22 +50,18 @@ export class OCRBFFClient {
       });
 
       if (!response.ok) {
-        throw new Error(`BFF OCR request failed: ${response.status}`);
+        throw new Error(`OCR request failed: ${response.status}`);
       }
 
-      const bffResponse = await response.json();
+      const result = await response.json();
 
-      if (!bffResponse.success) {
-        throw new Error(bffResponse.error || 'OCR processing failed');
-      }
+      console.log('Direct API OCR SUCCESS');
+      console.log('Result:', result);
 
-      console.log('=== BFF OCR SUCCESS ===');
-      console.log('Result:', bffResponse.data);
-
-      return this.transformBFFResponse(bffResponse.data);
+      return this.transformResponse(result);
 
     } catch (error) {
-      console.error('OCR BFF Client error:', error);
+      console.error('OCR API Client error:', error);
       throw error;
     }
   }
@@ -85,7 +75,7 @@ export class OCRBFFClient {
     });
   }
 
-  private transformBFFResponse(data: any): ComprehensiveOCRResult {
+  private transformResponse(data: any): ComprehensiveOCRResult {
     return {
       firstName: data.first_name,
       lastName1: data.last_name1,
@@ -110,4 +100,4 @@ export class OCRBFFClient {
   }
 }
 
-export const ocrBFFClient = new OCRBFFClient();
+export const ocrAPIClient = new OCRAPIClient();

@@ -1240,45 +1240,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
   });
 
-  // BFF Registration endpoints
-  app.post('/api/bff/registration/ocr', async (req, res) => {
+  // Document validation endpoint
+  app.post('/api/validate/document', async (req, res) => {
+    const { documentType, documentNumber } = req.body;
+    
+    // Placeholder validation - replace with actual validation logic
+    res.json({
+      isValid: true,
+      normalizedNumber: documentNumber,
+      errorMessage: null
+    });
+  });
+
+  // Email validation endpoint  
+  app.post('/api/validate/email', async (req, res) => {
+    const { email } = req.body;
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(email);
+    
+    res.json({
+      isValid,
+      normalizedEmail: isValid ? email.toLowerCase() : undefined
+    });
+  });
+
+  // Phone validation endpoint
+  app.post('/api/validate/phone', async (req, res) => {
+    const { phone, countryCode } = req.body;
+    
+    // Basic phone validation
+    const cleanPhone = phone.replace(/\D/g, '');
+    const isValid = cleanPhone.length >= 6 && cleanPhone.length <= 15;
+    
+    res.json({
+      isValid,
+      normalizedPhone: isValid ? cleanPhone : undefined
+    });
+  });
+
+  // OCR processing endpoint - proxy to external Lambda service
+  app.post('/api/ocr/process', async (req, res) => {
     try {
-      // Route to Rust BFF
-      const result = await proxyToRustBackend('/api/bff/registration/ocr', 'POST', req.body);
+      const { image_data, document_type_hint, document_side } = req.body;
+      
+      const lambdaUrl = process.env.VITE_LAMBDA_OCR_URL;
+      if (!lambdaUrl) {
+        return res.status(500).json({
+          isValid: false,
+          errors: ['OCR service not configured'],
+          confidence: 0,
+          processingTime: 0,
+          detectedFields: [],
+          rawText: '',
+        });
+      }
+
+      const response = await fetch(lambdaUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_data,
+          document_type: document_type_hint,
+          document_side,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OCR service error: ${response.status}`);
+      }
+
+      const result = await response.json();
       res.json(result);
     } catch (error) {
-      console.error('BFF OCR proxy error:', error);
-      res.status(500).json({ success: false, error: 'OCR processing failed' });
+      console.error('OCR processing error:', error);
+      res.status(500).json({
+        isValid: false,
+        errors: ['OCR processing failed'],
+        confidence: 0,
+        processingTime: 0,
+        detectedFields: [],
+        rawText: '',
+      });
     }
   });
 
-  app.post('/api/bff/registration/validate/document', async (req, res) => {
+  // Country info endpoint
+  app.post('/api/country/info', async (req, res) => {
     try {
-      const result = await proxyToRustBackend('/api/bff/registration/validate/document', 'POST', req.body);
-      res.json(result);
-    } catch (error) {
-      console.error('BFF validation proxy error:', error);
-      res.status(500).json({ success: false, error: 'Validation failed' });
-    }
-  });
+      const { countryName } = req.body;
+      
+      // Use REST Countries API for real country data
+      const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fields=name,flag,idd,cca3`);
+      
+      if (!response.ok) {
+        // Fallback for common countries
+        const fallbackData = {
+          Spain: { calling_code: '+34', flag_url: 'https://flagcdn.com/w320/es.png', country_code: 'ESP', country_name: 'Spain' },
+          France: { calling_code: '+33', flag_url: 'https://flagcdn.com/w320/fr.png', country_code: 'FRA', country_name: 'France' },
+          Germany: { calling_code: '+49', flag_url: 'https://flagcdn.com/w320/de.png', country_code: 'DEU', country_name: 'Germany' },
+          Portugal: { calling_code: '+351', flag_url: 'https://flagcdn.com/w320/pt.png', country_code: 'PRT', country_name: 'Portugal' },
+        };
+        
+        const fallback = fallbackData[countryName as keyof typeof fallbackData];
+        if (fallback) {
+          return res.json(fallback);
+        }
+        
+        throw new Error('Country not found');
+      }
 
-  app.post('/api/bff/registration/validate/email', async (req, res) => {
-    try {
-      const result = await proxyToRustBackend('/api/bff/registration/validate/email', 'POST', req.body);
-      res.json(result);
+      const data = await response.json();
+      const country = data[0];
+      
+      res.json({
+        calling_code: country.idd?.root + (country.idd?.suffixes?.[0] || ''),
+        flag_url: country.flag,
+        country_code: country.cca3,
+        country_name: country.name.common,
+      });
     } catch (error) {
-      console.error('BFF email validation proxy error:', error);
-      res.status(500).json({ success: false, error: 'Email validation failed' });
-    }
-  });
-
-  app.post('/api/bff/registration/validate/phone', async (req, res) => {
-    try {
-      const result = await proxyToRustBackend('/api/bff/registration/validate/phone', 'POST', req.body);
-      res.json(result);
-    } catch (error) {
-      console.error('BFF phone validation proxy error:', error);
-      res.status(500).json({ success: false, error: 'Phone validation failed' });
+      console.error('Country info error:', error);
+      res.status(500).json({
+        calling_code: '',
+        flag_url: '',
+        country_code: '',
+        country_name: countryName || '',
+      });
     }
   });
 

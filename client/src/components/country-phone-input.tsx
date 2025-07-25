@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { CountrySelector } from './country-selector';
-import { countryBFFClient, type CountryInfo } from '@/lib/country-bff-client';
+import { countryAPIClient, type CountryInfo } from '@/lib/country-api-client';
 import { useI18n } from '@/contexts/i18n-context';
 
 
@@ -53,7 +53,7 @@ export function CountryPhoneInput({
     setFetchError(null);
     
     try {
-      const data = await countryBFFClient.getCountryInfo(country);
+      const data = await countryAPIClient.getCountryInfo(country);
       setCountryInfo(data);
     } catch (err) {
       console.error('Error fetching country info:', err);

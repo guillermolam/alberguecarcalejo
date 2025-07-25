@@ -40,19 +40,20 @@ jest.mock('../../client/src/components/ui/select', () => ({
   SelectValue: ({ placeholder }: any) => <div data-testid="mock-select-value">{placeholder}</div>,
 }));
 
-// Mock OCR BFF Client
-jest.mock('../../client/src/lib/ocr-bff-client', () => ({
-  ocrBFFClient: {
+// Mock OCR API Client
+jest.mock('../../client/src/lib/ocr-api-client', () => ({
+  ocrAPIClient: {
     processDocument: jest.fn().mockResolvedValue({
-      success: true,
-      extractedData: {
-        documentNumber: '12345678Z',
-        firstName: 'JOHN',
-        lastName1: 'DOE',
-        birthDate: '01/01/1990',
-      },
+      isValid: true,
+      firstName: 'JOHN',
+      lastName1: 'DOE',
+      documentNumber: '12345678Z',
+      birthDate: '01/01/1990',
       confidence: 0.9,
-      processingTimeMs: 1500,
+      processingTime: 1500,
+      detectedFields: [],
+      rawText: '',
+      errors: [],
     }),
   },
 }));

@@ -7,7 +7,7 @@ async function validateDocumentAPI(documentType: string, documentNumber: string)
   normalizedNumber?: string;
 }> {
   try {
-    const response = await fetch('/api/bff/registration/validate/document', {
+    const response = await fetch('/api/validate/document', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ documentType, documentNumber })
@@ -20,15 +20,12 @@ async function validateDocumentAPI(documentType: string, documentNumber: string)
       throw new Error('Validation service error');
     }
 
-    const bffResponse = await response.json();
-    if (!bffResponse.success) {
-      return { isValid: false, errorMessage: bffResponse.error };
-    }
-
+    const result = await response.json();
+    
     return {
-      isValid: bffResponse.data.is_valid,
-      normalizedNumber: bffResponse.data.normalized_number,
-      errorMessage: bffResponse.data.error_message
+      isValid: result.isValid,
+      normalizedNumber: result.normalizedNumber,
+      errorMessage: result.errorMessage
     };
   } catch (error) {
     console.error('Document validation error:', error);
@@ -41,7 +38,7 @@ async function validateEmailAPI(email: string): Promise<{
   normalizedEmail?: string;
 }> {
   try {
-    const response = await fetch('/api/bff/registration/validate/email', {
+    const response = await fetch('/api/validate/email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
@@ -49,14 +46,11 @@ async function validateEmailAPI(email: string): Promise<{
 
     if (!response.ok) throw new Error('Email validation error');
 
-    const bffResponse = await response.json();
-    if (!bffResponse.success) {
-      return { isValid: false };
-    }
-
+    const result = await response.json();
+    
     return {
-      isValid: bffResponse.data.is_valid,
-      normalizedEmail: bffResponse.data.normalized_email
+      isValid: result.isValid,
+      normalizedEmail: result.normalizedEmail
     };
   } catch (error) {
     console.error('Email validation error:', error);
@@ -69,7 +63,7 @@ async function validatePhoneAPI(phone: string, countryCode: string): Promise<{
   normalizedPhone?: string;
 }> {
   try {
-    const response = await fetch('/api/bff/registration/validate/phone', {
+    const response = await fetch('/api/validate/phone', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, countryCode })
@@ -77,14 +71,11 @@ async function validatePhoneAPI(phone: string, countryCode: string): Promise<{
 
     if (!response.ok) throw new Error('Phone validation error');
 
-    const bffResponse = await response.json();
-    if (!bffResponse.success) {
-      return { isValid: false };
-    }
-
+    const result = await response.json();
+    
     return {
-      isValid: bffResponse.data.is_valid,
-      normalizedPhone: bffResponse.data.normalized_phone
+      isValid: result.isValid,
+      normalizedPhone: result.normalizedPhone
     };
   } catch (error) {
     console.error('Phone validation error:', error);

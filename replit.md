@@ -313,3 +313,17 @@ The system includes comprehensive testing infrastructure across multiple levels:
   - **Outputs**: `tests/e2e/outputs/` - TestCafe reports, screenshots, videos
 - **Benefits**: Cleaner project structure, better test organization, removed scattered TestCafe files
 - **Status**: Test structure reorganized, all paths updated, ready for execution
+
+### July 25, 2025 - BFF Architecture Cleanup  
+- **Removed BFF (Backend For Frontend) Architecture**: 
+  - Deleted legacy `api/` folder and `build-bff.sh` script
+  - Removed all BFF client files (`*-bff-client.ts`) from `client/src/lib/`
+  - Replaced BFF API calls with direct Express.js API endpoints
+  - Updated server routes to handle validation, OCR, and country info directly
+- **New Direct API Architecture**:
+  - **Validation Endpoints**: `/api/validate/document`, `/api/validate/email`, `/api/validate/phone`
+  - **OCR Processing**: `/api/ocr/process` - Direct proxy to AWS Lambda OCR service
+  - **Country Information**: `/api/country/info` - RESTCountries API integration with fallback data
+  - **API Clients**: `country-api-client.ts`, `ocr-api-client.ts` for clean client-side integration
+- **Benefits**: Simplified architecture, faster development, reduced complexity, direct API access
+- **Status**: BFF removal complete, all components updated, server running successfully

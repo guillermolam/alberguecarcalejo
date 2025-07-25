@@ -7,7 +7,7 @@ export interface CountryInfo {
   country_name: string;
 }
 
-class CountryBFFClient {
+class CountryAPIClient {
   private cache = new Map<string, { data: CountryInfo; timestamp: number }>();
   private readonly CACHE_DURATION = 3600000; // 1 hour
 
@@ -51,4 +51,4 @@ class CountryBFFClient {
   }
 }
 
-export const countryBFFClient = new CountryBFFClient();
+export const countryAPIClient = new CountryAPIClient();

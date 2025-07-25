@@ -19,11 +19,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ocrBFFClient,
-  type OCRResponse,
-  type ExtractedDocumentData,
-} from "@/lib/ocr-bff-client";
+import { ocrAPIClient } from "@/lib/ocr-api-client";
+
+interface OCRResponse {
+  success: boolean;
+  extractedData: ExtractedDocumentData;
+  confidence: number;
+  processingTimeMs: number;
+  error?: string;
+}
+
+interface ExtractedDocumentData {
+  firstName?: string;
+  lastName1?: string;
+  lastName2?: string;
+  documentNumber?: string;
+  documentType?: string;
+  documentSupport?: string;
+  birthDate?: string;
+  gender?: string;
+  nationality?: string;
+  addressStreet?: string;
+  addressCity?: string;
+  addressPostalCode?: string;
+  addressCountry?: string;
+}
 import { useI18n } from "@/contexts/i18n-context";
 import { DOCUMENT_TYPES } from "@/lib/constants";
 
@@ -210,12 +230,39 @@ function MultiDocumentCapture({
         currentSide,
       );
 
-      // Process with BFF OCR
-      const result = await ocrBFFClient.processDocumentWithImage(
-        imageDataUrl,
-        selectedDocumentType,
-        currentSide,
-      );
+      // Convert data URL to File object for API client
+      const response = await fetch(imageDataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'document.jpg', { type: 'image/jpeg' });
+
+      // Process with OCR API client
+      const apiResult = await ocrAPIClient.processDocument(file, {
+        documentType: selectedDocumentType,
+        documentSide: currentSide,
+      });
+
+      // Transform API result to match expected format
+      const result: OCRResponse = {
+        success: apiResult.isValid,
+        extractedData: {
+          firstName: apiResult.firstName,
+          lastName1: apiResult.lastName1,
+          lastName2: apiResult.lastName2,
+          documentNumber: apiResult.documentNumber,
+          documentType: apiResult.documentType,
+          documentSupport: apiResult.documentSupport,
+          birthDate: apiResult.birthDate,
+          gender: apiResult.gender,
+          nationality: apiResult.nationality,
+          addressStreet: apiResult.addressStreet,
+          addressCity: apiResult.addressCity,
+          addressPostalCode: apiResult.addressPostalCode,
+          addressCountry: apiResult.addressCountry,
+        },
+        confidence: apiResult.confidence,
+        processingTimeMs: apiResult.processingTime,
+        error: apiResult.errors?.join(', '),
+      };
 
       clearInterval(progressInterval);
 
@@ -226,8 +273,8 @@ function MultiDocumentCapture({
       );
 
       if (!result.success) {
-        console.error("OCR processing failed:", result.errors);
-        setError(result.errors?.[0] || "Failed to process document");
+        console.error("OCR processing failed:", result.error);
+        setError(result.error || "Failed to process document");
         setIsProcessing(false);
         return;
       }
