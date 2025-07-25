@@ -22,8 +22,8 @@ app.use(express.json());
 app.get('/booking/dashboard/stats', (req, res) => {
   res.json({
     occupancy: {
-      available: 16,
-      occupied: 8,
+      available: 24,
+      occupied: 0,
       total: 24
     },
     today_bookings: 3,

@@ -114,8 +114,8 @@ fn create_booking(_req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
 fn get_dashboard_stats() -> Result<impl IntoResponse> {
     let stats = DashboardStats {
         occupancy: OccupancyStats {
-            available: 16,
-            occupied: 8,
+            available: 24,
+            occupied: 0,
             total: 24,
         },
         today_bookings: 3,

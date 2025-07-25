@@ -5,14 +5,15 @@ You are an expert full‑stack engineer. Scaffold a **Replit** workspace that im
 
 ## Recent Changes: Latest modifications with dates
 
-### July 25, 2025 - Real Data Backend Connection Restored
+### July 25, 2025 - Database-Driven Configuration Updated
 ✓ Connected frontend to actual booking service with real occupancy and pricing data
 ✓ Created API server (port 3001) serving real backend data structure
 ✓ Fixed "Loading..." and "Price unavailable" errors with proper proxy configuration
 ✓ Restored preferred "Bienvenido Peregrino" with bed count in subtitle (24 beds, 15€)
 ✓ Hero section now displays real data: 24 available beds and 15€ dormitory pricing
 ✓ API endpoints returning authentic data from booking service structure
-✓ Removed hardcoded values - all data now flows from backend services
+✓ Updated configuration to match actual database: Dormitorio 1 (10 beds), Dormitorio 2 (10 beds), Dormitorio 3 (4 beds)
+✓ Removed hardcoded values - all data now flows from backend services and database schema
 
 ### July 25, 2025 - Deployment Build Fixes Applied
 ✓ Fixed Vite build configuration issues for deployment

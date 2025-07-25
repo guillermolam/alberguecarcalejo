@@ -23,8 +23,8 @@ export default function HomePage() {
         console.log('Using fallback dashboard stats from booking service');
         return {
           occupancy: {
-            available: 16,
-            occupied: 8,
+            available: 24,
+            occupied: 0,
             total: 24
           },
           today_bookings: 3,
@@ -110,14 +110,14 @@ export default function HomePage() {
               Bienvenido Peregrino
             </h2>
             <p className="text-xl text-green-100 mb-8">
-              {dashboardStats?.occupancy?.available || 16} beds, {pricing?.dormitory || 15}€
+              {dashboardStats?.occupancy?.available || 24} beds, {pricing?.dormitory || 15}€
             </p>
             
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
               <div className="flex items-center justify-center space-x-4 text-lg">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-[hsl(75,25%,75%)]">
-                    {dashboardStats?.occupancy?.available || 16}
+                    {dashboardStats?.occupancy?.available || 24}
                   </div>
                   <div className="text-sm text-green-100">
                     {t('hero.beds_available')}
