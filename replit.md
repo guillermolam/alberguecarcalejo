@@ -482,11 +482,11 @@ npm install && rustup target add wasm32-unknown-unknown
 # 2. Install sqlx‑cli
 cargo install sqlx-cli --no-default-features --features native-tls,postgres
 
-# 3. Build all WASM components and Spin gateway
-npm run build:wasm && npm run build:gateway
+# 3. Build all WASM components using organized scripts
+bash scripts/build-wasm.sh
 
-# 4. Start application via Spin (bind to all interfaces for Replit)
-spin up --listen 0.0.0.0:8000
+# 4. Start application via Spin on port 80 (fixed port configuration)
+spin up --listen 0.0.0.0:80
 ```
 
 ---
@@ -502,14 +502,15 @@ spin up --listen 0.0.0.0:8000
 - Maintained proper separation: services/validation-service/, services/booking-service/
 - Ensured spin.toml routes all traffic through gateway component
 
-**✅ TASK COMPLETED: Legacy Backend Removal & DDD Migration**
+**✅ TASK COMPLETED: Legacy Backend Removal & Script Organization**
 
 **What was accomplished:**
 - ✅ **Legacy backend/ folder completely deleted** as required
 - ✅ **All microservices migrated to services/ structure** with proper DDD+hexagonal architecture
 - ✅ **Port configuration fixed** from 5000 → 80 to resolve mismatch
 - ✅ **Spin gateway created and configured** for proper routing
-- ✅ **WASM compilation structure established** with proper workspace organization
+- ✅ **All monorepo scripts organized** into scripts/ directory
+- ✅ **WASM build process updated** to use `bash scripts/build-wasm.sh`
 - ✅ **Development scripts created** to handle the new architecture
 
 **Architecture Verification:**
@@ -519,6 +520,16 @@ spin up --listen 0.0.0.0:8000
 - Gateway configured to route traffic on port 80
 - Spin.toml updated with correct component routing
 - Server configuration matches expected port (80)
+- **All scripts organized** in scripts/ directory (build-wasm.sh, dev-replit.sh, etc.)
+
+**Script Organization:**
+- `bash scripts/build-wasm.sh` - Build all WASM microservices
+- `bash scripts/dev-replit.sh` - Start development server
+- `bash scripts/deploy-build.js` - Handle deployment builds
+- `bash scripts/cargo-build.sh` - Cargo-specific operations
+- All build and deployment scripts moved from root to scripts/
+- Documentation updated to use `bash scripts/` prefix
+- Created comprehensive scripts/README.md for guidance
 
 ---
 **Deliverables**: scaffolded repo folders, config files, sample code stubs, UI behaviour notes, admin console specs, and the scripts above.
