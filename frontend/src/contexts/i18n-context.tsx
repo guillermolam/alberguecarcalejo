@@ -18,6 +18,12 @@ const translations = {
   'booking.title': 'Reserva tu Cama',
   'booking.subtitle': 'Albergue del Carrascalejo - Camino de Santiago',
   
+  // Hero
+  'hero.welcome': 'Bienvenido Peregrino',
+  'hero.subtitle': 'Registro rápido y seguro para tu estancia en el Camino',
+  'hero.beds_available': 'Camas disponibles',
+  'hero.price_per_night': 'Por persona/noche',
+  
   // Stepper
   'stepper.stay_dates': 'Fechas',
   'stepper.personal_info': 'Datos Personales',

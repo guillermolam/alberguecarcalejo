@@ -8,3 +8,19 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// API request utility
+export async function apiRequest(method: string, url: string, data?: any) {
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+
+  if (data) {
+    options.body = JSON.stringify(data);
+  }
+
+  return fetch(url, options);
+}

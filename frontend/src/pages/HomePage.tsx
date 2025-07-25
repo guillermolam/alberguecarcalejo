@@ -1,7 +1,30 @@
 import RegistrationForm from "../components/registration-form";
-import { Globe, User } from "lucide-react";
+import { User } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "../lib/queryClient";
+import { useI18n } from "../contexts/i18n-context";
 
 export default function HomePage() {
+  const { t } = useI18n();
+  
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['/api/dashboard/stats'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/dashboard/stats');
+      return response.json();
+    }
+  });
+
+  // Fetch secure pricing from backend (prevents CSRF/MitM attacks)
+  const { data: pricing, isLoading: pricingLoading, error: pricingError } = useQuery({
+    queryKey: ['/api/pricing'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/pricing');
+      return response.json();
+    },
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Header */}
@@ -49,23 +72,39 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-[hsl(75,35%,25%)] to-[hsl(75,35%,20%)] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Bienvenido Peregrino
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 font-title">
+              {t('hero.welcome')}
             </h2>
             <p className="text-xl text-green-100 mb-8">
-              Registro rápido y seguro para tu estancia en el Camino
+              {t('hero.subtitle')}
             </p>
             
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
               <div className="flex items-center justify-center space-x-4 text-lg">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[hsl(75,25%,75%)]">24</div>
-                  <div className="text-sm text-green-100">Camas disponibles</div>
+                  <div className="text-2xl font-bold text-[hsl(75,25%,75%)]">
+                    {dashboardStats?.occupancy?.available || 'Loading...'}
+                  </div>
+                  <div className="text-sm text-green-100">
+                    {t('hero.beds_available')}
+                  </div>
                 </div>
                 <div className="w-px h-12 bg-white/20"></div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-[#45c655]">15€</div>
-                  <div className="text-sm text-green-100">Por persona/noche</div>
+                  <div className="text-2xl font-bold text-[#45c655]">
+                    {pricingLoading ? (
+                      <div className="animate-pulse bg-green-200/20 rounded w-16 h-8 mx-auto"></div>
+                    ) : pricingError ? (
+                      <span className="text-red-300 text-sm">Error loading price</span>
+                    ) : pricing?.dormitory ? (
+                      `${pricing.dormitory}€`
+                    ) : (
+                      <span className="text-yellow-300 text-sm">Price unavailable</span>
+                    )}
+                  </div>
+                  <div className="text-sm text-green-100">
+                    {t('hero.price_per_night')}
+                  </div>
                 </div>
               </div>
             </div>
