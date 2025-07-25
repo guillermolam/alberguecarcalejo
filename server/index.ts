@@ -10,7 +10,7 @@ async function startServer() {
   const server = await createServer({
     root: './client',
     server: {
-      port: 5000,
+      port: parseInt(process.env.PORT || '80'),
       host: '0.0.0.0',
       open: false
     },

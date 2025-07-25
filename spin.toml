@@ -6,7 +6,7 @@ authors = ["Guillermo Lam <guillermo@alberguedelcarrascalejo.com>"]
 [[component]]
 id = "gateway"
 source = "gateway/target/wasm32-wasi/release/gateway.wasm"
-allowed_http_hosts = [
+allowed_outbound_hosts = [
     "http://validation-service.internal",
     "http://booking-service.internal", 
     "http://country-service.internal",
@@ -15,7 +15,7 @@ allowed_http_hosts = [
 ]
 [component.trigger]
 type = "http"
-route = "/api/..."
+route = "/..."
 
 [[component]]
 id = "validation-service"

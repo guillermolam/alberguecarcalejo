@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "shared",
+    "gateway",
     "services/validation-service",
     "services/booking-service"
 ]
