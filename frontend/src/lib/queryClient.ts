@@ -1,27 +1,36 @@
-import { QueryClient } from '@tanstack/react-query'
+// Query client for API requests
+import { QueryClient } from '@tanstack/react-query';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 1,
     },
   },
-})
+});
 
-// Default fetcher for React Query
-export const apiRequest = async (url: string, options?: RequestInit) => {
-  const response = await fetch(url, {
+export async function apiRequest(
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  url: string,
+  data?: any
+): Promise<Response> {
+  const options: RequestInit = {
+    method,
     headers: {
       'Content-Type': 'application/json',
-      ...options?.headers,
     },
-    ...options,
-  })
+  };
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
+  if (data) {
+    options.body = JSON.stringify(data);
   }
 
-  return response.json()
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return response;
 }

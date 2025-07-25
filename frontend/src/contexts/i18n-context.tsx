@@ -1,108 +1,178 @@
-import React, { createContext, useContext, useState } from 'react';
+// I18n context for Spanish localization
+import React, { createContext, useContext, ReactNode } from 'react';
 
 interface I18nContextType {
-  language: string;
-  setLanguage: (lang: string) => void;
-  t: (key: string, fallback?: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
+  formatDate: (date: string) => string;
+  currentLanguage: string;
 }
+
+const translations = {
+  // Common
+  'common.back': 'Atrás',
+  'common.continue': 'Continuar',
+  'common.optional': 'opcional',
+  'common.loading': 'Cargando...',
+  
+  // Booking
+  'booking.title': 'Reserva tu Cama',
+  'booking.subtitle': 'Albergue del Carrascalejo - Camino de Santiago',
+  
+  // Stepper
+  'stepper.stay_dates': 'Fechas',
+  'stepper.personal_info': 'Datos Personales',
+  'stepper.contact_info': 'Contacto',
+  'stepper.arrival_info': 'Llegada',
+  'stepper.document_validation': 'Documentos',
+  'stepper.bed_selection': 'Cama',
+  'stepper.confirmation': 'Confirmación',
+  
+  // Stay
+  'stay.title': 'Selecciona las fechas de tu estancia',
+  'stay.dates': 'Fechas',
+  'stay.nights': 'Noches',
+  'stay.guests': 'Huéspedes',
+  'stay.guest_single': 'huésped',
+  'stay.individual_only': 'Solo reservas individuales',
+  'stay.continue': 'Continuar',
+  'stay.check_in': 'Entrada',
+  'stay.check_out': 'Salida',
+  'stay.available': 'Disponible - {count} camas libres',
+  'stay.not_available': 'No disponible para estas fechas',
+  'stay.next_available': 'Próxima fecha disponible: {date}',
+  
+  // Registration
+  'registration.personal_info': 'Información Personal',
+  'registration.contact_info': 'Información de Contacto',
+  'registration.arrival_info': 'Información de Llegada',
+  'registration.first_name': 'Nombre',
+  'registration.first_name_placeholder': 'Tu nombre',
+  'registration.last_name_1': 'Primer Apellido',
+  'registration.last_name_1_placeholder': 'Tu primer apellido',
+  'registration.last_name_2': 'Segundo Apellido',
+  'registration.last_name_2_placeholder': 'Tu segundo apellido',
+  'registration.document_type': 'Tipo de Documento',
+  'registration.document_number': 'Número de Documento',
+  'registration.document': 'Documento',
+  'registration.passport': 'Pasaporte',
+  'registration.birth_date': 'Fecha de Nacimiento',
+  'registration.nationality': 'Nacionalidad',
+  'registration.email': 'Email',
+  'registration.phone': 'Teléfono',
+  'registration.payment_method': 'Método de Pago',
+  'registration.payment_method_placeholder': 'Selecciona método de pago',
+  'registration.contact_privacy_notice': 'Tu información de contacto se utilizará únicamente para confirmar tu reserva y enviarte detalles importantes.',
+  
+  // Validation
+  'validation.required': 'Este campo es obligatorio',
+  'validation.email_invalid': 'Email no válido',
+  
+  // Arrival
+  'arrival.estimated_time': 'Hora Estimada de Llegada',
+  'arrival.select_time': 'Selecciona hora de llegada',
+  'arrival.time_note': 'Hora aproximada de llegada al albergue',
+  'arrival.cancellation_policy': 'Cancelación gratuita hasta 24h antes',
+  
+  // Payment
+  'payment.card': 'Tarjeta de Crédito/Débito',
+  'payment.bizum': 'Bizum',
+  'payment.cash': 'Efectivo (en el albergue)',
+  
+  // Pricing
+  'pricing.night': 'noche',
+  'pricing.nights': 'noches',
+  'pricing.total': 'total',
+  'pricing.payment_due': 'Pago al llegar',
+  'pricing.accepted_methods': 'Métodos de pago aceptados:',
+  
+  // Bed Selection
+  'bed_selection.title': 'Selecciona tu Cama',
+  'bed_selection.dates': 'Estancia: {checkIn} - {checkOut}',
+  'bed_selection.available': 'disponibles',
+  'bed_selection.occupied': 'Ocupada',
+  'bed_selection.selected': 'Seleccionada',
+  'bed_selection.selected_bed': 'Cama Seleccionada',
+  'bed_selection.back': 'Atrás',
+  'bed_selection.confirm': 'Confirmar Cama',
+  'bed_selection.confirmed': 'Confirmada',
+  
+  // Confirmation
+  'confirmation.review_booking': 'Revisa tu Reserva',
+  'confirmation.review_details': 'Por favor revisa todos los detalles antes de confirmar',
+  'confirmation.personal_info': 'Información Personal',
+  'confirmation.contact_info': 'Información de Contacto',
+  'confirmation.stay_info': 'Información de Estancia',
+  'confirmation.bed_assignment': 'Asignación de Cama',
+  'confirmation.payment_info': 'Información de Pago',
+  'confirmation.important_notice': 'Aviso Importante',
+  'confirmation.cancellation_policy': 'Cancelación gratuita hasta 24h antes',
+  'confirmation.check_in_time': 'Check-in desde las 15:00h',
+  'confirmation.payment_due': 'Pago al llegar al albergue',
+  'confirmation.back': 'Modificar',
+  'confirmation.confirm_booking': 'Confirmar Reserva',
+  'confirmation.processing': 'Procesando...',
+  
+  // Success
+  'success.congratulations': '¡Enhorabuena!',
+  'success.booking_confirmed': 'Tu reserva ha sido confirmada',
+  'success.reference_number': 'Número de Referencia',
+  'success.what_happens_next': '¿Qué ocurre ahora?',
+  'success.email_sent': 'Recibirás un email de confirmación',
+  'success.owner_notified': 'El albergue ha sido notificado',
+  'success.government_submitted': 'Datos enviados a las autoridades',
+  'success.bed_reserved': 'Tu cama está reservada',
+  'success.explore_area': 'Explora la Zona',
+  'success.recommendations': 'Lugares de interés cerca del albergue',
+  'success.attractions': 'Lugares de Interés',
+  'success.dining': 'Restaurantes',
+  'success.services': 'Servicios',
+  'success.need_help': '¿Necesitas Ayuda?',
+  'success.contact_reception': 'Contacta con recepción para cualquier duda:',
+  'success.new_booking': 'Nueva Reserva',
+  
+  // Loading and errors
+  'loading.processing': 'Procesando tu solicitud...',
+  'notifications.error': 'Ha ocurrido un error. Por favor inténtalo de nuevo.',
+};
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-const translations = {
-  es: {
-    // Common
-    'common.loading': 'Cargando...',
-    'common.error': 'Error',
-    'common.success': 'Éxito',
-    'common.cancel': 'Cancelar',
-    'common.confirm': 'Confirmar',
-    'common.save': 'Guardar',
-    'common.edit': 'Editar',
-    'common.delete': 'Eliminar',
+export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const t = (key: string, params?: Record<string, any>) => {
+    let translation = translations[key as keyof typeof translations] || key;
     
-    // Navigation
-    'nav.home': 'Inicio',
-    'nav.booking': 'Reservas',
-    'nav.admin': 'Administración',
-    'nav.info': 'Información',
+    if (params) {
+      Object.entries(params).forEach(([paramKey, value]) => {
+        translation = translation.replace(`{${paramKey}}`, String(value));
+      });
+    }
     
-    // Booking form
-    'booking.title': 'Reserva tu estancia',
-    'booking.personal_info': 'Información personal',
-    'booking.contact_info': 'Información de contacto',
-    'booking.stay_details': 'Detalles de la estancia',
-    'booking.payment': 'Pago',
-    
-    // Form fields
-    'form.first_name': 'Nombre',
-    'form.last_name': 'Apellidos',
-    'form.email': 'Email',
-    'form.phone': 'Teléfono',
-    'form.birth_date': 'Fecha de nacimiento',
-    'form.nationality': 'Nacionalidad',
-    'form.document_type': 'Tipo de documento',
-    'form.document_number': 'Número de documento',
-    'form.check_in': 'Fecha de entrada',
-    'form.check_out': 'Fecha de salida',
-    'form.arrival_time': 'Hora de llegada',
-    
-    // Bed selection
-    'beds.select': 'Seleccionar cama',
-    'beds.available': 'Disponible',
-    'beds.occupied': 'Ocupada',
-    'beds.reserved': 'Reservada',
-    'beds.maintenance': 'Mantenimiento',
-    
-    // Document capture
-    'documents.front': 'Anverso del documento',
-    'documents.back': 'Reverso del documento',
-    'documents.upload': 'Subir imagen',
-    'documents.drag_drop': 'Arrastra la imagen aquí',
-    'documents.processing': 'Procesando...',
-    
-    // Messages
-    'messages.booking_confirmed': 'Reserva confirmada',
-    'messages.booking_error': 'Error al procesar la reserva',
-    'messages.required_field': 'Este campo es obligatorio',
-    'messages.invalid_email': 'Email inválido',
-    'messages.invalid_phone': 'Teléfono inválido',
-  },
-  en: {
-    // English translations (fallback)
-    'common.loading': 'Loading...',
-    'common.error': 'Error',
-    'common.success': 'Success',
-    'common.cancel': 'Cancel',
-    'common.confirm': 'Confirm',
-    'nav.home': 'Home',
-    'nav.booking': 'Booking',
-    'nav.admin': 'Admin',
-    'nav.info': 'Information',
-    'booking.title': 'Book your stay',
-  }
-};
+    return translation;
+  };
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<string>('es');
-
-  const t = (key: string, fallback?: string): string => {
-    const langTranslations = translations[language as keyof typeof translations] || translations.es;
-    return langTranslations[key as keyof typeof langTranslations] || fallback || key;
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
   };
 
   return (
-    <I18nContext.Provider value={{ language, setLanguage, t }}>
-      <div data-testid="i18n-provider">
-        {children}
-      </div>
+    <I18nContext.Provider value={{
+      t,
+      formatDate,
+      currentLanguage: 'es'
+    }}>
+      {children}
     </I18nContext.Provider>
   );
-}
+};
 
-export function useI18n() {
+export const useI18n = () => {
   const context = useContext(I18nContext);
   if (context === undefined) {
     throw new Error('useI18n must be used within an I18nProvider');
   }
   return context;
-}
+};

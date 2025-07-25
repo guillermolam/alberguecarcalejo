@@ -17,7 +17,7 @@ interface RegistrationStepperProps {
 
 export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
   currentStep,
-  completedSteps = [],
+  completedSteps,
   onStepClick
 }) => {
   const { t } = useI18n();
@@ -33,7 +33,7 @@ export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
   ];
 
   const getStepStatus = (stepId: number) => {
-    if (completedSteps && completedSteps.includes(stepId)) return 'completed';
+    if (completedSteps.includes(stepId)) return 'completed';
     if (stepId === currentStep) return 'current';
     if (stepId < currentStep) return 'available';
     return 'disabled';
@@ -53,7 +53,7 @@ export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
   };
 
   const getConnectorClasses = (stepId: number) => {
-    const isCompleted = (completedSteps && completedSteps.includes(stepId)) || stepId < currentStep;
+    const isCompleted = completedSteps.includes(stepId) || stepId < currentStep;
     return isCompleted ? 'bg-green-500' : 'bg-gray-200';
   };
 

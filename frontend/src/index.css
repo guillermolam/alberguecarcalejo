@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 @layer base {
   :root {
@@ -10,7 +10,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 75 25% 55%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
@@ -22,13 +22,8 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 75 25% 55%;
     --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
   }
 
   .dark {
@@ -38,8 +33,8 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 75 25% 55%;
+    --primary-foreground: 222.2 84% 4.9%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -50,12 +45,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --ring: 75 25% 55%;
   }
 }
 
@@ -65,156 +55,9 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  .font-title {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  }
-}
-
-/* Enhanced styles for the restored booking system */
-@layer components {
-  .booking-stepper {
-    @apply flex items-center justify-between w-full;
-  }
-  
-  .booking-step {
-    @apply flex items-center relative;
-  }
-  
-  .booking-step-icon {
-    @apply w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium;
-  }
-  
-  .booking-step-icon.active {
-    @apply bg-primary border-primary text-primary-foreground;
-  }
-  
-  .booking-step-icon.completed {
-    @apply bg-green-600 border-green-600 text-white;
-  }
-  
-  .booking-step-icon.pending {
-    @apply bg-muted border-muted-foreground text-muted-foreground;
-  }
-  
-  .document-capture-area {
-    @apply border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center transition-colors hover:border-muted-foreground/50;
-  }
-  
-  .document-capture-area.drag-active {
-    @apply border-primary bg-primary/5;
-  }
-  
-  .bed-selection-grid {
-    @apply grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2;
-  }
-  
-  .bed-button {
-    @apply relative h-16 w-16 p-1 flex flex-col items-center justify-center border-2 rounded-md transition-all;
-  }
-  
-  .bed-button.available {
-    @apply bg-green-50 border-green-300 hover:bg-green-100 hover:border-green-400;
-  }
-  
-  .bed-button.occupied {
-    @apply bg-red-50 border-red-300 cursor-not-allowed;
-  }
-  
-  .bed-button.selected {
-    @apply bg-primary border-primary text-primary-foreground;
-  }
-  
-  .registration-form {
-    @apply space-y-6;
-  }
-  
-  .form-section {
-    @apply space-y-4;
-  }
-  
-  .form-row {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
-  }
-  
-  /* Country selector enhancements */
-  .country-selector {
-    @apply w-full justify-between;
-  }
-  
-  .country-flag {
-    @apply text-base mr-2;
-  }
-  
-  /* Document processing feedback */
-  .document-confidence-high {
-    @apply bg-green-100 text-green-800;
-  }
-  
-  .document-confidence-medium {
-    @apply bg-yellow-100 text-yellow-800;
-  }
-  
-  .document-confidence-low {
-    @apply bg-red-100 text-red-800;
-  }
-  
-  /* Responsive improvements */
-  @media (max-width: 640px) {
-    .booking-stepper {
-      @apply flex-col space-y-4;
-    }
-    
-    .bed-selection-grid {
-      @apply grid-cols-3;
-    }
-    
-    .form-row {
-      @apply grid-cols-1;
-    }
-  }
-}
-
-/* Animation enhancements */
-@layer utilities {
-  .fade-in {
-    animation: fadeIn 0.5s ease-in-out;
-  }
-  
-  .slide-up {
-    animation: slideUp 0.3s ease-out;
-  }
-  
-  .pulse-success {
-    animation: pulseSuccess 0.6s ease-in-out;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulseSuccess {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
   }
 }
