@@ -9,11 +9,9 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="3" fill="#9CA65A"/>
-                <path d="M12 2L22 12L12 22L2 12L12 2Z" stroke="#9CA65A" strokeWidth="2" fill="none"/>
-              </svg>
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+              {/* Placeholder for logoalbergue__msi___jpeg-108w.jpeg */}
+              <span className="text-xs font-bold" style={{color: 'hsl(var(--albergue-dark-green))'}}>AC</span>
             </div>
             <div>
               <span className="font-bold text-lg text-gray-900">Albergue Del Carrascalejo</span>
