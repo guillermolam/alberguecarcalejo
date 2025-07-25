@@ -15,9 +15,11 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, Check } from "lucide-react";
 import { LANGUAGES } from "@/lib/constants";
 import { useI18n } from "@/contexts/i18n-context";
+import { useLanguage } from "@/store/globalStore";
 
 export function LanguageSelector() {
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguage, t } = useI18n();
+  const { setLanguage: setGlobalLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
 
   const handleLanguageChange = (newLanguage: string) => {

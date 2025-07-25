@@ -1,5 +1,5 @@
 use shared::AlbergueResult;
-use image::{ImageBuffer, RgbImage, DynamicImage, ImageFormat};
+use image::{ImageBuffer, DynamicImage, ImageFormat, GenericImageView};
 use std::io::Cursor;
 
 pub struct ImageProcessor;
@@ -11,7 +11,7 @@ impl ImageProcessor {
 
     pub fn preprocess_document_image(&self, image_data: &[u8]) -> AlbergueResult<Vec<u8>> {
         let img = image::load_from_memory(image_data)
-            .map_err(|e| shared::AlbergueError::ValidationError(format!("Failed to load image: {}", e)))?;
+            .map_err(|e| shared::AlbergueError::Validation { message: format!("Failed to load image: {}", e) })?;
         
         // Convert to grayscale for better OCR
         let gray_img = img.to_luma8();
@@ -26,7 +26,7 @@ impl ImageProcessor {
         let mut buffer = Vec::new();
         let mut cursor = Cursor::new(&mut buffer);
         corrected.write_to(&mut cursor, ImageFormat::Png)
-            .map_err(|e| shared::AlbergueError::ValidationError(format!("Failed to encode image: {}", e)))?;
+            .map_err(|e| shared::AlbergueError::Validation { message: format!("Failed to encode image: {}", e) })?;
         
         Ok(buffer)
     }
@@ -59,14 +59,14 @@ impl ImageProcessor {
 
     pub fn extract_document_regions(&self, image_data: &[u8]) -> AlbergueResult<Vec<Vec<u8>>> {
         let img = image::load_from_memory(image_data)
-            .map_err(|e| shared::AlbergueError::ValidationError(format!("Failed to load image: {}", e)))?;
+            .map_err(|e| shared::AlbergueError::Validation { message: format!("Failed to load image: {}", e) })?;
         
         // For now, return the full image as a single region
         // TODO: Implement document region detection (text blocks, photos, etc.)
         let mut buffer = Vec::new();
         let mut cursor = Cursor::new(&mut buffer);
         img.write_to(&mut cursor, ImageFormat::Png)
-            .map_err(|e| shared::AlbergueError::ValidationError(format!("Failed to encode image: {}", e)))?;
+            .map_err(|e| shared::AlbergueError::Validation { message: format!("Failed to encode image: {}", e) })?;
         
         Ok(vec![buffer])
     }
@@ -74,7 +74,7 @@ impl ImageProcessor {
     pub fn detect_document_type(&self, image_data: &[u8]) -> AlbergueResult<String> {
         // Analyze image dimensions and layout to detect document type
         let img = image::load_from_memory(image_data)
-            .map_err(|e| shared::AlbergueError::ValidationError(format!("Failed to load image: {}", e)))?;
+            .map_err(|e| shared::AlbergueError::Validation { message: format!("Failed to load image: {}", e) })?;
         
         let (width, height) = img.dimensions();
         let aspect_ratio = width as f32 / height as f32;

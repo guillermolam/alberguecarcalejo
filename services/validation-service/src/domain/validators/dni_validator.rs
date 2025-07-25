@@ -5,6 +5,12 @@ use chrono::{DateTime, Utc, NaiveDate};
 pub struct DniValidator;
 
 impl DniValidator {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl DniValidator {
     pub fn validate_format(document_number: &str) -> bool {
         let dni_regex = Regex::new(r"^\d{8}[A-Z]$").unwrap();
         dni_regex.is_match(document_number)

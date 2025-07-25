@@ -1,16 +1,35 @@
 use shared::{ValidationRequest, ValidationResponse, ExtractedData, DocumentType, AlbergueResult, AlbergueError};
 use crate::domain::validators::dni_validator::DniValidator;
+use crate::domain::validators::nie_validator::NieValidator;
+use crate::domain::validators::passport_validator::PassportValidator;
+use crate::domain::validators::mrz_validator::MrzValidator;
+use crate::domain::ocr::{ImageProcessor, TextExtractor, ConfidenceScorer};
 use crate::ports::ocr_client::OCRClient;
 use crate::adapters::tesseract_ocr::TesseractOCR;
+use std::collections::HashMap;
 
 pub struct ValidationService {
     ocr_client: TesseractOCR,
+    image_processor: ImageProcessor,
+    text_extractor: TextExtractor,
+    confidence_scorer: ConfidenceScorer,
+    dni_validator: DniValidator,
+    nie_validator: NieValidator,
+    passport_validator: PassportValidator,
+    mrz_validator: MrzValidator,
 }
 
 impl ValidationService {
     pub fn new() -> Self {
         Self {
             ocr_client: TesseractOCR::new(),
+            image_processor: ImageProcessor::new(),
+            text_extractor: TextExtractor::new(),
+            confidence_scorer: ConfidenceScorer::new(),
+            dni_validator: DniValidator::new(),
+            nie_validator: NieValidator::new(),
+            passport_validator: PassportValidator::new(),
+            mrz_validator: MrzValidator::new(),
         }
     }
 
