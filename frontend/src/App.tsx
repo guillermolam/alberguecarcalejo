@@ -8,16 +8,13 @@ import InfoCardsPage from "./pages/InfoCardsPage";
 import BookingPage from "./pages/BookingPage";
 import AdminPage from "./pages/AdminPage";
 import { Toaster } from "./components/ui/toaster";
-import Navigation from "./components/Navigation";
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background">
-            <Navigation />
-            <main className="container mx-auto px-4 py-8">
+            <main>
               <Switch>
                 <Route path="/" component={HomePage} />
                 <Route path="/info" component={InfoCardsPage} />
