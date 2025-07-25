@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Alert, AlertDescription } from './ui/alert';
 import { useRegistrationStore } from '../stores/registration-store';
 import { useI18n } from '../contexts/i18n-context';
-import { Calendar, User, FileText, CreditCard, CheckCircle } from 'lucide-react';
+import { Calendar, User, FileText, CreditCard, CheckCircle, Plus, Minus } from 'lucide-react';
 
 const registrationSchema = z.object({
   // Personal Information
@@ -149,14 +149,18 @@ export default function RegistrationForm() {
             {/* Step 0: Date Selection */}
             {currentStep === 0 && (
               <div className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
+                  {/* Check-in Date */}
                   <div>
-                    <Label htmlFor="checkInDate">Fecha de entrada *</Label>
+                    <Label htmlFor="checkInDate" className="text-sm font-medium mb-2 block">
+                      Fecha de entrada *
+                    </Label>
                     <Input
                       id="checkInDate"
                       type="date"
                       {...form.register('checkInDate')}
                       min={new Date().toISOString().split('T')[0]}
+                      className="w-full"
                     />
                     {form.formState.errors.checkInDate && (
                       <p className="text-sm text-destructive mt-1">
@@ -165,13 +169,17 @@ export default function RegistrationForm() {
                     )}
                   </div>
 
+                  {/* Check-out Date */}
                   <div>
-                    <Label htmlFor="checkOutDate">Fecha de salida *</Label>
+                    <Label htmlFor="checkOutDate" className="text-sm font-medium mb-2 block">
+                      Fecha de salida *
+                    </Label>
                     <Input
                       id="checkOutDate"
                       type="date"
                       {...form.register('checkOutDate')}
                       min={new Date().toISOString().split('T')[0]}
+                      className="w-full"
                     />
                     {form.formState.errors.checkOutDate && (
                       <p className="text-sm text-destructive mt-1">
@@ -179,16 +187,100 @@ export default function RegistrationForm() {
                       </p>
                     )}
                   </div>
+
+                  {/* Nights Selector */}
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">
+                      Número de noches
+                    </Label>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => {
+                          const currentNights = form.watch('checkInDate') && form.watch('checkOutDate') 
+                            ? Math.ceil((new Date(form.watch('checkOutDate')).getTime() - new Date(form.watch('checkInDate')).getTime()) / (1000 * 60 * 60 * 24))
+                            : 1;
+                          if (currentNights > 1) {
+                            const newDate = new Date(form.watch('checkInDate'));
+                            newDate.setDate(newDate.getDate() + currentNights - 1);
+                            form.setValue('checkOutDate', newDate.toISOString().split('T')[0]);
+                          }
+                        }}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <div className="w-12 text-center font-semibold">
+                        {form.watch('checkInDate') && form.watch('checkOutDate') 
+                          ? Math.max(1, Math.ceil((new Date(form.watch('checkOutDate')).getTime() - new Date(form.watch('checkInDate')).getTime()) / (1000 * 60 * 60 * 24)))
+                          : 1}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => {
+                          const currentNights = form.watch('checkInDate') && form.watch('checkOutDate') 
+                            ? Math.ceil((new Date(form.watch('checkOutDate')).getTime() - new Date(form.watch('checkInDate')).getTime()) / (1000 * 60 * 60 * 24))
+                            : 1;
+                          if (currentNights < 7) { // Max 7 nights
+                            const newDate = new Date(form.watch('checkInDate'));
+                            newDate.setDate(newDate.getDate() + currentNights + 1);
+                            form.setValue('checkOutDate', newDate.toISOString().split('T')[0]);
+                          }
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Price Display */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-semibold text-blue-800">Resumen de precios</h3>
+                      <p className="text-blue-700 text-sm">
+                        {form.watch('checkInDate') && form.watch('checkOutDate') 
+                          ? Math.max(1, Math.ceil((new Date(form.watch('checkOutDate')).getTime() - new Date(form.watch('checkInDate')).getTime()) / (1000 * 60 * 60 * 24)))
+                          : 1} noche(s) × 15€
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-blue-800">
+                        {(form.watch('checkInDate') && form.watch('checkOutDate') 
+                          ? Math.max(1, Math.ceil((new Date(form.watch('checkOutDate')).getTime() - new Date(form.watch('checkInDate')).getTime()) / (1000 * 60 * 60 * 24)))
+                          : 1) * 15}€
+                      </div>
+                      <div className="text-sm text-blue-600">Total</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Availability Status */}
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle className="w-5 h-5 text-green-600" />
                     <h3 className="font-semibold text-green-800">Disponibilidad confirmada</h3>
                   </div>
                   <p className="text-green-700 text-sm">
-                    Hay camas disponibles para las fechas seleccionadas.
+                    Hay camas disponibles para las fechas seleccionadas. Precio por noche: 15€
                   </p>
+                </div>
+
+                {/* Booking Rules */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-yellow-800 mb-2">Normas de reserva</h3>
+                  <ul className="text-yellow-700 text-sm space-y-1">
+                    <li>• Máximo 7 noches por reserva</li>
+                    <li>• Check-in: a partir de las 15:00h</li>
+                    <li>• Check-out: antes de las 10:00h</li>
+                    <li>• Pago en efectivo al llegar</li>
+                  </ul>
                 </div>
               </div>
             )}
