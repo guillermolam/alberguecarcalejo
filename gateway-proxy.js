@@ -55,6 +55,19 @@ app.use('/booking', createProxyMiddleware({
   }
 }));
 
+// Proxy reviews requests to the reviews service (no auth required - public data)
+app.use('/reviews', createProxyMiddleware({
+  target: 'http://localhost:3002',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/reviews': '/reviews'
+  },
+  onError: (err, req, res) => {
+    console.error('Reviews service error:', err.message);
+    res.status(500).json({ error: 'Reviews service unavailable' });
+  }
+}));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'Gateway running', timestamp: new Date().toISOString() });
@@ -63,6 +76,7 @@ app.get('/health', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🛡️  Gateway with route protection running on port ${PORT}`);
   console.log(`🔒 Protected routes: /booking/dashboard/*, /booking/admin/*`);
-  console.log(`🔑 Credentials: admin/admin`);
+  console.log(`📝 Public routes: /reviews/* (via reviews service)`);
+  console.log(`🔑 Admin credentials: admin/admin`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
 });

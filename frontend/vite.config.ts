@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => ({
         }
       },
       '/reviews': {
-        target: 'http://localhost:3002',
+        target: 'http://localhost:8000',
         changeOrigin: true
       }
     }
