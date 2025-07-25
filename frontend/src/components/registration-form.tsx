@@ -60,12 +60,19 @@ export default function RegistrationForm() {
   const [documents, setDocuments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Set default dates
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       gender: undefined,
       documentType: undefined,
       consentGiven: false,
+      checkInDate: today.toISOString().split('T')[0],
+      checkOutDate: tomorrow.toISOString().split('T')[0],
     },
   });
 
@@ -148,121 +155,143 @@ export default function RegistrationForm() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Step 0: Date Selection */}
             {currentStep === 0 && (
-              <div className="space-y-4">
-                {/* Date Selection in Cards */}
-                <div className="grid md:grid-cols-4 gap-4">
-                  {/* Check-in Date Card */}
-                  <Card className="bg-gray-50">
-                    <CardContent className="p-4">
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Fecha de entrada
-                      </Label>
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900">Información de la estancia</h3>
+                
+                {/* Stay Information Grid */}
+                <div className="grid md:grid-cols-3 gap-6">
+                  {/* Dates Section */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                      Fechas de estancia
+                    </Label>
+                    <div className="space-y-2">
                       <Input
                         type="date"
                         {...form.register('checkInDate')}
                         min={new Date().toISOString().split('T')[0]}
-                        className="border-0 bg-white"
+                        className="w-full"
                       />
-                    </CardContent>
-                  </Card>
-
-                  {/* Check-out Date Card */}
-                  <Card className="bg-gray-50">
-                    <CardContent className="p-4">
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Fecha de salida
-                      </Label>
                       <Input
                         type="date"
                         {...form.register('checkOutDate')}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="border-0 bg-white"
+                        min={form.watch('checkInDate') || new Date().toISOString().split('T')[0]}
+                        className="w-full"
                       />
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
 
-                  {/* Nights Card */}
-                  <Card className="bg-gray-50">
-                    <CardContent className="p-4">
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Noches
-                      </Label>
-                      <div className="flex items-center justify-between bg-white rounded border">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => {
-                            const checkIn = form.watch('checkInDate');
-                            const checkOut = form.watch('checkOutDate');
-                            if (checkIn && checkOut) {
-                              const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
-                              if (nights > 1) {
-                                const newDate = new Date(checkIn);
-                                newDate.setDate(newDate.getDate() + nights - 1);
-                                form.setValue('checkOutDate', newDate.toISOString().split('T')[0]);
-                              }
+                  {/* Nights Section */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                      Número de noches
+                    </Label>
+                    <div className="flex items-center justify-center border rounded-lg p-3 bg-gray-50">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => {
+                          const checkIn = form.watch('checkInDate');
+                          if (checkIn) {
+                            const nights = Math.max(1, Math.ceil((new Date(form.watch('checkOutDate')).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)));
+                            if (nights > 1) {
+                              const newDate = new Date(checkIn);
+                              newDate.setDate(newDate.getDate() + nights - 1);
+                              form.setValue('checkOutDate', newDate.toISOString().split('T')[0]);
                             }
-                          }}
-                        >
-                          <Minus className="w-3 h-3" />
-                        </Button>
-                        <span className="text-sm font-medium">
-                          {(() => {
-                            const checkIn = form.watch('checkInDate');
-                            const checkOut = form.watch('checkOutDate');
-                            if (checkIn && checkOut) {
-                              return Math.max(1, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)));
-                            }
-                            return 1;
-                          })()}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => {
-                            const checkIn = form.watch('checkInDate');
-                            const checkOut = form.watch('checkOutDate');
-                            if (checkIn && checkOut) {
-                              const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
-                              if (nights < 7) {
-                                const newDate = new Date(checkIn);
-                                newDate.setDate(newDate.getDate() + nights + 1);
-                                form.setValue('checkOutDate', newDate.toISOString().split('T')[0]);
-                              }
-                            }
-                          }}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Price Card */}
-                  <Card className="bg-green-50 border-green-200">
-                    <CardContent className="p-4">
-                      <Label className="text-sm font-medium text-green-700 mb-2 block">
-                        Total
-                      </Label>
-                      <div className="text-lg font-bold text-green-800">
+                          }
+                        }}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <span className="mx-4 text-lg font-semibold min-w-[2rem] text-center">
                         {(() => {
                           const checkIn = form.watch('checkInDate');
                           const checkOut = form.watch('checkOutDate');
-                          const nights = checkIn && checkOut 
-                            ? Math.max(1, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)))
-                            : 1;
-                          return nights * 15;
-                        })()}€
+                          if (checkIn && checkOut) {
+                            return Math.max(1, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)));
+                          }
+                          return 2;
+                        })()}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => {
+                          const checkIn = form.watch('checkInDate');
+                          if (checkIn) {
+                            const nights = Math.max(1, Math.ceil((new Date(form.watch('checkOutDate')).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)));
+                            if (nights < 30) { // Max 30 nights
+                              const newDate = new Date(checkIn);
+                              newDate.setDate(newDate.getDate() + nights + 1);
+                              form.setValue('checkOutDate', newDate.toISOString().split('T')[0]);
+                            }
+                          }
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 text-center">Máx 30 noches</p>
+                  </div>
+
+                  {/* Persons Section */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                      Personas
+                    </Label>
+                    <Select defaultValue="1" disabled>
+                      <SelectTrigger className="w-full">
+                        <SelectValue>1 persona</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 persona</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">Solo registro individual</p>
+                  </div>
+                </div>
+
+                {/* Pricing Summary */}
+                <div className="bg-gray-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm text-gray-600">
+                      <span className="font-semibold">15€</span> × {(() => {
+                        const checkIn = form.watch('checkInDate');
+                        const checkOut = form.watch('checkOutDate');
+                        if (checkIn && checkOut) {
+                          return Math.max(1, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)));
+                        }
+                        return 2;
+                      })()} noches
+                    </div>
+                    <div className="text-lg font-bold text-green-600">
+                      {(() => {
+                        const checkIn = form.watch('checkInDate');
+                        const checkOut = form.watch('checkOutDate');
+                        const nights = checkIn && checkOut 
+                          ? Math.max(1, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)))
+                          : 2;
+                        return nights * 15;
+                      })()}€ Total
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-500">Pago a la llegada</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Métodos aceptados de pago</span>
+                      <div className="flex gap-1">
+                        <div className="w-6 h-4 bg-green-500 rounded text-white text-xs flex items-center justify-center font-bold">€</div>
+                        <div className="w-6 h-4 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">V</div>
+                        <div className="w-6 h-4 bg-red-500 rounded text-white text-xs flex items-center justify-center font-bold">M</div>
+                        <div className="w-6 h-4 bg-purple-500 rounded text-white text-xs flex items-center justify-center font-bold">B</div>
                       </div>
-                      <div className="text-xs text-green-600">
-                        15€ por noche
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Availability Confirmation */}
@@ -564,23 +593,25 @@ export default function RegistrationForm() {
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between pt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 0}
-              >
-                Anterior
-              </Button>
+            <div className="flex justify-end pt-6">
+              {currentStep > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrevious}
+                  className="mr-4"
+                >
+                  Anterior
+                </Button>
+              )}
 
               {currentStep < steps.length - 1 ? (
-                <Button type="button" onClick={handleNext}>
-                  Siguiente
+                <Button type="button" onClick={handleNext} className="bg-green-600 hover:bg-green-700">
+                  Continuar
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Procesando...' : 'Confirmar Reserva'}
+                <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
+                  {isSubmitting ? 'Procesando...' : 'Completar registro'}
                 </Button>
               )}
             </div>

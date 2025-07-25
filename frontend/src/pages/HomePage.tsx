@@ -16,13 +16,13 @@ export default function HomePage() {
           {/* Stats Display */}
           <div className="flex justify-center items-center gap-8 text-lg">
             <div className="text-center">
-              <div className="text-2xl font-bold">25</div>
+              <div className="text-2xl font-bold">24</div>
               <div className="text-sm text-green-100">Camas disponibles</div>
             </div>
             <div className="w-px h-12 bg-green-600"></div>
             <div className="text-center">
               <div className="text-2xl font-bold">15€</div>
-              <div className="text-sm text-green-100">precio/noche</div>
+              <div className="text-sm text-green-100">Por persona/noche</div>
             </div>
           </div>
         </div>
