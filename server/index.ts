@@ -22,7 +22,7 @@ async function startServer() {
         '@': path.resolve('./client/src'),
         '@assets': path.resolve('./attached_assets'),
         '@shared': path.resolve('./shared'),
-        '@wasm': path.resolve('./backend/services/pkg')
+        '@wasm': path.resolve('./services')
       }
     },
     optimizeDeps: {
@@ -34,7 +34,7 @@ async function startServer() {
   server.printUrls();
   
   console.log('✅ WASM microservices architecture active');
-  console.log('🔧 Build WASM: ./build-wasm.sh');
+  console.log('🔧 Build WASM: ./scripts/cargo-build.sh');
   console.log('🚀 All backend logic runs in browser WASM');
 }
 

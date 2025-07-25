@@ -1,6 +1,17 @@
 use crate::ports::notification_sender::NotificationSender;
 use crate::domain::entities::booking::Booking;
 use shared::AlbergueResult;
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+}
+
+macro_rules! console_log {
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
 
 pub struct ConsoleNotificationSender;
 
@@ -13,31 +24,30 @@ impl ConsoleNotificationSender {
 #[async_trait::async_trait(?Send)]
 impl NotificationSender for ConsoleNotificationSender {
     async fn send_booking_confirmation(&self, booking: &Booking) -> AlbergueResult<()> {
-        // In WASM context, log to console
-        web_sys::console::log_1(&format!(
+        console_log!(
             "📧 Booking confirmation sent to {}: Booking ID {} for {} nights",
             booking.guest_email,
             booking.id,
             booking.duration_nights()
-        ).into());
+        );
         Ok(())
     }
 
     async fn send_booking_cancellation(&self, booking: &Booking) -> AlbergueResult<()> {
-        web_sys::console::log_1(&format!(
+        console_log!(
             "📧 Booking cancellation sent to {}: Booking ID {} has been cancelled",
             booking.guest_email,
             booking.id
-        ).into());
+        );
         Ok(())
     }
 
     async fn send_payment_reminder(&self, booking: &Booking) -> AlbergueResult<()> {
-        web_sys::console::log_1(&format!(
+        console_log!(
             "📧 Payment reminder sent to {}: Please complete payment for booking ID {}",
             booking.guest_email,
             booking.id
-        ).into());
+        );
         Ok(())
     }
 }

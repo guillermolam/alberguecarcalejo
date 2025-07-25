@@ -1,5 +1,5 @@
 // Spanish translations for the Albergue del Carrascalejo application
-export const esTranslations = {
+export const translations_es = {
   // Navigation
   'nav.home': 'Inicio',
   'nav.booking': 'Reservar',

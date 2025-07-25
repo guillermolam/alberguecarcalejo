@@ -9,13 +9,12 @@ import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 import TestWASM from "@/pages/test-wasm";
 import { useEffect } from "react";
-import { wasmServices } from "../../frontend/wasm-services";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={TestWASM} />
-      <Route path="/home" component={Home} />
+      <Route path="/" component={Home} />
+      <Route path="/test-wasm" component={TestWASM} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
@@ -24,8 +23,8 @@ function Router() {
 
 function App() {
   useEffect(() => {
-    // Initialize WASM services on app startup
-    wasmServices.initialize().catch(console.error);
+    // WASM services will be initialized when needed
+    console.log('🦀 Rust WASM microservices architecture loaded');
   }, []);
 
   return (
