@@ -9,10 +9,14 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-              {/* Placeholder for logoalbergue__msi___jpeg-108w.jpeg */}
-              <span className="text-xs font-bold" style={{color: 'hsl(var(--albergue-dark-green))'}}>AC</span>
-            </div>
+            <img 
+              src="https://le-de.cdn-website.com/4e684d9f728943a6941686bc89abe581/dms3rep/multi/opt/logoalbergue__msi___jpeg-1920w.jpeg"
+              alt="Albergue Del Carrascalejo"
+              className="h-8 sm:h-10 w-auto flex-shrink-0"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
             <div>
               <span className="font-bold text-lg text-gray-900">Albergue Del Carrascalejo</span>
             </div>
