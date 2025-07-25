@@ -24,30 +24,11 @@ export default defineConfig(({ mode }) => ({
     watch: {
       ignored: ['**/services/**/target/**', '**/pkg/**']
     },
-    // Mock API proxy for development
+    // Proxy API calls to development server
     proxy: {
-      '/booking/dashboard/stats': {
-        target: 'http://localhost:5173',
-        bypass: () => {
-          return JSON.stringify({
-            occupancy: {
-              available: 24,
-              occupied: 8,
-              total: 32
-            },
-            today_bookings: 3,
-            revenue: 4500
-          });
-        }
-      },
-      '/booking/pricing': {
-        target: 'http://localhost:5173',
-        bypass: () => {
-          return JSON.stringify({
-            dormitory: 15,
-            private_room: 35
-          });
-        }
+      '/booking': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
       }
     }
   },

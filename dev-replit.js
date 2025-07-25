@@ -9,20 +9,29 @@ const __dirname = dirname(__filename);
 // Development script for Replit environment
 console.log("🚀 Starting Albergue Management System...");
 
-// Start the Vite development server for frontend
-const viteProcess = spawn("npx", ["vite", "--host", "0.0.0.0", "--port", "5173"], {
-  cwd: "frontend",
+// Start the API server first
+const apiProcess = spawn("node", ["api-server.js"], {
   stdio: "inherit"
 });
 
-// Handle process cleanup
-process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down servers...');
-  viteProcess.kill();
-  process.exit(0);
-});
+// Wait a moment then start Vite
+setTimeout(() => {
+  const viteProcess = spawn("npx", ["vite", "--host", "0.0.0.0", "--port", "5173"], {
+    cwd: "frontend",
+    stdio: "inherit"
+  });
 
-process.on('SIGTERM', () => {
-  viteProcess.kill();
-  process.exit(0);
-});
+  // Handle process cleanup
+  process.on('SIGINT', () => {
+    console.log('\n🛑 Shutting down servers...');
+    apiProcess.kill();
+    viteProcess.kill();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+    apiProcess.kill();
+    viteProcess.kill();
+    process.exit(0);
+  });
+}, 1000);
