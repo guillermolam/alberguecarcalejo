@@ -1,15 +1,6 @@
 [workspace]
 members = [
-    "gateway",
-    "services/shared",
-    "services/booking-service", 
-    "services/validation-service",
-    "services/country-service",
-    "services/security-service",
-    "services/rate-limiter-service",
-    "services/notification-service",
-    "services/info-on-arrival-service",
-    "services/reviews-service"
+    "gateway"
 ]
 resolver = "2"
 

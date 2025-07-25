@@ -41,7 +41,9 @@ route = "/..."
 component = "frontend"
 
 [component.gateway]
-source = "gateway/component.wasm"
+source = "target/wasm32-wasi/release/gateway.wasm"
+[component.gateway.build]
+command = "cargo build --target wasm32-wasi --release"
 allowed_outbound_hosts = [ "https://{{ auth0_domain }}", "{{ booking_api_url }}", "{{ reviews_api_url }}" ]
 [component.gateway.variables]
 auth0_domain = "{{ auth0_domain }}"
