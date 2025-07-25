@@ -122,8 +122,11 @@ export default function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 font-title">
               Bienvenido Peregrino
             </h2>
-            <p className="text-xl text-green-100 mb-8">
-              {dashboardStats?.occupancy?.available || 24} beds, {pricing?.dormitory || 15}€
+            <p className="text-xl text-green-100 mb-2">
+              El Camino de la Plata te espera
+            </p>
+            <p className="text-lg text-green-200 mb-8">
+              {dashboardStats?.occupancy?.available || 24} camas disponibles · Desde {pricing?.dormitory || 15}€/noche
             </p>
             
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
