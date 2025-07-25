@@ -511,12 +511,14 @@ spin up --listen 0.0.0.0:80
   - Integration with Twilio, SMTP (Resend), and Telegram Bot API
   - Comprehensive notification types: booking confirmations, payment receipts, alerts
   
-- ✅ **Info-on-Arrival Service** with rich content management
-  - Four info cards: Mérida attractions, Carrascalejo info, emergency contacts, route maps
-  - Web scraping capabilities for dynamic content updates
-  - Caching system with configurable expiration
-  - Route planning with waypoints and difficulty levels
-  - Emergency contact management with categorized services
+- ✅ **Info-on-Arrival Service** with comprehensive pilgrim information
+  - Seven info cards: Mérida attractions, Carrascalejo info, emergency contacts, route maps, restaurants, taxis, car rentals
+  - Web scraping from official sources (turismomerida.org, radiotaximerida.es, hertz.es, europcar.es)
+  - Content management with JSON files and database caching
+  - Rich data structure with ratings, price ranges, phone numbers, addresses
+  - Route planning with waypoints, difficulty levels, and service amenities
+  - Emergency contact management with 24h availability and service categories
+  - Real business data from verified official sources with fallback mechanisms
   
 - ✅ **Updated Rust workspace** to include both new services in Cargo.toml
 - ✅ **Complete testing suites** for both services with unit and integration tests

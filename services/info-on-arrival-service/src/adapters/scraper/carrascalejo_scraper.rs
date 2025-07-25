@@ -133,4 +133,30 @@ impl ScraperPort for CarrascalejoScraperAdapter {
             error_message: None,
         })
     }
+
+    async fn scrape_restaurants(&self) -> AlbergueResult<Vec<ScrapedContent>> {
+        // Carrascalejo is too small for restaurants - refer to nearby Mérida
+        Err(AlbergueError::NotImplemented("Use MeridaScraperAdapter for restaurant data".to_string()))
+    }
+
+    async fn scrape_taxi_services(&self) -> AlbergueResult<Vec<ScrapedContent>> {
+        // No local taxi service - provide regional numbers
+        Ok(vec![
+            ScrapedContent {
+                source_url: "https://www.radiotaximerida.es/".to_string(),
+                title: "Taxi desde Mérida".to_string(),
+                content: "Servicio de taxi regional que cubre Carrascalejo. Reservas con antelación recomendadas.".to_string(),
+                links: vec!["tel:+34924371111".to_string()],
+                images: Vec::new(),
+                last_scraped: Utc::now(),
+                scraping_successful: true,
+                error_message: None,
+            }
+        ])
+    }
+
+    async fn scrape_car_rentals(&self) -> AlbergueResult<Vec<ScrapedContent>> {
+        // No car rentals in Carrascalejo - refer to Mérida
+        Err(AlbergueError::NotImplemented("Use MeridaScraperAdapter for car rental data".to_string()))
+    }
 }

@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig(({ mode }) => ({
-  // Root is the frontend folder
-  root: path.resolve(__dirname),
+  // Root directory for serving (current frontend directory)
+  root: '.',
 
   plugins: [
     react(),
@@ -39,9 +39,9 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       // Frontend source
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, 'src'),
       // Test and training assets
-      '@assets': path.resolve(__dirname, '../tests/attached_assets'),
+      '@assets': path.resolve(__dirname, '../attached_assets'),
       // Shared Rust DTOs & types exposed to JS via wasm-bindgen or similar
       '@shared': path.resolve(__dirname, '../services/shared/src'),
       // All WASM service outputs
@@ -57,7 +57,7 @@ export default defineConfig(({ mode }) => ({
   },
 
   css: {
-    postcss: path.resolve(__dirname, './postcss.config.js')
+    postcss: './postcss.config.js'
   },
 
   build: {
