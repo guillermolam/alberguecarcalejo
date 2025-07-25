@@ -7,6 +7,11 @@ import { useI18n } from "../contexts/i18n-context";
 export default function HomePage() {
   const { t } = useI18n();
   
+  const handleAdminAccess = () => {
+    // Placeholder for admin access - could navigate to admin panel or show login
+    alert('Funcionalidad de administración próximamente disponible');
+  };
+  
   const { data: dashboardStats } = useQuery({
     queryKey: ['/booking/dashboard/stats'],
     queryFn: async () => {
@@ -30,7 +35,7 @@ export default function HomePage() {
   });
 
   // Fetch secure pricing from booking service
-  const { data: pricing, isLoading: pricingLoading, error: pricingError } = useQuery({
+  const { data: pricing } = useQuery({
     queryKey: ['/booking/pricing'],
     queryFn: async () => {
       try {
@@ -79,11 +84,18 @@ export default function HomePage() {
               </select>
               
               {/* Admin Button */}
-              <button className="hidden sm:flex items-center gap-2 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
+              <button 
+                onClick={handleAdminAccess}
+                className="hidden sm:flex items-center gap-2 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors"
+              >
                 <User className="w-4 h-4" />
                 Administración
               </button>
-              <button className="sm:hidden p-2 border border-gray-300 rounded hover:bg-gray-50">
+              <button 
+                onClick={handleAdminAccess}
+                className="sm:hidden p-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                title="Administración"
+              >
                 <User className="w-4 h-4" />
               </button>
             </div>
