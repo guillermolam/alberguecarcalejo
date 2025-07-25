@@ -11,6 +11,9 @@ You are an expert full‑stack engineer. Scaffold a **Replit** workspace that im
 ✓ Date selection now first step before personal information
 ✓ Complete workflow: Fechas → Datos Personales → Documentación → Confirmación
 ✓ Cleaned up legacy client/ folder, now using frontend/ structure exclusively
+✓ Removed duplicate global Navigation component with "Reservar" button
+✓ HomePage IS the reservation page - no separate booking button needed in header
+✓ Clean header with only: logo, title, language selector, admin access
 
 ### July 25, 2025 - Deployment Build Fixes Applied
 ✓ Fixed Vite build configuration issues for deployment
