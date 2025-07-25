@@ -1,117 +1,99 @@
-import React from 'react'
-import { Link } from 'wouter'
-import { MapPin, Info, Calendar, Settings } from 'lucide-react'
+import { Link } from "wouter";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { MapPin, Calendar, Info, User } from "lucide-react";
 
-const HomePage: React.FC = () => {
+export default function HomePage() {
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <header className="text-center mb-12">
-        <h1 className="text-5xl font-bold text-gray-800 mb-4">
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold tracking-tight">
           Albergue del Carrascalejo
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Bienvenido a tu refugio en la Vía de la Plata. 
-          Tu hogar en el Camino de Santiago hacia Compostela.
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Tu refugio en la Vía de la Plata. Bienvenido a nuestro albergue municipal 
+          en el corazón de Extremadura, camino a Santiago de Compostela.
         </p>
-        <div className="flex items-center justify-center mt-4 text-sm text-gray-500">
-          <MapPin className="w-4 h-4 mr-1" />
-          <span>Carrascalejo, Cáceres • Extremadura • España</span>
+        <div className="flex gap-4 justify-center">
+          <Link href="/booking">
+            <Button size="lg" className="gap-2">
+              <Calendar className="h-5 w-5" />
+              Reservar Ahora
+            </Button>
+          </Link>
+          <Link href="/info">
+            <Button variant="outline" size="lg" className="gap-2">
+              <Info className="h-5 w-5" />
+              Información Local
+            </Button>
+          </Link>
         </div>
-      </header>
-
-      {/* Navigation Cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        <Link href="/info">
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer group">
-            <div className="flex items-center mb-4">
-              <Info className="w-8 h-8 text-blue-600 mr-3" />
-              <h2 className="text-xl font-semibold text-gray-800">
-                Información Local
-              </h2>
-            </div>
-            <p className="text-gray-600 text-sm">
-              Descubre qué ver en Mérida, dónde comer, servicios de taxi, 
-              alquiler de coches y información de emergencia.
-            </p>
-            <div className="mt-4 text-blue-600 text-sm font-medium group-hover:text-blue-700">
-              Ver información →
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/booking">
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer group">
-            <div className="flex items-center mb-4">
-              <Calendar className="w-8 h-8 text-green-600 mr-3" />
-              <h2 className="text-xl font-semibold text-gray-800">
-                Reservar Cama
-              </h2>
-            </div>
-            <p className="text-gray-600 text-sm">
-              Reserva tu cama en nuestro albergue. 24 plazas disponibles 
-              en habitaciones compartidas y privadas.
-            </p>
-            <div className="mt-4 text-green-600 text-sm font-medium group-hover:text-green-700">
-              Hacer reserva →
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/admin">
-          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer group">
-            <div className="flex items-center mb-4">
-              <Settings className="w-8 h-8 text-purple-600 mr-3" />
-              <h2 className="text-xl font-semibold text-gray-800">
-                Administración
-              </h2>
-            </div>
-            <p className="text-gray-600 text-sm">
-              Panel de control para gestionar reservas, pagos en efectivo 
-              y estadísticas del albergue.
-            </p>
-            <div className="mt-4 text-purple-600 text-sm font-medium group-hover:text-purple-700">
-              Acceder →
-            </div>
-          </div>
-        </Link>
       </div>
 
-      {/* About Section */}
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          Sobre el Albergue
+      {/* Features Grid */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Ubicación Perfecta
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Situado en el kilómetro 626 de la Vía de la Plata, el lugar ideal 
+              para descansar en tu peregrinaje hacia Santiago.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Reserva Online
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Sistema de reservas 24/7 con confirmación inmediata. 
+              Garantiza tu lugar en nuestras instalaciones.
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5" />
+              Información Completa
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Descubre qué ver en Mérida, dónde comer, cómo moverte 
+              y toda la información que necesitas para tu estancia.
+            </CardDescription>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Call to Action */}
+      <div className="bg-muted rounded-lg p-8 text-center">
+        <h2 className="text-2xl font-semibold mb-4">
+          ¿Listo para continuar tu camino?
         </h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-3">
-              Nuestra Historia
-            </h3>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              El Albergue del Carrascalejo se encuentra en el corazón de la 
-              Vía de la Plata, la ruta jacobea que conecta Sevilla con Santiago 
-              de Compostela. Nuestro pequeño pueblo de 300 habitantes acoge 
-              cada año a miles de peregrinos en su camino hacia Santiago.
-            </p>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-3">
-              Servicios
-            </h3>
-            <ul className="text-gray-600 text-sm space-y-1">
-              <li>• 24 camas en habitaciones compartidas</li>
-              <li>• 2 habitaciones privadas</li>
-              <li>• Cocina equipada para peregrinos</li>
-              <li>• WiFi gratuito</li>
-              <li>• Lavadora y secadora</li>
-              <li>• Desayuno casero (opcional)</li>
-              <li>• Sello del Camino</li>
-            </ul>
-          </div>
-        </div>
+        <p className="text-muted-foreground mb-6">
+          Reserva tu lugar en el Albergue del Carrascalejo y disfruta de una 
+          estancia cómoda en tu peregrinaje por la Vía de la Plata.
+        </p>
+        <Link href="/booking">
+          <Button size="lg">
+            Hacer Reserva
+          </Button>
+        </Link>
       </div>
     </div>
-  )
+  );
 }
-
-export default HomePage

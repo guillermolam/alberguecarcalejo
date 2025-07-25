@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function formatPrice(priceInCents: number): string {
+  return `€${(priceInCents / 100).toFixed(2)}`;
+}
+
 // API Base URL helper
 export const getApiBaseUrl = (): string => {
   return typeof __API_BASE_URL__ !== 'undefined' 

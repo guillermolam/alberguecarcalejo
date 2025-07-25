@@ -1,71 +1,148 @@
-import React from 'react'
-import { ArrowLeft, Shield, Settings, BarChart3, Users } from 'lucide-react'
-import { Link } from 'wouter'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
+import { BarChart3, Users, Euro, Calendar } from "lucide-react";
 
-const AdminPage: React.FC = () => {
+export default function AdminPage() {
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center mb-6">
-        <Link href="/">
-          <ArrowLeft className="w-6 h-6 mr-3 text-gray-600 hover:text-gray-800 cursor-pointer" />
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-800">Panel de Administración</h1>
+    <div className="space-y-8">
+      <div className="text-center space-y-4">
+        <h1 className="text-3xl font-bold">Panel de Administración</h1>
+        <p className="text-muted-foreground">
+          Gestión del Albergue del Carrascalejo
+        </p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <Shield className="w-16 h-16 text-purple-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Acceso Restringido
-          </h2>
-          <p className="text-gray-600">
-            Esta área está reservada para el personal autorizado del albergue.
-          </p>
-        </div>
+      {/* KPI Cards */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Ocupación Hoy
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">18/24</div>
+            <p className="text-xs text-muted-foreground">
+              +2 desde ayer
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="text-center p-6 bg-blue-50 rounded-lg">
-            <BarChart3 className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-800 mb-2">Estadísticas</h3>
-            <p className="text-sm text-gray-600">
-              Ocupación, ingresos y métricas del albergue
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Ingresos Mes
+            </CardTitle>
+            <Euro className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">€2,340</div>
+            <p className="text-xs text-muted-foreground">
+              +12% vs mes anterior
             </p>
-          </div>
-          
-          <div className="text-center p-6 bg-green-50 rounded-lg">
-            <Users className="w-12 h-12 text-green-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-800 mb-2">Reservas</h3>
-            <p className="text-sm text-gray-600">
-              Gestión de reservas y pagos en efectivo
-            </p>
-          </div>
-          
-          <div className="text-center p-6 bg-purple-50 rounded-lg">
-            <Settings className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-800 mb-2">Configuración</h3>
-            <p className="text-sm text-gray-600">
-              Precios, disponibilidad y configuración
-            </p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="border-t border-gray-200 pt-6">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <h4 className="font-semibold text-yellow-800 mb-2">
-              🔐 Autenticación requerida
-            </h4>
-            <p className="text-sm text-yellow-700 mb-4">
-              Para acceder al panel de administración, necesitas credenciales válidas. 
-              El sistema de autenticación se integrará con Auth0 en la próxima versión.
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Reservas Pendientes
+            </CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">5</div>
+            <p className="text-xs text-muted-foreground">
+              Próximas 48h
             </p>
-            <button className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition-colors">
-              Solicitar Acceso
-            </button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Tasa Ocupación
+            </CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">75%</div>
+            <p className="text-xs text-muted-foreground">
+              Media semanal
+            </p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Recent Bookings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Reservas Recientes</CardTitle>
+          <CardDescription>
+            Últimas reservas realizadas en el sistema
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { id: "RES001", guest: "María García", room: "Dormitorio A", date: "Hoy", status: "Confirmada" },
+              { id: "RES002", guest: "Jean Pierre", room: "Privada 1", date: "Mañana", status: "Pendiente" },
+              { id: "RES003", guest: "Hans Mueller", room: "Dormitorio B", date: "26/07", status: "Confirmada" },
+              { id: "RES004", guest: "Sarah Johnson", room: "Privada 2", date: "27/07", status: "Pendiente" },
+            ].map((booking) => (
+              <div key={booking.id} className="flex items-center justify-between p-3 border rounded">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="font-medium">{booking.guest}</p>
+                    <p className="text-sm text-muted-foreground">{booking.id}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="font-medium">{booking.room}</p>
+                    <p className="text-sm text-muted-foreground">{booking.date}</p>
+                  </div>
+                  <Badge variant={booking.status === "Confirmada" ? "default" : "secondary"}>
+                    {booking.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Acciones Rápidas</CardTitle>
+          <CardDescription>
+            Operaciones frecuentes del albergue
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Button variant="outline" className="h-20 flex-col gap-2">
+              <Users className="h-6 w-6" />
+              Registrar Llegada
+            </Button>
+            <Button variant="outline" className="h-20 flex-col gap-2">
+              <Euro className="h-6 w-6" />
+              Pago en Efectivo
+            </Button>
+            <Button variant="outline" className="h-20 flex-col gap-2">
+              <Calendar className="h-6 w-6" />
+              Ver Calendario
+            </Button>
+            <Button variant="outline" className="h-20 flex-col gap-2">
+              <BarChart3 className="h-6 w-6" />
+              Reportes
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }
-
-export default AdminPage

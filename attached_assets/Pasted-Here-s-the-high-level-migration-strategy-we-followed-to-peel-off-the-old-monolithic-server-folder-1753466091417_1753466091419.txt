@@ -1,0 +1,62 @@
+Here’s the high‑level migration strategy we followed to peel off the old monolithic `server/` folder into the new Spin Gateway (`gateway/`) and microservices (`services/…`) structure:
+
+## 1. Survey & Inventory
+
+1. **List all existing routes and handlers** in `server/` (e.g. `/api/bookings`, `/api/validate/document`, `/api/ocr/process`, OAuth callback, static file serving, etc.).
+2. **Identify core concerns**:
+
+   * API routing & auth (gateway responsibility)
+   * Booking logic, persistence, contracts (booking-service)
+   * Document OCR & validation (validation-service)
+   * Country lookup & caching (country-service)
+   * Any other domain logic (e.g. payments, notifications)
+
+## 2. Extract the Spin Gateway
+
+1. **Create `gateway/`** as a minimal Spin HTTP component.
+2. **Implement routing there**: copy over only the Express route definitions (paths + methods), replacing Express handlers with calls to downstream services.
+3. **Handle auth/JWT** at the gateway (via Auth0 validation logic), so individual services needn’t re‑authenticate.
+4. **Serve static assets** (built frontend) if needed via gateway’s static handler.
+
+## 3. Define Service Boundaries & Ports
+
+1. **For each concern**, define a Rust crate under `services/…` with:
+
+   * A clear DDD folder structure (`domain/`, `application/`, `ports/`, `adapters/`, `infrastructure/`).
+   * A Spin HTTP component entrypoint (or a library that the gateway invokes via HTTP).
+2. **Create traits** (ports) for repositories and external clients so that each microservice can swap implementations (e.g. real PostgreSQL vs. in‑memory for tests).
+
+## 4. Gradual Migration & Dual‑Write
+
+1. **Leave the old `server/` running** behind the gateway for any routes not yet migrated (“dual‑write” period).
+2. **One by one**, move a route’s logic into its new service:
+
+   * Implement the new service endpoint.
+   * Update the gateway to proxy that route to the new service.
+   * Run integration tests against both old and new paths.
+3. **Once stable**, remove the old route from `server/`.
+
+## 5. Data & DB Migration
+
+1. Ensure all services share the same NeonDB schema. Migrations remain in `database/migrations/`.
+2. In the new booking‑service, swap out any direct Drizzle/Express queries for SQLx in Rust.
+3. Run smoke tests to verify data continues to flow correctly.
+
+## 6. Clean Up & Cut‑Over
+
+1. Once all routes are handled by microservices, **delete** the legacy `server/` folder.
+2. Ensure CI/CD pipelines now build and deploy:
+
+   * `gateway/` (Spin component)
+   * All `services/*` crates to WASM via `wasm-pack` / Spin
+   * Frontend via Vite
+3. Update documentation, README, and dev scripts (`dev:replit`, build scripts) to reflect the new structure exclusively.
+
+---
+
+### 📝 Key Benefits of This Approach
+
+* **Incremental & Safe:** Dual‑write lets you roll back if a service isn’t ready.
+* **Clear Boundaries:** Each service owns its domain, reducing coupling.
+* **Reuse & Consistency:** Shared types live in `services/shared/`, so DTOs stay consistent.
+* **Scalability:** You can deploy and scale services independently on Fermyon Spin.

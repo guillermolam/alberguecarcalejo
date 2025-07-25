@@ -1,101 +1,236 @@
-import React from 'react'
-import { ArrowLeft, Calendar, Bed, Users } from 'lucide-react'
-import { Link } from 'wouter'
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
+import { Calendar, Users, Bed, MapPin, Clock } from "lucide-react";
+import { formatPrice } from "../lib/utils";
+// Type definition for Room (matching the WASM service)
+type Room = {
+  id: string;
+  name: string;
+  type: string;
+  beds?: number;
+  capacity?: number;
+  price: number;
+  available: number;
+  amenities: string[];
+};
 
-const BookingPage: React.FC = () => {
+export default function BookingPage() {
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+
+  const { data: rooms = [], isLoading } = useQuery<Room[]>({
+    queryKey: ["/api/rooms"],
+    queryFn: () => fetch("/api/rooms").then(res => res.json()),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Cargando habitaciones...</div>
+      </div>
+    );
+  }
+
+  const mockRooms = [
+    {
+      id: "dorm-a",
+      name: "Dormitorio A",
+      type: "Compartido",
+      beds: 12,
+      price: 15,
+      available: 8,
+      amenities: ["Taquillas", "Enchufes", "Ventanas"]
+    },
+    {
+      id: "dorm-b", 
+      name: "Dormitorio B",
+      type: "Compartido",
+      beds: 10,
+      price: 15,
+      available: 6,
+      amenities: ["Taquillas", "Enchufes", "Aire acondicionado"]
+    },
+    {
+      id: "private-1",
+      name: "Habitación Privada 1",
+      type: "Privada",
+      beds: 2,
+      price: 35,
+      available: 1,
+      amenities: ["Baño privado", "TV", "Aire acondicionado"]
+    },
+    {
+      id: "private-2",
+      name: "Habitación Privada 2", 
+      type: "Privada",
+      beds: 2,
+      price: 35,
+      available: 0,
+      amenities: ["Baño privado", "TV", "Terraza"]
+    }
+  ];
+
+  // Use actual rooms data if available, otherwise fall back to mock data
+  const displayRooms = rooms.length > 0 ? rooms : mockRooms;
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center mb-6">
-        <Link href="/">
-          <ArrowLeft className="w-6 h-6 mr-3 text-gray-600 hover:text-gray-800 cursor-pointer" />
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-800">Reservar Cama</h1>
+    <div className="space-y-8">
+      <div className="text-center space-y-4">
+        <h1 className="text-3xl font-bold">Reservar Alojamiento</h1>
+        <p className="text-muted-foreground">
+          Elige tu habitación en el Albergue del Carrascalejo
+        </p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <Calendar className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Próximamente disponible
-          </h2>
-          <p className="text-gray-600">
-            El sistema de reservas online estará disponible próximamente. 
-            Mientras tanto, puedes contactar directamente con el albergue.
+      {/* Info Card */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Ventana de Reserva
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm">
+            Tienes <strong>2 horas</strong> para completar tu reserva una vez iniciado el proceso.
+            Después de este tiempo, tu selección será liberada automáticamente.
           </p>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Información de Contacto
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <span className="font-medium text-gray-700 w-20">Teléfono:</span>
-                <a href="tel:+34924123456" className="text-blue-600 hover:text-blue-700">
-                  +34 924 123 456
-                </a>
-              </div>
-              <div className="flex items-center">
-                <span className="font-medium text-gray-700 w-20">Email:</span>
-                <a href="mailto:info@alberguecarrascalejo.com" className="text-blue-600 hover:text-blue-700">
-                  info@alberguecarrascalejo.com
-                </a>
-              </div>
-              <div className="flex items-start">
-                <span className="font-medium text-gray-700 w-20">Horario:</span>
-                <div className="text-gray-600">
-                  <div>8:00 - 22:00 (Recepción)</div>
-                  <div>24h (Emergencias)</div>
+      {/* Room Selection */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold">Habitaciones Disponibles</h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          {displayRooms.map((room) => (
+            <Card 
+              key={room.id} 
+              className={`cursor-pointer transition-colors ${
+                selectedRoom === room.id 
+                  ? "border-primary bg-primary/5" 
+                  : room.available === 0 
+                    ? "opacity-50" 
+                    : "hover:border-primary/50"
+              }`}
+              onClick={() => {
+                const isAvailable = room.available !== undefined ? room.available > 0 : room.available;
+                if (isAvailable) setSelectedRoom(room.id);
+              }}
+            >
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{room.name}</CardTitle>
+                    <CardDescription>{room.type}</CardDescription>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">
+                      {room.pricePerNight ? formatPrice(room.pricePerNight) : `€${room.price}`}
+                    </div>
+                    <div className="text-sm text-muted-foreground">por noche</div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Disponibilidad y Precios
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <Bed className="w-5 h-5 text-gray-600 mr-2" />
-                  <span className="text-gray-700">Cama en dormitorio</span>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
+                    <Bed className="h-4 w-4" />
+                    <span className="text-sm">{room.capacity || room.beds} camas</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm">
+                      {room.available !== undefined ? room.available : (room.available ? "Disponible" : "No disponible")} 
+                    </span>
+                  </div>
                 </div>
-                <span className="font-semibold text-gray-800">15€/noche</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <Users className="w-5 h-5 text-gray-600 mr-2" />
-                  <span className="text-gray-700">Habitación privada</span>
+                
+                <div className="flex flex-wrap gap-1">
+                  {(room.amenities || []).map((amenity) => (
+                    <Badge key={amenity} variant="outline" className="text-xs">
+                      {typeof amenity === 'string' ? amenity : JSON.stringify(amenity)}
+                    </Badge>
+                  ))}
                 </div>
-                <span className="font-semibold text-gray-800">35€/noche</span>
-              </div>
-            </div>
 
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-semibold text-blue-800 mb-2">
-                Servicios incluidos:
-              </h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Ropa de cama y toallas</li>
-                <li>• WiFi gratuito</li>
-                <li>• Cocina equipada</li>
-                <li>• Lavadora y secadora</li>
-                <li>• Sello del Camino</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 text-center">
-          <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-            Llamar para Reservar
-          </button>
+                {((room.available !== undefined && room.available === 0) || !room.available) && (
+                  <Badge variant="destructive" className="w-fit">
+                    No disponible
+                  </Badge>
+                )}
+                
+                {selectedRoom === room.id && (
+                  <Badge variant="default" className="w-fit">
+                    Seleccionada
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
-    </div>
-  )
-}
 
-export default BookingPage
+      {/* Booking Form Preview */}
+      {selectedRoom && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Detalles de la Reserva</CardTitle>
+            <CardDescription>
+              Confirma los detalles antes de proceder al pago
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Fecha de llegada</label>
+                <div className="mt-1 p-2 border rounded text-sm">
+                  Seleccionar fecha
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Fecha de salida</label>
+                <div className="mt-1 p-2 border rounded text-sm">
+                  Seleccionar fecha
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Habitación seleccionada</label>
+              <div className="mt-1 p-2 bg-muted rounded text-sm">
+                {rooms.find(r => r.id === selectedRoom)?.name} - €{rooms.find(r => r.id === selectedRoom)?.price}/noche
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <Button size="lg" className="w-full">
+                Continuar con el Proceso de Reserva
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Location Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            Ubicación
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-2">
+            El Carrascalejo, Km 626 Vía de la Plata, Cáceres, Extremadura
+          </p>
+          <p className="text-sm">
+            Situado en el corazón de la ruta jacobea, nuestro albergue municipal 
+            ofrece el descanso perfecto para continuar tu peregrinaje hacia Santiago de Compostela.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
