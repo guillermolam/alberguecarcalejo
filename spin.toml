@@ -1,53 +1,16 @@
+spin_manifest_version = 2
+
 [application]
 name = "albergue-app"
 version = "0.1.0"
 authors = ["Guillermo Lam <guillermo@alberguedelcarrascalejo.com>"]
 
+[[trigger.http]]
+route = "/api/..."
+component = "gateway"
+
 [[component]]
 id = "gateway"
-source = "gateway/target/wasm32-wasi/release/gateway.wasm"
-allowed_outbound_hosts = [
-    "http://validation-service.internal",
-    "http://booking-service.internal", 
-    "http://country-service.internal",
-    "http://security-service.internal",
-    "http://rate-limiter-service.internal"
-]
-[component.trigger]
-type = "http"
-route = "/..."
-
-[[component]]
-id = "validation-service"
-source = "services/validation-service/target/wasm32-wasi/release/validation_service.wasm"
-[component.trigger]
-type = "http"
-route = "/validation/..."
-
-[[component]]
-id = "booking-service"
-source = "services/booking-service/target/wasm32-wasi/release/booking_service.wasm"
-[component.trigger]
-type = "http"
-route = "/booking/..."
-
-[[component]]
-id = "country-service"
-source = "services/country-service/target/wasm32-wasi/release/country_service.wasm"
-[component.trigger]
-type = "http"
-route = "/country/..."
-
-[[component]]
-id = "security-service"
-source = "services/security-service/target/wasm32-wasi/release/security_service.wasm"
-[component.trigger]
-type = "http"
-route = "/security/..."
-
-[[component]]
-id = "rate-limiter-service"
-source = "services/rate-limiter-service/target/wasm32-wasi/release/rate_limiter_service.wasm"
-[component.trigger]
-type = "http"
-route = "/rate-limit/..."
+source = "gateway/spin_component.js"
+[component.build]
+command = "npm run build:gateway"

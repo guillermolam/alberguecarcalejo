@@ -14,6 +14,11 @@ const apiProcess = spawn("node", ["api-server.js"], {
   stdio: "inherit"
 });
 
+// Note: Spin gateway commented out for development - using direct API connection
+// const spinProcess = spawn("spin", ["up", "--listen", "0.0.0.0:8000"], {
+//   stdio: "inherit"
+// });
+
 // Wait a moment then start Vite
 setTimeout(() => {
   const viteProcess = spawn("npx", ["vite", "--host", "0.0.0.0", "--port", "5173"], {
@@ -25,12 +30,14 @@ setTimeout(() => {
   process.on('SIGINT', () => {
     console.log('\n🛑 Shutting down servers...');
     apiProcess.kill();
+    // spinProcess.kill();
     viteProcess.kill();
     process.exit(0);
   });
 
   process.on('SIGTERM', () => {
     apiProcess.kill();
+    // spinProcess.kill();
     viteProcess.kill();
     process.exit(0);
   });

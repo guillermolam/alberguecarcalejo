@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
     watch: {
       ignored: ['**/services/**/target/**', '**/pkg/**']
     },
-    // Proxy API calls to development server (temporary while gateway is being built)
+    // Proxy API calls to development server
     proxy: {
       '/booking': {
         target: 'http://localhost:3001',
