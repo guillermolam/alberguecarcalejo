@@ -29,8 +29,8 @@ spin up --listen 0.0.0.0:80
 ```
 ├── frontend/           # React SPA application
 ├── services/          # Rust WASM microservices
+│   ├── shared/        # Common DTOs and types
 ├── gateway/           # Spin JS gateway component
-├── shared/            # Common DTOs and types
 ├── database/          # Migration files
 ├── tests/             # Test suites and documentation
 ├── scripts/           # Build and deployment scripts

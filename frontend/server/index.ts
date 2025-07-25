@@ -21,7 +21,7 @@ async function startServer() {
       alias: {
         '@': path.resolve('./frontend/src'),
         '@assets': path.resolve('./tests/attached_assets'),
-        '@shared': path.resolve('./shared'),
+        '@shared': path.resolve('./services/shared'),
         '@wasm': path.resolve('./services')
       }
     },

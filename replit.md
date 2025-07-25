@@ -95,6 +95,8 @@ spin up --listen 0.0.0.0:8000
 │   └── tests/
 │
 ├── services/
+│   ├── shared/           # Common DTOs / error types
+│   │   └── src/lib.rs
 │   ├── booking-service/
 │   │   ├── src/{domain,application,ports,adapters,infrastructure}
 │   │   └── tests/
@@ -114,9 +116,6 @@ spin up --listen 0.0.0.0:8000
 │   └── rate-limiter-service/
 │       ├── src/{domain,application,ports,adapters,infrastructure}
 │       └── tests/
-│
-├── shared/               # Common DTOs / error types
-│   └── src/lib.rs
 │
 ├── database/migrations/
 │
@@ -545,6 +544,13 @@ spin up --listen 0.0.0.0:80
 - Updated to serve from frontend/ directory with proper WASM aliases
 - All backend logic runs through WASM microservices in browser
 - Created dev-replit.js script to bridge npm script limitations
+
+**Microservices Organization:**
+- **Moved shared/ to services/shared/** for proper microservices structure
+- Updated Cargo.toml workspace to include services/shared
+- Fixed frontend server aliases to point to services/shared
+- All microservices now properly contained within services/ directory
+- Shared DTOs and error types accessible at services/shared/src/lib.rs
 
 ---
 **Deliverables**: scaffolded repo folders, config files, sample code stubs, UI behaviour notes, admin console specs, and the scripts above.
