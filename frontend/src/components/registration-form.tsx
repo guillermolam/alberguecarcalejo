@@ -257,7 +257,7 @@ export default function RegistrationForm() {
                 </div>
 
                 {/* Pricing Summary */}
-                <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded-r-lg">
+                <div className="bg-gray-50 border-l-4 border-secondary p-4 rounded-r-lg" style={{borderLeftColor: 'hsl(var(--albergue-sage))'}}>
                   <div className="flex justify-between items-center mb-2">
                     <div className="text-sm text-gray-700">
                       <span className="font-semibold text-gray-900">15€</span> • {(() => {
@@ -622,11 +622,11 @@ export default function RegistrationForm() {
               )}
 
               {currentStep < steps.length - 1 ? (
-                <Button type="button" onClick={handleNext} className="bg-gray-700 hover:bg-gray-800 text-white">
+                <Button type="button" onClick={handleNext} style={{backgroundColor: 'hsl(var(--albergue-dark-green))'}} className="hover:opacity-90 text-white">
                   Continuar
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting} className="bg-gray-700 hover:bg-gray-800 text-white">
+                <Button type="submit" disabled={isSubmitting} style={{backgroundColor: 'hsl(var(--albergue-dark-green))'}} className="hover:opacity-90 text-white">
                   {isSubmitting ? 'Procesando...' : 'Completar registro'}
                 </Button>
               )}
