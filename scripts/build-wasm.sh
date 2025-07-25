@@ -1,13 +1,19 @@
 #!/bin/bash
 
-# Build all WASM microservices for the DDD monorepo
+# Build all WASM microservices for the DDD monorepo with Bun
 set -e
 
-echo "🦀 Building Rust WASM microservices..."
+echo "🦀 Building Rust WASM microservices with Bun support..."
 
 # Ensure WASM targets are installed
 rustup target add wasm32-unknown-unknown
 rustup target add wasm32-wasi
+
+# Install bun dependencies if needed
+if command -v bun &> /dev/null; then
+  echo "📦 Installing frontend dependencies with Bun..."
+  cd frontend && bun install && cd ..
+fi
 
 # Build all services in workspace from root directory
 echo "📦 Building validation-service..."

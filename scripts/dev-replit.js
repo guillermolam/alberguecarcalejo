@@ -1,17 +1,41 @@
 #!/usr/bin/env node
+/**
+ * Development script for Replit environment
+ * Starts Vite development server with Bun
+ */
 
-// WASM Microservices Development Server for Replit
-import { exec } from 'child_process';
+const { spawn } = require('child_process');
 
-console.log('🦀 Starting Rust WASM Microservices Architecture');
-console.log('📦 Frontend-only server with WASM backend services');
+console.log('🚀 Starting Albergue Management System with Bun...');
 
-// Start development server with proper port configuration
-exec('tsx server/index.ts', { env: { ...process.env, PORT: '80' } }, (error, stdout, stderr) => {
-  if (error) {
-    console.error(`Error: ${error}`);
-    return;
+// Start Vite dev server from frontend directory using bun
+const viteProcess = spawn('bun', ['run', 'dev'], {
+  cwd: './frontend',
+  stdio: 'inherit',
+  env: {
+    ...process.env,
+    HOST: '0.0.0.0',
+    PORT: '5173'
   }
-  console.log(stdout);
-  if (stderr) console.error(stderr);
+});
+
+viteProcess.on('error', (error) => {
+  console.error('Failed to start Vite server:', error);
+  process.exit(1);
+});
+
+viteProcess.on('close', (code) => {
+  console.log(`Vite server exited with code ${code}`);
+  process.exit(code);
+});
+
+// Handle graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n🛑 Shutting down...');
+  viteProcess.kill('SIGINT');
+});
+
+process.on('SIGTERM', () => {
+  console.log('\n🛑 Shutting down...');
+  viteProcess.kill('SIGTERM');
 });

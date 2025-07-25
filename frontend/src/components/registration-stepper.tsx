@@ -1,4 +1,3 @@
-// Original registration stepper from client/ - exact restoration
 import React from 'react';
 import { Check, Circle } from 'lucide-react';
 import { useI18n } from '@/contexts/i18n-context';
@@ -10,13 +9,13 @@ interface Step {
 }
 
 interface RegistrationStepperProps {
-  currentStep: number;
-  completedSteps: number[];
+  currentStep?: number;
+  completedSteps?: number[];
   onStepClick?: (step: number) => void;
 }
 
 export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
-  currentStep,
+  currentStep = 0,
   completedSteps = [],
   onStepClick
 }) => {
@@ -84,7 +83,7 @@ export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
                     <span>{step.id + 1}</span>
                   )}
                 </button>
-                
+
                 {/* Step Label */}
                 <div className="mt-2 text-center">
                   <p className={`
