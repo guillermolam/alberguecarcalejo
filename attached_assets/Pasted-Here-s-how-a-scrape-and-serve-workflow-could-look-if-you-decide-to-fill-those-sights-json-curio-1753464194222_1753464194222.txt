@@ -1,0 +1,79 @@
+Here’s how a “scrape‑and‑serve” workflow could look if you decide to fill those `sights.json / curiosities.json / emergencies.json / map‑ruta.json` files with data pulled straight from official sources:
+
+---
+
+### 1 . Pick stable, “official” URLs
+
+| Card                                | Good primary URL                                                          | What you’d extract                                                        |
+| ----------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Qué ver en Mérida**               | `https://turismomerida.org/que-ver/`                                      | List of monuments, short blurb, hero image ([Turismo Mérida][1])          |
+| **Curiosidades de El Carrascalejo** | Municipal site news / history pages, e.g. `https://www.carrascalejo.es/`  | Local facts, short history nuggets, village photos ([carrascalejo.es][2]) |
+| **Emergencias**                     | Ayuntamiento contact pages (`/ayuntamiento` or `/sede` endpoints)         | 112, Guardia Civil, centro de salud phone numbers ([carrascalejo.es][3])  |
+| **Mapa & Ruta**                     | Static GPX/KML you host, or OpenStreetMap “share link” for the hostel pin | OSM embed URL + text directions                                           |
+
+*(If an URL changes often or has no clear structure, favour an open‑data alternative such as Spain’s tourism API or Wikidata.)*
+
+---
+
+### 2 . Check the legal bits first
+
+1. **Robots.txt & TOS** – Verify the site doesn’t block scraping and doesn’t forbid reuse.
+2. **Spanish Open‑Data Law (Ley 37/2007)** – Most public‑sector info can be reused with attribution and no personal‑data.
+3. **Copyright / licences** – If the page doesn’t state a CC‑BY or public‑domain licence, e‑mail the Ayuntamiento/Turismo office for written approval (often they’ll say “yes, just mention our site”).
+4. **Attribution** – Add a footer line in the card payload: “Fuente: turismomerida.org”.
+
+---
+
+### 3 . Mini‑scraper workflow
+
+| Step            | Tool choice (Rust)                                                                                   | Notes                                |
+| --------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Fetch HTML      | `reqwest`                                                                                            | Set a polite `User-Agent`.           |
+| Parse & extract | `scraper` crate (CSS selectors) or `select.rs`                                                       | Grab `<h2>` headings & `<p>` blurbs. |
+| Transform → DTO | Map to `{ "title": ..., "items": [ { "text": "...", "img": "..." }, ... ] }`                         |                                      |
+| Store           | Write JSON file in `services/cards-service/content/` **or** upsert into `info_cards` Postgres table. |                                      |
+| Schedule        | GitHub Action cron (`perf‑audit.yaml`) or `cards‑service` background task every 24 h.                |                                      |
+
+If the scrape fails (site down, markup changed), serve the last good JSON from disk/DB and log a warning.
+
+---
+
+### 4 . cards‑service endpoint
+
+```rust
+// GET /info/cards
+[
+  { "id": "sights",        "title": "Qué ver en Mérida",       "items": [ ... ] },
+  { "id": "curiosities",   "title": "El Carrascalejo – Curiosidades", "items": [ ... ] },
+  { "id": "emergencies",   "title": "Emergencias",             "items": [ ... ] },
+  { "id": "map-ruta",      "title": "Mapa & Ruta",             "items": [ ... ] }
+]
+```
+
+Frontend just fetches once (React Query cache) and renders each object into your Tailwind `<Card>` component.
+
+---
+
+### 5 . Why this beats hard‑coding
+
+* **Always up to date** – If Mérida adds a new museum, it shows up the next day.
+* **No dev involved** – Content editors change text on the town’s CMS; your scraper picks it up.
+* **Version control** – Each JSON diff is committed by CI, so you can roll back bad data.
+* **Multilingual ready** – When the Turismo site publishes English pages, point the scraper at `/en/que-ver/` and add a `lang` field.
+
+---
+
+### 6 . Gotchas to plan for
+
+1. **Markup drift** – Wrap parsing in `Option`s and add unit tests so a missing tag doesn’t crash the build.
+2. **Rate limits / politeness** – Cache aggressively; a static tourism page rarely needs more than one fetch per day.
+3. **Image hot‑linking** – Download and serve under your own CDN path (avoids mixed‑content and bandwidth surprises).
+4. **Translation** – If you scrape only Spanish but want other languages, run the text through a translation service at scrape‑time and store per‑locale keys.
+
+---
+
+If that sounds good, the next step is to scaffold a tiny `scraper.rs` inside `cards‑service`, add a nightly GitHub Action to run it, and wire the JSON output into your existing `/info/cards` endpoint.
+
+[1]: https://turismomerida.org/que-ver/?utm_source=chatgpt.com "Qué ver - Turismo Mérida"
+[2]: https://www.carrascalejo.es/?utm_source=chatgpt.com "Inicio - Ayuntamiento de Carrascalejo - Ayuntamiento de Carrascalejo"
+[3]: https://www.carrascalejo.es/ayuntamiento?utm_source=chatgpt.com "Ayuntamiento de Carrascalejo"

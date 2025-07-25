@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=build.rs
+cargo:rustc-env=DEBUG_OUTPUT_DIR=/home/runner/workspace/target/debug/build/wit-bindgen-rust-macro-11be54537548b1b8/out

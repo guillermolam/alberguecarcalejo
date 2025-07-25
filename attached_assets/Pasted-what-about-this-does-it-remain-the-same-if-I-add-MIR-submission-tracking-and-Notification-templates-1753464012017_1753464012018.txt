@@ -1,0 +1,199 @@
+what about this, does it remain the same if I add MIR submission tracking and Notification templates
+
+services/
+├── shared/
+│   ├── Cargo.toml
+│   └── src/
+│       └── lib.rs
+│
+├── booking-service/
+│   ├── Cargo.toml
+│   ├── build.rs
+│   ├── src/
+│   │   ├── main.rs
+│   │   ├── domain/
+│   │   │   ├── mod.rs
+│   │   │   └── booking.rs
+│   │   ├── application/
+│   │   │   ├── mod.rs
+│   │   │   └── booking_service.rs
+│   │   ├── ports/
+│   │   │   ├── mod.rs
+│   │   │   ├── booking_repository.rs
+│   │   │   └── notification_port.rs
+│   │   ├── adapters/
+│   │   │   └── repository/
+│   │   │       ├── mod.rs
+│   │   │       └── postgres_booking_repo.rs
+│   │   └── infrastructure/
+│   │       ├── server.rs
+│   │       ├── config.rs
+│   │       └── tracer.rs
+│   └── tests/
+│       ├── integration_tests.rs
+│       └── unit_tests.rs
+│
+├── validation-service/
+│   ├── Cargo.toml
+│   ├── build.rs
+│   ├── src/
+│   │   ├── main.rs
+│   │   ├── domain/
+│   │   │   ├── mod.rs
+│   │   │   └── document.rs
+│   │   ├── application/
+│   │   │   ├── mod.rs
+│   │   │   └── validation_service.rs
+│   │   ├── ports/
+│   │   │   ├── mod.rs
+│   │   │   ├── ocr_port.rs
+│   │   │   └── checksum_port.rs
+│   │   ├── adapters/
+│   │   │   ├── ocr/
+│   │   │   │   ├── tesseract.rs
+│   │   │   │   └── wasm_ocr.rs
+│   │   │   └── checksum/
+│   │   │       ├── mod.rs
+│   │   │       └── dni.rs
+│   │   └── infrastructure/
+│   │       ├── server.rs
+│   │       ├── config.rs
+│   │       └── http.rs
+│   └── tests/
+│       ├── ocr_training/
+│       │   ├── dni-nif/
+│       │   ├── passports/
+│       │   └── nie-tie/
+│       ├── integration_tests.rs
+│       └── unit_tests.rs
+│
+├── country-service/
+│   ├── Cargo.toml
+│   ├── build.rs
+│   ├── src/
+│   │   ├── main.rs
+│   │   ├── domain/
+│   │   │   ├── mod.rs
+│   │   │   └── country.rs
+│   │   ├── application/
+│   │   │   ├── mod.rs
+│   │   │   └── country_service.rs
+│   │   ├── ports/
+│   │   │   ├── mod.rs
+│   │   │   └── rest_countries_api_port.rs
+│   │   ├── adapters/
+│   │   │   └── rest_client.rs
+│   │   └── infrastructure/
+│   │       ├── server.rs
+│   │       └── cache.rs
+│   └── tests/
+│       ├── integration_tests.rs
+│       └── unit_tests.rs
+│
+├── security-service/
+│   ├── Cargo.toml
+│   ├── build.rs
+│   ├── src/
+│   │   ├── main.rs
+│   │   ├── domain/
+│   │   │   ├── mod.rs
+│   │   │   └── auth.rs
+│   │   ├── application/
+│   │   │   ├── mod.rs
+│   │   │   └── security_service.rs
+│   │   ├── ports/
+│   │   │   ├── mod.rs
+│   │   │   └── jwt_port.rs
+│   │   ├── adapters/
+│   │   │   ├── jwt/
+│   │   │   │   ├── mod.rs
+│   │   │   │   └── auth0.rs
+│   │   │   └── hashing.rs
+│   │   └── infrastructure/
+│   │       ├── server.rs
+│   │       └── config.rs
+│   └── tests/
+│       ├── integration_tests.rs
+│       └── unit_tests.rs
+│
+├── rate-limiter-service/
+│   ├── Cargo.toml
+│   ├── build.rs
+│   ├── src/
+│   │   ├── main.rs
+│   │   ├── domain/
+│   │   │   ├── mod.rs
+│   │   │   └── rate_limit.rs
+│   │   ├── application/
+│   │   │   ├── mod.rs
+│   │   │   └── rate_limiter_service.rs
+│   │   ├── ports/
+│   │   │   ├── mod.rs
+│   │   │   └── storage_port.rs
+│   │   ├── adapters/
+│   │   │   └── redis_storage.rs
+│   │   └── infrastructure/
+│   │       ├── server.rs
+│   │       └── config.rs
+│   └── tests/
+│       ├── integration_tests.rs
+│       └── unit_tests.rs
+│
+├── notification-service/
+│   ├── Cargo.toml
+│   ├── build.rs
+│   ├── src/
+│   │   ├── main.rs
+│   │   ├── domain/
+│   │   │   ├── mod.rs
+│   │   │   └── notification.rs
+│   │   ├── application/
+│   │   │   ├── mod.rs
+│   │   │   └── notification_service.rs
+│   │   ├── ports/
+│   │   │   ├── mod.rs
+│   │   │   ├── email_port.rs
+│   │   │   ├── sms_port.rs
+│   │   │   └── telegram_port.rs
+│   │   ├── adapters/
+│   │   │   ├── email/
+│   │   │   │   └── nodemailer.rs
+│   │   │   ├── sms/
+│   │   │   │   └── twilio.rs
+│   │   │   └── telegram/
+│   │   │       └── telegraf.rs
+│   │   └── infrastructure/
+│   │       ├── server.rs
+│   │       └── config.rs
+│   └── tests/
+│       ├── integration_tests.rs
+│       └── unit_tests.rs
+│
+└── info-on-arrival-service/
+    ├── Cargo.toml
+    ├── build.rs
+    ├── src/
+    │   ├── main.rs
+    │   ├── domain/
+    │   │   ├── mod.rs
+    │   │   └── card.rs
+    │   ├── application/
+    │   │   ├── mod.rs
+    │   │   └── cards_service.rs
+    │   ├── ports/
+    │   │   ├── mod.rs
+    │   │   ├── storage_port.rs
+    │   │   └── scraper_port.rs
+    │   ├── adapters/
+    │   │   ├── storage/
+    │   │   │   └── postgres_cards_repo.rs
+    │   │   └── scraper/
+    │   │       ├── mod.rs
+    │   │       ├── merida_scraper.rs
+    │   │       └── carrascalejo_scraper.rs
+    │   └── infrastructure/
+    │       ├── server.rs
+    │       └── config.rs
+    └── tests/
+        ├── integration_tests.rs
+        └── unit_tests.rs

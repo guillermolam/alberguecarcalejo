@@ -1,0 +1,85 @@
+Here’s how to fold the three new cards into the existing **cards‑service**.
+
+---
+
+## 1.  Add three new payload files (or DB rows)
+
+```
+services/cards-service/content/
+├── sights.json            # already present
+├── curiosities.json       # already present
+├── emergencies.json       # already present
+├── map‑ruta.json          # already present
+├── eat.json               # ← NEW
+├── taxis.json             # ← NEW
+└── car‑rentals.json       # ← NEW
+```
+
+Each file (or table row) follows the same shape:
+
+```jsonc
+{
+  "id": "eat",
+  "lang": "es",
+  "title": "Dónde y qué comer cerca",
+  "icon": "utensils",
+  "items": [
+    {
+      "name": "Restaurante Rex Numitor",
+      "description": "Cocina extremeña junto al Teatro Romano",
+      "link": "https://turismomerida.org/donde-comer/",   // source URL
+      "img": "/img/resto-rex.jpg"
+    },
+    …
+  ],
+  "source": "turismomerida.org"
+}
+```
+
+> **Tip:** keep the same structure for `taxis.json` and `car‑rentals.json` so the frontend can render any card with `title + items[]`.
+
+---
+
+## 2.  Reliable data sources for each card
+
+| Card                 | Where you pull from                                                                                                                                                                       | Why it’s “official” / stable                                                              |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **eat.json**         | *Turismo Mérida* – “Dónde comer” page (`turismomerida.org/donde-comer`) or the cuisine section on `visitarmerida.es` ([Turismo Mérida][1])                                                | City tourism office keeps it up to date and lists the best‑known local restaurants.       |
+| **taxis.json**       | *Radio Taxi Mérida* (`radiotaximerida.es`, phone 924 371 111) and the 24 h taxi listing on `meridavisitas.com/taxi-merida-24-horas` ([Radio Taxi Mérida][2], [Visitas Guiadas Mérida][3]) | These are the two numbers tourists are shown on city billboards; they rarely change.      |
+| **car‑rentals.json** | Hertz Mérida office page (`hertz.es … Mérida`) ([Hertz][4]) + Europcar listing (`europcar.es … Mérida`) ([Europcar][5])                                                                   | Both companies have permanent desks in the city; contact info is public and seldom moves. |
+
+*Fallback:* if any site goes down, query Google Places once per day for category=`restaurant`, `taxi_stand`, or `car_rental` within 10 km of El Carrascalejo.
+
+---
+
+## 3.  Mini‑scraper additions
+
+1. **Add three `fetch_*` functions** in `cards-service/src/infrastructure/scraper.rs`:
+
+   ```rust
+   fetch_eat()        // pulls & parses “Dónde comer” HTML
+   fetch_taxis()      // scrapes radio‑taxi phone list
+   fetch_car_rentals()// scrapes Hertz + Europcar pages
+   ```
+2. Each returns `Vec<CardItem>`; merge into their respective JSON / DB row.
+3. Schedule a nightly scrape (GitHub Action or background task) so phone numbers or restaurant lists stay fresh.
+
+---
+
+## 4.  Frontend tweaks
+
+1. No component work needed—the existing `<CardGrid>` just renders whatever `/info/cards` sends.
+2. Translation: add three keys to `i18n/es.json` and `i18n/en.json` for the new titles.
+3. Icon names (`utensils`, `taxi`, `car`) already exist in Lucide.
+
+---
+
+### That’s it
+
+Add the three JSON stubs (or seed rows), hook your scraper to those official pages, and the new “Eat nearby”, “Taxi services”, and “Car rentals” cards will show up automatically in the kiosk UI.
+
+[1]: https://turismomerida.org/donde-comer/?utm_source=chatgpt.com "Dónde comer - Turismo Mérida"
+[2]: https://www.radiotaximerida.es/?utm_source=chatgpt.com "Compañía de taxis en Mérida Radio Taxi Mérida"
+[3]: https://meridavisitas.com/taxi-merida-24-horas/?utm_source=chatgpt.com "▷ Taxi Mérida: Taxis 24 horas, 365 días al año | Reservas y Tarifas"
+[4]: https://www.hertz.es/p/alquiler-de-coches/espana/merida?utm_source=chatgpt.com "Alquiler de Coches en Mérida - Hertz"
+[5]: https://www.europcar.es/es-es?utm_source=chatgpt.com "Europcar: Alquiler de Coches y Furgonetas en todo el Mundo"
