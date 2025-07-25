@@ -1,11 +1,8 @@
-// Pure Frontend Server - WASM Services Architecture
-// This serves only static files, all backend logic runs in WASM
 import { createServer } from 'vite';
 import path from 'path';
 
 async function startServer() {
-  console.log('🦀 Starting Rust WASM Microservices Architecture');
-  console.log('📦 Frontend-only server with WASM backend services');
+  console.log('🚀 Starting Vite development server with WASM services...');
   
   const server = await createServer({
     root: './client',
@@ -26,16 +23,15 @@ async function startServer() {
       }
     },
     optimizeDeps: {
-      exclude: ['@wasm', 'wasm-services']
+      exclude: ['@wasm']
     }
   });
 
   await server.listen();
   server.printUrls();
   
-  console.log('✅ WASM microservices architecture active');
-  console.log('🔧 Build WASM: ./build-wasm.sh');
-  console.log('🚀 All backend logic runs in browser WASM');
+  console.log('✅ Frontend server running with WASM services');
+  console.log('📦 Build WASM services with: ./build-wasm.sh');
 }
 
 startServer().catch(console.error);

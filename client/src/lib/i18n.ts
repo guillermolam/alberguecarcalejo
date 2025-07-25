@@ -24,16 +24,20 @@ export class I18n {
 
   constructor() {
     // Try to get language from localStorage or use default
-    const savedLang = localStorage.getItem("preferred-language");
-    if (savedLang && LANGUAGES.some(l => l.code === savedLang)) {
-      this.currentLanguage = savedLang;
+    if (typeof localStorage !== 'undefined') {
+      const savedLang = localStorage.getItem("preferred-language");
+      if (savedLang && LANGUAGES.some(l => l.code === savedLang)) {
+        this.currentLanguage = savedLang;
+      }
     }
   }
 
   setLanguage(language: string): void {
     if (LANGUAGES.some(l => l.code === language)) {
       this.currentLanguage = language;
-      localStorage.setItem("preferred-language", language);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem("preferred-language", language);
+      }
     }
   }
 
@@ -41,17 +45,13 @@ export class I18n {
     return this.currentLanguage;
   }
 
-  t(key: string, variables?: Record<string, any>): string {
-    const translation = translations[this.currentLanguage]?.[key] ||
-      translations.es[key] ||
-      key;
-
-    if (!variables) {
-      return translation;
-    }
-
-    return Object.keys(variables).reduce((result, varKey) => {
-      return result.replace(new RegExp(`{${varKey}}`, 'g'), String(variables[varKey]));
+  t(key: string, variables?: Record<string, string | number>): string {
+    const translation = translations[this.currentLanguage]?.[key] || key;
+    
+    if (!variables) return translation;
+    
+    return Object.keys(variables).reduce((text, variable) => {
+      return text.replace(new RegExp(`{{${variable}}}`, 'g'), String(variables[variable]));
     }, translation);
   }
 }
