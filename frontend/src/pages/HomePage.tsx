@@ -8,18 +8,18 @@ export default function HomePage() {
   const { t } = useI18n();
   
   const { data: dashboardStats } = useQuery({
-    queryKey: ['/api/dashboard/stats'],
+    queryKey: ['/booking/dashboard/stats'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/dashboard/stats');
+      const response = await apiRequest('GET', '/booking/dashboard/stats');
       return response.json();
     }
   });
 
-  // Fetch secure pricing from backend (prevents CSRF/MitM attacks)
+  // Fetch secure pricing from booking service
   const { data: pricing, isLoading: pricingLoading, error: pricingError } = useQuery({
-    queryKey: ['/api/pricing'],
+    queryKey: ['/booking/pricing'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/pricing');
+      const response = await apiRequest('GET', '/booking/pricing');
       return response.json();
     },
     retry: 3,

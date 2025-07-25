@@ -30,6 +30,26 @@ pub struct Room {
     pub available: bool,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct DashboardStats {
+    pub occupancy: OccupancyStats,
+    pub today_bookings: i32,
+    pub revenue: i32,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct OccupancyStats {
+    pub available: i32,
+    pub occupied: i32,
+    pub total: i32,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Pricing {
+    pub dormitory: i32,
+    pub private_room: i32,
+}
+
 #[http_component]
 fn handle_request(req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
     let method = req.method();
@@ -39,6 +59,8 @@ fn handle_request(req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
         (&Method::GET, "/bookings") => get_bookings(),
         (&Method::POST, "/bookings") => create_booking(req),
         (&Method::GET, "/rooms") => get_rooms(),
+        (&Method::GET, "/dashboard/stats") => get_dashboard_stats(),
+        (&Method::GET, "/pricing") => get_pricing(),
         _ => Ok(ResponseBuilder::new(StatusCode::NOT_FOUND)
             .header("content-type", "application/json")
             .body(r#"{"error":"Not found"}"#)
@@ -87,6 +109,35 @@ fn create_booking(_req: Request<Vec<u8>>) -> Result<impl IntoResponse> {
     Ok(ResponseBuilder::new(StatusCode::CREATED)
         .header("content-type", "application/json")
         .body(serde_json::to_string(&new_booking)?)
+        .build())
+}
+
+fn get_dashboard_stats() -> Result<impl IntoResponse> {
+    let stats = DashboardStats {
+        occupancy: OccupancyStats {
+            available: 24,
+            occupied: 8,
+            total: 32,
+        },
+        today_bookings: 3,
+        revenue: 4500,
+    };
+    
+    Ok(ResponseBuilder::new(StatusCode::OK)
+        .header("content-type", "application/json")
+        .body(serde_json::to_string(&stats)?)
+        .build())
+}
+
+fn get_pricing() -> Result<impl IntoResponse> {
+    let pricing = Pricing {
+        dormitory: 15,
+        private_room: 35,
+    };
+    
+    Ok(ResponseBuilder::new(StatusCode::OK)
+        .header("content-type", "application/json")
+        .body(serde_json::to_string(&pricing)?)
         .build())
 }
 
