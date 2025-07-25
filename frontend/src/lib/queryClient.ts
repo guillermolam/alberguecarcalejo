@@ -13,11 +13,18 @@ export const queryClient = new QueryClient({
 export async function apiRequest(method: string, url: string, data?: any) {
   console.log(`API Request: ${method} ${url}`);
   
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Add basic auth for admin endpoints
+  if (url.includes('/dashboard/stats') || url.includes('/admin/')) {
+    headers['Authorization'] = 'Basic ' + btoa('admin:admin');
+  }
+  
   const options: RequestInit = {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
   };
 
   if (data) {

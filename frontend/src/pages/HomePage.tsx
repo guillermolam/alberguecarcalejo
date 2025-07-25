@@ -1,6 +1,5 @@
 import { useState } from "react";
 import RegistrationForm from "../components/registration-form";
-import AdminLogin from "../components/AdminLogin";
 import AdminDashboard from "../components/AdminDashboard";
 import { User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -9,24 +8,15 @@ import { useI18n } from "../contexts/i18n-context";
 
 export default function HomePage() {
   const { t } = useI18n();
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   
   const handleAdminAccess = () => {
-    setShowAdminLogin(true);
+    // Try to access protected admin endpoint - gateway will handle auth
+    setShowAdminDashboard(true);
   };
 
-  const handleAdminLogin = () => {
-    setShowAdminLogin(false);
-    setIsAdminLoggedIn(true);
-  };
-
-  const handleAdminLogout = () => {
-    setIsAdminLoggedIn(false);
-  };
-
-  const handleCancelLogin = () => {
-    setShowAdminLogin(false);
+  const handleBackToHome = () => {
+    setShowAdminDashboard(false);
   };
   
   const { data: dashboardStats } = useQuery({
@@ -70,9 +60,9 @@ export default function HomePage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Show admin dashboard if logged in
-  if (isAdminLoggedIn) {
-    return <AdminDashboard onLogout={handleAdminLogout} />;
+  // Show admin dashboard if requested
+  if (showAdminDashboard) {
+    return <AdminDashboard onBackToHome={handleBackToHome} />;
   }
 
   return (
@@ -166,13 +156,7 @@ export default function HomePage() {
         <RegistrationForm />
       </div>
 
-      {/* Admin Login Modal */}
-      {showAdminLogin && (
-        <AdminLogin 
-          onLogin={handleAdminLogin}
-          onCancel={handleCancelLogin}
-        />
-      )}
+
     </div>
   );
 }

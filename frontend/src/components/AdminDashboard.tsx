@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 
 interface AdminDashboardProps {
-  onLogout: () => void;
+  onBackToHome: () => void;
 }
 
-export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
+export default function AdminDashboard({ onBackToHome }: AdminDashboardProps) {
   const { data: dashboardStats } = useQuery({
     queryKey: ['/booking/dashboard/stats'],
     queryFn: async () => {
@@ -56,11 +56,11 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={onLogout}
+              onClick={onBackToHome}
               className="flex items-center space-x-2"
             >
               <LogOut className="h-4 w-4" />
-              <span>Cerrar Sesión</span>
+              <span>Volver al Inicio</span>
             </Button>
           </div>
         </div>

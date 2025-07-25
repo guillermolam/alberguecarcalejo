@@ -4,6 +4,26 @@ import express from 'express';
 const app = express();
 const PORT = 3001;
 
+// Basic Authentication middleware for admin routes
+const basicAuth = (req, res, next) => {
+  const auth = req.headers.authorization;
+  
+  if (!auth || !auth.startsWith('Basic ')) {
+    res.set('WWW-Authenticate', 'Basic realm="Admin Area"');
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  const credentials = Buffer.from(auth.substring(6), 'base64').toString();
+  const [username, password] = credentials.split(':');
+  
+  if (username === 'admin' && password === 'admin') {
+    next();
+  } else {
+    res.set('WWW-Authenticate', 'Basic realm="Admin Area"');
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+};
+
 // Enable CORS for development
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -18,8 +38,15 @@ app.use((req, res, next) => {
 });
 app.use(express.json());
 
-// Booking service endpoints with real data from backend service structure
-app.get('/booking/dashboard/stats', (req, res) => {
+// Public booking service endpoints (no auth required)
+app.get('/booking/pricing', (req, res) => {
+  res.json({
+    dormitory: 15
+  });
+});
+
+// Protected admin endpoints requiring basic auth
+app.get('/booking/dashboard/stats', basicAuth, (req, res) => {
   res.json({
     occupancy: {
       available: 24,
@@ -31,13 +58,7 @@ app.get('/booking/dashboard/stats', (req, res) => {
   });
 });
 
-app.get('/booking/pricing', (req, res) => {
-  res.json({
-    dormitory: 15
-  });
-});
-
-app.get('/booking/bookings', (req, res) => {
+app.get('/booking/admin/bookings', basicAuth, (req, res) => {
   res.json([
     {
       id: "1",
@@ -54,6 +75,8 @@ app.get('/booking/bookings', (req, res) => {
     }
   ]);
 });
+
+
 
 app.listen(PORT, () => {
   console.log(`🚀 API Server running on port ${PORT}`);
