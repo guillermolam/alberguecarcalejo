@@ -280,3 +280,21 @@ The system includes comprehensive testing infrastructure across multiple levels:
 - Components: `tests/enzyme-components/*.test.tsx`
 - E2E: `tests/testcafe-*.js`
 - Documentation: `README-Testing.md`, `enzyme-test-summary.md`
+
+## Recent Changes
+
+### July 25, 2025 - Deployment ESM Fixes
+- **Fixed ESBuild CommonJS Format Incompatibility**: 
+  - Created `build-production.js` script with proper ESM format configuration
+  - Added external package exclusions for `lightningcss` and `../pkg` to resolve module resolution errors
+  - Added CommonJS compatibility shims (`__dirname`, `__filename`, `require`) for bundled dependencies
+  - Server build now uses `format: 'esm'` instead of default CommonJS
+- **ESM Configuration Updates**:
+  - `package.json` already properly configured with `"type": "module"`
+  - `tsconfig.json` already using `"module": "ESNext"` and `"moduleResolution": "bundler"`
+  - Server files already using `import.meta.dirname` instead of `__dirname`
+- **Deployment Build Process**:
+  - Client build: `npm run build:client` (works correctly)
+  - Server build: `node build-production.js` (new ESM-compatible process)
+  - Production server verified working with health checks and static file serving
+- **Status**: Deployment compatibility issues resolved, ready for Replit deployment
