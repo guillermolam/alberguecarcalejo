@@ -1,39 +1,28 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import i18n from '@/lib/i18n';
 
 interface I18nContextType {
-  t: (key: string, params?: Record<string, any>) => string;
   language: string;
   setLanguage: (lang: string) => void;
-  supportedLanguages: string[];
+  t: (key: string) => string;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState('es'); // Default to Spanish
-  const supportedLanguages = ['es', 'en', 'ca', 'gl', 'val', 'zh'];
+export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [language, setLanguageState] = useState('es');
 
-  const t = (key: string, params?: Record<string, any>) => {
-    return i18n.t(key, params, language);
+  const setLanguage = (lang: string) => {
+    setLanguageState(lang);
+    i18n.setLanguage(lang);
   };
 
-  const handleSetLanguage = (lang: string) => {
-    if (supportedLanguages.includes(lang)) {
-      setLanguage(lang);
-      localStorage.setItem('preferred-language', lang);
-    }
+  const t = (key: string) => {
+    return i18n.t(key);
   };
-
-  useEffect(() => {
-    const saved = localStorage.getItem('preferred-language');
-    if (saved && supportedLanguages.includes(saved)) {
-      setLanguage(saved);
-    }
-  }, []);
 
   return (
-    <I18nContext.Provider value={{ t, language, setLanguage: handleSetLanguage, supportedLanguages }}>
+    <I18nContext.Provider value={{ language, setLanguage, t }}>
       {children}
     </I18nContext.Provider>
   );

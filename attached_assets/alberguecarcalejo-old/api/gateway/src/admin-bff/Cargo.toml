@@ -1,0 +1,36 @@
+[package]
+name = "admin-bff"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+  "console",
+  "Window",
+  "Request",
+  "RequestInit",
+  "Response",
+  "Headers",
+  "fetch",
+  "Storage",
+  "Location",
+  "Performance",
+] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde", "wasm-bindgen"] }
+uuid = { version = "1.0", features = ["v4", "wasm-bindgen"] }
+getrandom = { version = "0.2", features = ["js"] }
+regex = "1.5"
+base64 = "0.21"
+sha2 = "0.10"
+hex = "0.4"
+
+[package.metadata.wasm-pack.profile.release]
+wee-alloc = true

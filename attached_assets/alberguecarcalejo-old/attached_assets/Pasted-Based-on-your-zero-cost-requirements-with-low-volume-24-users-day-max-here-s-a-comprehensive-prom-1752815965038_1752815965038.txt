@@ -1,0 +1,243 @@
+Based on your zero-cost requirements with low volume (24 users/day max), here's a comprehensive prompt for Replit to build a cost-effective OCR service using AWS Lambda free tier:
+
+## Replit Project Setup Prompt: Zero-Cost Spanish Document OCR Service
+
+### Project Overview
+Create a Rust-based AWS Lambda function that processes Spanish DNI/NIE documents and worldwide passports using Tesseract OCR. The service will be triggered by photo uploads and return parsed data as JSON for form field population. Optimized for AWS Lambda free tier (1M requests/month, 400,000 GB-seconds).
+
+### Directory Structure
+```
+spanish-document-ocr/
+├── src/
+│   ├── main.rs              # Lambda handler entry point
+│   ├── document_classifier.rs # Document type detection (DNI/NIE/Passport)
+│   ├── image_processor.rs    # Image preprocessing pipeline
+│   ├── ocr_engine.rs        # Tesseract OCR wrapper
+│   ├── spanish_validator.rs  # DNI/NIE validation logic
+│   ├── passport_parser.rs    # MRZ parsing for passports
+│   ├── models.rs            # Data structures and response models
+│   └── utils.rs             # Helper functions and constants
+├── Cargo.toml               # Dependencies
+├── .cargo/config.toml       # Build configuration
+├── Makefile                 # Build and deployment scripts
+└── lambda-runtime-config.toml # Lambda runtime settings
+```
+
+### Cargo.toml
+```toml
+[package]
+name = "spanish-document-ocr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Lambda runtime
+lambda_runtime = "0.8"
+lambda_web = "0.2"
+tokio = { version = "1", features = ["macros"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Image processing
+image = "0.24"
+imageproc = "0.23"
+base64 = "0.21"
+
+# OCR
+leptess = "0.14"
+
+# Passport MRZ parsing
+mrtd = "0.1"
+
+# Utilities
+regex = "1.9"
+chrono = "0.4"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "json"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = "z"  # Optimize for size
+strip = true     # Strip symbols
+```
+
+### .cargo/config.toml
+```toml
+[build]
+target = "x86_64-unknown-linux-musl"
+
+[target.x86_64-unknown-linux-musl]
+linker = "x86_64-linux-musl-gcc"
+```
+
+### File Responsibilities
+
+#### src/main.rs
+```rust
+// Lambda handler that:
+// - Receives base64 encoded image from API Gateway
+// - Coordinates document processing pipeline
+// - Returns JSON response with extracted fields
+// - Implements error handling and logging
+```
+
+#### src/document_classifier.rs
+```rust
+// Responsibilities:
+// - Detect document type (DNI front/back, NIE, Passport)
+// - Use image features to classify (aspect ratio, color analysis)
+// - Route to appropriate processor
+// - Handle unknown document types
+```
+
+#### src/image_processor.rs
+```rust
+// Preprocessing pipeline:
+// - Convert to grayscale
+// - Apply Otsu binarization
+// - Deskew and perspective correction
+// - Noise reduction
+// - Contrast enhancement
+// - Prepare image for OCR (white background)
+```
+
+#### src/ocr_engine.rs
+```rust
+// Tesseract wrapper:
+// - Initialize Tesseract with Spanish language
+// - Configure PSM mode for document scanning
+// - Extract text with confidence scores
+// - Get bounding boxes for text regions
+// - Handle OCR errors gracefully
+```
+
+#### src/spanish_validator.rs
+```rust
+// Spanish document validation:
+// - DNI format: 8 digits + control letter
+// - NIE format: X/Y/Z + 7 digits + control letter
+// - Control letter calculation (mod 23 algorithm)
+// - Extract fields: name, surnames, document number
+// - Date parsing (birth, expiry)
+// - Validate checksums
+```
+
+#### src/passport_parser.rs
+```rust
+// MRZ parsing:
+// - Detect MRZ lines (2 or 3 line format)
+// - Parse using mrtd crate
+// - Extract: passport number, names, nationality
+// - Validate check digits
+// - Handle various passport formats
+```
+
+#### src/models.rs
+```rust
+// Data structures:
+// - Input: ImageUploadRequest { image_base64: String }
+// - Output: DocumentData {
+//     document_type: String,
+//     document_number: String,
+//     first_name: Option<String>,
+//     last_names: Option<String>,
+//     birth_date: Option<String>,
+//     expiry_date: Option<String>,
+//     nationality: Option<String>,
+//     confidence_score: f32,
+//     validation_status: ValidationResult
+// }
+```
+
+### Makefile
+```makefile
+.PHONY: build deploy test
+
+build:
+	cargo lambda build --release
+
+deploy:
+	cargo lambda deploy \
+		--iam-role arn:aws:iam::ACCOUNT:role/lambda-role \
+		--memory 256 \
+		--timeout 30
+
+test:
+	cargo test
+	cargo lambda watch # Local testing
+```
+
+### Deployment Architecture
+
+```
+Client Upload → API Gateway → Lambda Function → JSON Response
+                  (CORS)       (256MB RAM)      (Parsed Data)
+                               (30s timeout)
+```
+
+### Lambda Configuration
+- **Memory**: 256MB (sufficient for OCR, stays in free tier)
+- **Timeout**: 30 seconds (processing time for complex documents)
+- **Environment Variables**:
+  - `RUST_LOG=info`
+  - `TESSERACT_LANG=spa`
+  - `MAX_IMAGE_SIZE=10485760` (10MB)
+
+### API Response Format
+```json
+{
+  "success": true,
+  "document_type": "DNI_FRONT",
+  "data": {
+    "document_number": "12345678A",
+    "first_name": "JUAN",
+    "last_names": "GARCÍA LÓPEZ",
+    "birth_date": "01-01-1990",
+    "expiry_date": "01-01-2030",
+    "validation": {
+      "format_valid": true,
+      "checksum_valid": true,
+      "confidence": 0.95
+    }
+  },
+  "processing_time_ms": 2500
+}
+```
+
+### Cost Optimization Strategy
+1. **Single Lambda Function**: Minimize cold starts
+2. **Efficient Memory Usage**: 256MB keeps costs low
+3. **Binary Size Optimization**: Use musl target, strip symbols
+4. **No External Storage**: Process in memory, return immediately
+5. **API Gateway Caching**: Cache repeated requests (optional)
+
+### Installation Instructions for Replit
+```bash
+# Install system dependencies
+sudo apt-get update
+sudo apt-get install -y tesseract-ocr tesseract-ocr-spa libtesseract-dev libleptonica-dev
+
+# Install Rust targets
+rustup target add x86_64-unknown-linux-musl
+
+# Install cargo-lambda
+pip install cargo-lambda
+
+# Build the project
+make build
+```
+
+### Testing Locally
+```bash
+# Start local Lambda runtime
+cargo lambda watch
+
+# Test with curl
+curl -X POST http://localhost:9000/lambda-url/spanish-document-ocr/ \
+  -H "Content-Type: application/json" \
+  -d '{"image_base64": "..."}'
+```
+
+This setup ensures zero infrastructure costs by leveraging AWS Lambda free tier while providing accurate OCR processing for your low-volume use case.

@@ -1,12 +1,19 @@
 import React from 'react';
+import { useI18n } from '@/contexts/i18n-context';
+import { Button } from '@/components/ui/button';
 
 const NotFound: React.FC = () => {
+  const { t } = useI18n();
+
   return (
-    <div className="text-center">
-      <h1 className="text-4xl font-title mb-8">404 - Page Not Found</h1>
-      <p className="text-lg text-muted-foreground">
-        The page you're looking for doesn't exist.
-      </p>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
+        <p className="text-xl text-gray-600 mb-8">Página no encontrada</p>
+        <Button onClick={() => window.location.href = '/'}>
+          Volver al inicio
+        </Button>
+      </div>
     </div>
   );
 };
