@@ -22,8 +22,17 @@ export default defineConfig(({ mode }) => ({
 
   resolve: {
     alias: {
-      // Frontend source paths
-      '@': path.resolve(__dirname, 'src'),
+      // Client source paths
+      '@': path.resolve(__dirname, 'client/src'),
+      '@/lib': path.resolve(__dirname, 'client/src/lib'),
+      '@/components': path.resolve(__dirname, 'client/src/components'),
+      '@/hooks': path.resolve(__dirname, 'client/src/hooks'),
+      '@/contexts': path.resolve(__dirname, 'client/src/contexts'),
+      '@/stores': path.resolve(__dirname, 'client/src/stores'),
+      '@/admin': path.resolve(__dirname, 'client/src/admin'),
+      '@/customer': path.resolve(__dirname, 'client/src/customer'),
+      '@/pages': path.resolve(__dirname, 'client/src/pages'),
+      '@/store': path.resolve(__dirname, 'client/src/store'),
       '@assets': path.resolve(__dirname, 'attached_assets'),
       '@shared': path.resolve(__dirname, 'services/shared/src'),
       '@wasm': path.resolve(__dirname, 'pkg'),
