@@ -4,71 +4,77 @@ import { Globe, User } from "lucide-react";
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Navigation */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <img 
-              src="https://le-de.cdn-website.com/4e684d9f728943a6941686bc89abe581/dms3rep/multi/opt/logoalbergue__msi___jpeg-1920w.jpeg"
-              alt="Albergue Del Carrascalejo"
-              className="h-8 sm:h-10 w-auto flex-shrink-0"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-            <div>
-              <span className="font-bold text-lg text-gray-900">Albergue Del Carrascalejo</span>
-            </div>
-          </div>
-          
-          {/* Right side navigation */}
-          <div className="flex items-center gap-4">
-            {/* Language Selector */}
-            <div className="flex items-center gap-2 px-3 py-2 border rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer">
-              <Globe className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">Español</span>
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+      {/* Navigation Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink min-w-0">
+              <div className="flex items-center space-x-1 sm:space-x-2 min-w-0">
+                <img 
+                  src="https://le-de.cdn-website.com/4e684d9f728943a6941686bc89abe581/dms3rep/multi/opt/logoalbergue__msi___jpeg-1920w.jpeg"
+                  alt="Albergue Del Carrascalejo"
+                  className="h-8 sm:h-10 w-auto flex-shrink-0"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <h1 className="text-sm sm:text-lg md:text-xl font-semibold text-gray-900 truncate min-w-0">
+                  <span className="hidden sm:inline">Albergue Del Carrascalejo</span>
+                  <span className="sm:hidden">Albergue Del Carrascalejo</span>
+                </h1>
+              </div>
             </div>
             
-            {/* Admin Link */}
-            <div className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 cursor-pointer">
-              <User className="w-4 h-4" />
-              <span className="text-sm font-medium">Administración</span>
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              {/* Language Selector */}
+              <select className="bg-transparent border border-gray-300 rounded px-2 py-1 text-sm">
+                <option value="es">Español</option>
+                <option value="en">English</option>
+              </select>
+              
+              {/* Admin Button */}
+              <button className="hidden sm:flex items-center gap-2 px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
+                <User className="w-4 h-4" />
+                Administración
+              </button>
+              <button className="sm:hidden p-2 border border-gray-300 rounded hover:bg-gray-50">
+                <User className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Hero Section with Sage Green Background */}
-        <div style={{backgroundColor: 'hsl(var(--albergue-dark-green))'}} className="text-white py-12 px-8 mb-8 -mx-4">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-[hsl(75,35%,25%)] to-[hsl(75,35%,20%)] text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Bienvenido Peregrino
-            </h1>
-            <p className="text-lg opacity-90 mb-6">
+            </h2>
+            <p className="text-xl text-green-100 mb-8">
               Registro rápido y seguro para tu estancia en el Camino
             </p>
             
-            {/* Stats Display */}
-            <div className="flex justify-center items-center gap-8 text-lg">
-              <div className="text-center">
-                <div className="text-2xl font-bold">24</div>
-                <div className="text-sm opacity-80">Camas disponibles</div>
-              </div>
-              <div className="w-px h-12 opacity-60" style={{backgroundColor: 'hsl(var(--albergue-sage))'}}></div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">15€</div>
-                <div className="text-sm opacity-80">Por persona/noche</div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
+              <div className="flex items-center justify-center space-x-4 text-lg">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[hsl(75,25%,75%)]">24</div>
+                  <div className="text-sm text-green-100">Camas disponibles</div>
+                </div>
+                <div className="w-px h-12 bg-white/20"></div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#45c655]">15€</div>
+                  <div className="text-sm text-green-100">Por persona/noche</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </section>
         
-        {/* Registration Form */}
+      {/* Registration Form */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <RegistrationForm />
       </div>
     </div>
