@@ -1,10 +1,24 @@
-modules = ["nodejs-20", "web", "postgresql-16", "rust-stable", "docker", "rust-nightly"]
-run = "npm run dev"
-hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+run = "npm run dev:replit"
+modules = ["nodejs-20", "rust-stable", "postgresql-16", "web", "fermyon-spin"]
+
+hidden = [
+  ".config",
+  ".git",
+  "node_modules",
+  "dist",
+  "pkg",
+  "frontend/public"
+]
 
 [nix]
 channel = "stable-24_05"
-packages = ["rustc", "cargo", "wasm-pack", "awscli2", "unzip", "cargo-lambda", "chromium", "fermyon-spin"]
+packages = [
+  "nodejs",
+  "wasm-pack",
+  "sqlx-cli",
+  "fermyon-spin",
+  "chromium"
+]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -12,29 +26,26 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
-localPort = 5000
+localPort = 5173
 externalPort = 80
+exposeLocalhost = false
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
+exposeLocalhost = false
 
 [env]
-PORT = "5000"
+PORT = "8000"
 
 [workflows]
-runButton = "Project"
+runButton = "Dev"
 
 [[workflows.workflow]]
-name = "Project"
+name = "Dev"
 mode = "parallel"
 author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
+  [[workflows.workflow.tasks]]
+  task = "shell.exec"
+  args = "npm run dev:replit"
+  waitForPort = 5173
