@@ -6,6 +6,23 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[package.metadata.env]
+# Database Configuration
+DATABASE_URL = { required = true, description = "PostgreSQL connection string" }
+NEON_DATABASE_URL = { required = true, description = "Neon database connection string" }
+
+# Notification Configuration
+TWILIO_ACCOUNT_SID = { required = false, description = "Twilio account SID" }
+TWILIO_AUTH_TOKEN = { required = false, description = "Twilio auth token" }
+SMTP_HOST = { required = false, description = "SMTP server host" }
+SMTP_PORT = { required = false, description = "SMTP server port" }
+SMTP_USER = { required = false, description = "SMTP username" }
+SMTP_PASS = { required = false, description = "SMTP password" }
+
+# Service Configuration
+BOOKING_TIMEOUT_HOURS = { default = "2", description = "Booking timeout in hours" }
+LOG_LEVEL = { default = "info", description = "Application log level" }
+
 [dependencies]
 # Spin SDK for WASM components
 spin-sdk = "2.1"

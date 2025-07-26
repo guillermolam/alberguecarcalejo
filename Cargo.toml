@@ -60,6 +60,34 @@ test = "test"
 lint = "lint"
 fmt = "format"
 
+[workspace.metadata.env]
+# Database Configuration
+DATABASE_URL = { required = true, description = "PostgreSQL connection string" }
+NEON_DATABASE_URL = { required = true, description = "Neon database connection string" }
+
+# Auth0 Configuration
+AUTH0_DOMAIN = { required = true, description = "Auth0 tenant domain" }
+AUTH0_CLIENT_ID = { required = true, description = "Auth0 client ID" }
+AUTH0_CLIENT_SECRET = { required = true, description = "Auth0 client secret" }
+AUTH0_AUDIENCE = { required = false, description = "Auth0 API audience" }
+
+# External Services
+TWILIO_ACCOUNT_SID = { required = false, description = "Twilio account SID for SMS" }
+TWILIO_AUTH_TOKEN = { required = false, description = "Twilio auth token" }
+TELEGRAM_BOT_TOKEN = { required = false, description = "Telegram bot token" }
+SMTP_HOST = { required = false, description = "SMTP server host" }
+SMTP_PORT = { required = false, description = "SMTP server port" }
+SMTP_USER = { required = false, description = "SMTP username" }
+SMTP_PASS = { required = false, description = "SMTP password" }
+
+# Encryption and Security
+ENCRYPTION_KEY = { required = true, description = "AES-256-GCM encryption key" }
+JWT_SECRET = { required = true, description = "JWT signing secret" }
+
+# Service Configuration
+RATE_LIMIT_REQUESTS = { required = false, description = "Rate limit requests per minute", default = "100" }
+LOG_LEVEL = { required = false, description = "Application log level", default = "info" }
+
 [workspace.dependencies]
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

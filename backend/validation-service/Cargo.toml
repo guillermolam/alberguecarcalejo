@@ -6,6 +6,21 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[package.metadata.env]
+# OCR Configuration
+TESSERACT_DATA_PATH = { required = false, description = "Path to Tesseract language data" }
+OCR_CONFIDENCE_THRESHOLD = { default = "60", description = "Minimum OCR confidence threshold" }
+
+# Document Validation
+DOCUMENT_MAX_SIZE_MB = { default = "10", description = "Maximum document size in MB" }
+SUPPORTED_FORMATS = { default = "jpg,jpeg,png,pdf", description = "Supported document formats" }
+
+# Security
+ENCRYPTION_KEY = { required = true, description = "AES-256-GCM encryption key" }
+
+# Service Configuration
+LOG_LEVEL = { default = "info", description = "Application log level" }
+
 [dependencies]
 # Spin SDK for WASM components
 spin-sdk = "2.1"
