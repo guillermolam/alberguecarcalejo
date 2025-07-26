@@ -17,104 +17,14 @@ deploymentTarget = "cloudrun"
 ignorePorts = false
 
 [workflows]
-runButton = "Development"
-# Force menu refresh
+runButton = "Dev"
 
 [[workflows.workflow]]
-name = "Integration Tests"
-author = 41744552
-mode = "sequential"
+name = "Dev"
+mode = "parallel"
+author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "task test:integration"
-
-[[workflows.workflow]]
-name = "E2E Tests"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task test:e2e"
-
-[[workflows.workflow]]
-name = "Performance Tests"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task performance:all"
-
-[[workflows.workflow]]
-name = "Browser Compatibility"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task compatibility:all"
-
-[[workflows.workflow]]
-name = "DAST Security"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task security:dast"
-
-[[workflows.workflow]]
-name = "Clean Build"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task clean"
-
-[[workflows.workflow]]
-name = "Preview App"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task preview"
-
-[[workflows.workflow]]
-name = "Health Check"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task health:check"
-
-[[workflows.workflow]]
-name = "Database Reset"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task db:reset"
-
-[[workflows.workflow]]
-name = "Deploy"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task deploy"
-
-[[workflows.workflow]]
-name = "Development"
-author = 41744552
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task dev"
+args = "npm run dev:replit"
+waitForPort = 5173
