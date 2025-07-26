@@ -1,40 +1,68 @@
-spin_manifest_version = "2"
+spin_manifest_version = "1"
 
 [application]
-name = "gateway"
+name = "albergue-gateway"
 version = "0.1.0"
 
 [variables]
-auth0_domain = { required = true }
-auth0_client_id = { required = true }
-auth0_client_secret = { required = true }
-
-[[trigger.http]]
-route = "/api/..."
-component = "gateway-bff"
+auth0_domain = { required = false, default = "" }
+auth0_client_id = { required = false, default = "" }
+auth0_client_secret = { required = false, default = "" }
 
 [[trigger.http]]
 route = "/api/reviews/..."
 component = "reviews-service"
 
 [[trigger.http]]
+route = "/api/booking/..."
+component = "booking-service"
+
+[[trigger.http]]
+route = "/api/auth/..."
+component = "auth-service"
+
+[[trigger.http]]
+route = "/api/security/..."
+component = "security-service"
+
+[[trigger.http]]
+route = "/api/rate-limit/..."
+component = "rate-service"
+
+[[trigger.http]]
 route = "/..."
 component = "static-files"
-
-[component.gateway-bff]
-source = "bff/target/wasm32-wasi/release/auth_verify.wasm"
-[component.gateway-bff.build]
-workdir = "bff"
-command = "cargo build --release --target wasm32-wasi"
-[component.gateway-bff.variables]
-auth0_domain = "{{ auth0_domain }}"
-auth0_client_id = "{{ auth0_client_id }}"
-auth0_client_secret = "{{ auth0_client_secret }}"
 
 [component.reviews-service]
 source = "../services/reviews-service/target/wasm32-wasi/release/reviews_service.wasm"
 [component.reviews-service.build]
 workdir = "../services/reviews-service"
+command = "cargo build --release --target wasm32-wasi"
+[component.reviews-service.variables]
+auth0_domain = "{{ auth0_domain }}"
+
+[component.booking-service]  
+source = "../services/booking-service/target/wasm32-wasi/release/booking_service.wasm"
+[component.booking-service.build]
+workdir = "../services/booking-service"
+command = "cargo build --release --target wasm32-wasi"
+
+[component.auth-service]
+source = "../services/auth-service/target/wasm32-wasi/release/auth_service.wasm"
+[component.auth-service.build]
+workdir = "../services/auth-service"
+command = "cargo build --release --target wasm32-wasi"
+
+[component.security-service]
+source = "../services/security-service/target/wasm32-wasi/release/security_service.wasm"
+[component.security-service.build]
+workdir = "../services/security-service"
+command = "cargo build --release --target wasm32-wasi"
+
+[component.rate-service]
+source = "../services/rate-limiter-service/target/wasm32-wasi/release/rate_limiter_service.wasm"
+[component.rate-service.build]
+workdir = "../services/rate-limiter-service"
 command = "cargo build --release --target wasm32-wasi"
 
 [component.static-files]
