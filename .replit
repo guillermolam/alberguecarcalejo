@@ -18,6 +18,7 @@ ignorePorts = false
 
 [workflows]
 runButton = "Development"
+# Force menu refresh
 
 [[workflows.workflow]]
 name = "Integration Tests"
