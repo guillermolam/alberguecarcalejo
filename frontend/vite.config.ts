@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => ({
 
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: parseInt(process.env.VITE_PORT || '5173'),
     strictPort: true,
     open: false,
     // Allow only Replit dev hosts in development, and your real domain in production
@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => ({
 
   preview: {
     host: '0.0.0.0',
-    port: 4173,
+    port: parseInt(process.env.VITE_PREVIEW_PORT || '4173'),
     strictPort: true,
     allowedHosts:
       mode === 'development'
