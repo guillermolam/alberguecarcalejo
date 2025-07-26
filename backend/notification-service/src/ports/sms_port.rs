@@ -1,6 +1,6 @@
 use crate::domain::Notification;
-use shared::AlbergueResult;
 use async_trait::async_trait;
+use shared::AlbergueResult;
 
 #[async_trait]
 pub trait SmsPort: Send + Sync {

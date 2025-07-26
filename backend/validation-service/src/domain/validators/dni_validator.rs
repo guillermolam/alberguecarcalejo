@@ -1,6 +1,6 @@
-use shared::{ExtractedData, AlbergueResult, AlbergueError};
+use chrono::{DateTime, NaiveDate, Utc};
 use regex::Regex;
-use chrono::{DateTime, Utc, NaiveDate};
+use shared::{AlbergueError, AlbergueResult, ExtractedData};
 
 pub struct DniValidator;
 
@@ -27,12 +27,12 @@ impl DniValidator {
         if let Ok(number) = number_part.parse::<u32>() {
             let letters = "TRWAGMYFPDXBNJZSQVHLCKE";
             let expected_letter = letters.chars().nth((number % 23) as usize);
-            
+
             if let Some(expected) = expected_letter {
                 return letter_part.chars().next() == Some(expected);
             }
         }
-        
+
         false
     }
 
@@ -68,7 +68,8 @@ impl DniValidator {
         }
 
         // Extract birth date
-        let birth_regex = Regex::new(r"(?i)(?:nacimiento|born)[:\s]+(\d{2})[/\-.](\d{2})[/\-.](\d{4})").unwrap();
+        let birth_regex =
+            Regex::new(r"(?i)(?:nacimiento|born)[:\s]+(\d{2})[/\-.](\d{2})[/\-.](\d{4})").unwrap();
         if let Some(captures) = birth_regex.captures(ocr_text) {
             if let (Ok(day), Ok(month), Ok(year)) = (
                 captures[1].parse::<u32>(),
@@ -76,9 +77,7 @@ impl DniValidator {
                 captures[3].parse::<i32>(),
             ) {
                 if let Some(naive_date) = NaiveDate::from_ymd_opt(year, month, day) {
-                    extracted.birth_date = Some(naive_date.and_hms_opt(0, 0, 0)
-                        .unwrap()
-                        .and_utc());
+                    extracted.birth_date = Some(naive_date.and_hms_opt(0, 0, 0).unwrap().and_utc());
                 }
             }
         }

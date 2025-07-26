@@ -1,9 +1,9 @@
 use crate::domain::Notification;
 use crate::ports::SmsPort;
-use shared::{AlbergueError, AlbergueResult};
 use async_trait::async_trait;
 use reqwest::Client;
 use serde_json::json;
+use shared::{AlbergueError, AlbergueResult};
 use std::collections::HashMap;
 
 pub struct TwilioAdapter {
@@ -48,21 +48,28 @@ impl TwilioAdapter {
             .form(&params)
             .send()
             .await
-            .map_err(|e| AlbergueError::ExternalServiceError(format!("Twilio request failed: {}", e)))?;
+            .map_err(|e| {
+                AlbergueError::ExternalServiceError(format!("Twilio request failed: {}", e))
+            })?;
 
         if response.status().is_success() {
-            let result: serde_json::Value = response
-                .json()
-                .await
-                .map_err(|e| AlbergueError::ExternalServiceError(format!("Failed to parse Twilio response: {}", e)))?;
-            
+            let result: serde_json::Value = response.json().await.map_err(|e| {
+                AlbergueError::ExternalServiceError(format!(
+                    "Failed to parse Twilio response: {}",
+                    e
+                ))
+            })?;
+
             Ok(result["sid"].as_str().unwrap_or("unknown").to_string())
         } else {
             let error_text = response
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            Err(AlbergueError::ExternalServiceError(format!("Twilio error: {}", error_text)))
+            Err(AlbergueError::ExternalServiceError(format!(
+                "Twilio error: {}",
+                error_text
+            )))
         }
     }
 }
@@ -74,7 +81,8 @@ impl SmsPort for TwilioAdapter {
             &notification.recipient,
             &self.phone_number,
             &notification.message,
-        ).await
+        )
+        .await
     }
 
     async fn send_whatsapp(&self, notification: &Notification) -> AlbergueResult<String> {
@@ -84,11 +92,8 @@ impl SmsPort for TwilioAdapter {
             format!("whatsapp:{}", notification.recipient)
         };
 
-        self.send_message(
-            &whatsapp_to,
-            &self.whatsapp_number,
-            &notification.message,
-        ).await
+        self.send_message(&whatsapp_to, &self.whatsapp_number, &notification.message)
+            .await
     }
 
     async fn verify_twilio_connection(&self) -> AlbergueResult<bool> {

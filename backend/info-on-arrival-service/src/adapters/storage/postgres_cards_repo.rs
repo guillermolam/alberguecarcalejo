@@ -1,10 +1,10 @@
 use crate::domain::*;
 use crate::ports::StoragePort;
-use shared::{AlbergueError, AlbergueResult, DatabaseConfig};
 use async_trait::async_trait;
+use serde_json;
+use shared::{AlbergueError, AlbergueResult, DatabaseConfig};
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
-use serde_json;
 
 pub struct PostgresCardsRepository {
     pool: Option<PgPool>,
@@ -19,9 +19,9 @@ impl PostgresCardsRepository {
 
     #[cfg(not(target_arch = "wasm32"))]
     pub async fn with_database(database_url: &str) -> AlbergueResult<Self> {
-        let pool = PgPool::connect(database_url)
-            .await
-            .map_err(|e| AlbergueError::DatabaseError(format!("Failed to connect to database: {}", e)))?;
+        let pool = PgPool::connect(database_url).await.map_err(|e| {
+            AlbergueError::DatabaseError(format!("Failed to connect to database: {}", e))
+        })?;
 
         Ok(Self { pool: Some(pool) })
     }
@@ -43,7 +43,7 @@ impl StoragePort for PostgresCardsRepository {
             if let Some(pool) = &self.pool {
                 let card_type_str = serde_json::to_string(&card.card_type)?;
                 let links_json = serde_json::to_string(&card.links)?;
-                
+
                 sqlx::query!(
                     r#"
                     INSERT INTO info_cards (
@@ -76,7 +76,9 @@ impl StoragePort for PostgresCardsRepository {
 
                 Ok(card)
             } else {
-                Err(AlbergueError::DatabaseError("No database connection".to_string()))
+                Err(AlbergueError::DatabaseError(
+                    "No database connection".to_string(),
+                ))
             }
         }
     }
@@ -85,23 +87,25 @@ impl StoragePort for PostgresCardsRepository {
         #[cfg(target_arch = "wasm32")]
         {
             // Simulate returning a card
-            Err(AlbergueError::NotFound(format!("Card {} not found in WASM storage", id)))
+            Err(AlbergueError::NotFound(format!(
+                "Card {} not found in WASM storage",
+                id
+            )))
         }
 
         #[cfg(not(target_arch = "wasm32"))]
         {
             if let Some(pool) = &self.pool {
-                let row = sqlx::query!(
-                    "SELECT * FROM info_cards WHERE id = $1",
-                    id
-                )
-                .fetch_one(pool)
-                .await
-                .map_err(|_| AlbergueError::NotFound(format!("Card {} not found", id)))?;
+                let row = sqlx::query!("SELECT * FROM info_cards WHERE id = $1", id)
+                    .fetch_one(pool)
+                    .await
+                    .map_err(|_| AlbergueError::NotFound(format!("Card {} not found", id)))?;
 
                 self.row_to_card(row)
             } else {
-                Err(AlbergueError::DatabaseError("No database connection".to_string()))
+                Err(AlbergueError::DatabaseError(
+                    "No database connection".to_string(),
+                ))
             }
         }
     }
@@ -124,7 +128,7 @@ impl StoragePort for PostgresCardsRepository {
         {
             if let Some(pool) = &self.pool {
                 let card_type_str = serde_json::to_string(&card_type)?;
-                
+
                 let row = sqlx::query!(
                     "SELECT * FROM info_cards WHERE card_type = $1 ORDER BY last_updated DESC LIMIT 1",
                     card_type_str
@@ -135,7 +139,9 @@ impl StoragePort for PostgresCardsRepository {
 
                 self.row_to_card(row)
             } else {
-                Err(AlbergueError::DatabaseError("No database connection".to_string()))
+                Err(AlbergueError::DatabaseError(
+                    "No database connection".to_string(),
+                ))
             }
         }
     }
@@ -165,7 +171,9 @@ impl StoragePort for PostgresCardsRepository {
                 }
                 Ok(cards)
             } else {
-                Err(AlbergueError::DatabaseError("No database connection".to_string()))
+                Err(AlbergueError::DatabaseError(
+                    "No database connection".to_string(),
+                ))
             }
         }
     }
@@ -183,10 +191,14 @@ impl StoragePort for PostgresCardsRepository {
                 sqlx::query!("DELETE FROM info_cards WHERE id = $1", id)
                     .execute(pool)
                     .await
-                    .map_err(|e| AlbergueError::DatabaseError(format!("Failed to delete card: {}", e)))?;
+                    .map_err(|e| {
+                        AlbergueError::DatabaseError(format!("Failed to delete card: {}", e))
+                    })?;
                 Ok(())
             } else {
-                Err(AlbergueError::DatabaseError("No database connection".to_string()))
+                Err(AlbergueError::DatabaseError(
+                    "No database connection".to_string(),
+                ))
             }
         }
     }
@@ -216,7 +228,9 @@ impl StoragePort for PostgresCardsRepository {
                 }
                 Ok(cards)
             } else {
-                Err(AlbergueError::DatabaseError("No database connection".to_string()))
+                Err(AlbergueError::DatabaseError(
+                    "No database connection".to_string(),
+                ))
             }
         }
     }
@@ -227,12 +241,12 @@ impl PostgresCardsRepository {
     fn row_to_card(&self, row: sqlx::postgres::PgRow) -> AlbergueResult<InfoCard> {
         let card_type: CardType = serde_json::from_str(
             &row.try_get::<String, _>("card_type")
-                .map_err(|e| AlbergueError::DatabaseError(format!("Invalid card_type: {}", e)))?
+                .map_err(|e| AlbergueError::DatabaseError(format!("Invalid card_type: {}", e)))?,
         )?;
 
         let links: Vec<InfoLink> = serde_json::from_str(
             &row.try_get::<String, _>("links")
-                .map_err(|e| AlbergueError::DatabaseError(format!("Invalid links: {}", e)))?
+                .map_err(|e| AlbergueError::DatabaseError(format!("Invalid links: {}", e)))?,
         )?;
 
         Ok(InfoCard {

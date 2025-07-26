@@ -1,8 +1,8 @@
 use crate::domain::*;
 use crate::ports::*;
+use serde_json;
 use shared::{AlbergueError, AlbergueResult};
 use std::collections::HashMap;
-use serde_json;
 
 pub struct NotificationServiceImpl {
     email_adapter: Box<dyn EmailPort>,
@@ -14,7 +14,7 @@ pub struct NotificationServiceImpl {
 impl NotificationServiceImpl {
     pub fn new() -> Self {
         let mut template_engine = handlebars::Handlebars::new();
-        
+
         // Register default templates
         Self::register_templates(&mut template_engine);
 
@@ -28,9 +28,10 @@ impl NotificationServiceImpl {
 
     fn register_templates(engine: &mut handlebars::Handlebars<'static>) {
         // Booking confirmation email template
-        engine.register_template_string(
-            "booking_confirmation_email",
-            r#"
+        engine
+            .register_template_string(
+                "booking_confirmation_email",
+                r#"
 ¡Hola {{pilgrim_name}}!
 
 Su reserva en el Albergue del Carrascalejo ha sido confirmada.
@@ -46,12 +47,14 @@ Detalles de la reserva:
 
 Albergue del Carrascalejo
 "#,
-        ).unwrap();
+            )
+            .unwrap();
 
         // Payment receipt template
-        engine.register_template_string(
-            "payment_receipt_email",
-            r#"
+        engine
+            .register_template_string(
+                "payment_receipt_email",
+                r#"
 Estimado/a peregrino/a,
 
 Su pago ha sido procesado correctamente.
@@ -70,7 +73,8 @@ Puede descargar su recibo desde: {{receipt_url}}
 
 Albergue del Carrascalejo
 "#,
-        ).unwrap();
+            )
+            .unwrap();
 
         // WhatsApp booking confirmation
         engine.register_template_string(
@@ -79,13 +83,19 @@ Albergue del Carrascalejo
         ).unwrap();
     }
 
-    pub async fn send_email(&self, recipient: &str, subject: &str, content: &str) -> AlbergueResult<String> {
+    pub async fn send_email(
+        &self,
+        recipient: &str,
+        subject: &str,
+        content: &str,
+    ) -> AlbergueResult<String> {
         let notification = Notification::new(
             NotificationType::AdminAlert,
             NotificationChannel::Email,
             recipient.to_string(),
             content.to_string(),
-        ).with_subject(subject.to_string());
+        )
+        .with_subject(subject.to_string());
 
         self.email_adapter.send_email(&notification).await
     }
@@ -138,7 +148,9 @@ Albergue del Carrascalejo
         template_data.insert("total_amount".to_string(), data.total_amount.to_string());
 
         // Send email
-        let email_content = self.template_engine.render("booking_confirmation_email", &template_data)
+        let email_content = self
+            .template_engine
+            .render("booking_confirmation_email", &template_data)
             .map_err(|e| AlbergueError::ValidationError(format!("Template error: {}", e)))?;
 
         let email_notification = Notification::new(
@@ -146,14 +158,17 @@ Albergue del Carrascalejo
             NotificationChannel::Email,
             data.pilgrim_email.clone(),
             email_content,
-        ).with_subject("Reserva confirmada - Albergue del Carrascalejo".to_string())
-         .with_template_data(template_data.clone());
+        )
+        .with_subject("Reserva confirmada - Albergue del Carrascalejo".to_string())
+        .with_template_data(template_data.clone());
 
         let email_result = self.email_adapter.send_email(&email_notification).await?;
 
         // Send WhatsApp if phone available
         if let Some(phone) = data.pilgrim_phone {
-            let whatsapp_content = self.template_engine.render("booking_confirmation_whatsapp", &template_data)
+            let whatsapp_content = self
+                .template_engine
+                .render("booking_confirmation_whatsapp", &template_data)
                 .map_err(|e| AlbergueError::ValidationError(format!("Template error: {}", e)))?;
 
             let whatsapp_notification = Notification::new(
@@ -161,11 +176,12 @@ Albergue del Carrascalejo
                 NotificationChannel::WhatsApp,
                 phone,
                 whatsapp_content,
-            ).with_template_data(template_data);
+            )
+            .with_template_data(template_data);
 
             // Try WhatsApp, fallback to SMS
             match self.sms_adapter.send_whatsapp(&whatsapp_notification).await {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(_) => {
                     let _ = self.sms_adapter.send_sms(&whatsapp_notification).await;
                 }
@@ -185,17 +201,25 @@ Albergue del Carrascalejo
         template_data.insert("amount".to_string(), data.amount.to_string());
         template_data.insert("currency".to_string(), data.currency.clone());
         template_data.insert("payment_method".to_string(), data.payment_method.clone());
-        template_data.insert("payment_date".to_string(), chrono::Utc::now().format("%Y-%m-%d %H:%M").to_string());
+        template_data.insert(
+            "payment_date".to_string(),
+            chrono::Utc::now().format("%Y-%m-%d %H:%M").to_string(),
+        );
 
         if let Some(receipt_url) = &data.receipt_url {
             template_data.insert("receipt_url".to_string(), receipt_url.clone());
         }
 
-        let email_content = self.template_engine.render("payment_receipt_email", &template_data)
+        let email_content = self
+            .template_engine
+            .render("payment_receipt_email", &template_data)
             .map_err(|e| AlbergueError::ValidationError(format!("Template error: {}", e)))?;
 
         // This would need to get the recipient email from the booking service
         // For now, we'll return a success message
-        Ok(format!("Payment receipt prepared for booking {}", data.booking_id))
+        Ok(format!(
+            "Payment receipt prepared for booking {}",
+            data.booking_id
+        ))
     }
 }

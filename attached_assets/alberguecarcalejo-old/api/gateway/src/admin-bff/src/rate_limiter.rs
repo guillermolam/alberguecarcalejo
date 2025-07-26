@@ -1,8 +1,8 @@
-use wasm_bindgen::prelude::*;
-use web_sys::{window, Storage};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use wasm_bindgen::prelude::*;
+use web_sys::{window, Storage};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct AdminRateLimitEntry {
@@ -34,13 +34,22 @@ static LOCKOUT_STORAGE_KEY: &str = "albergue_admin_lockouts";
 pub fn init() {
     // Initialize admin rate limiter storage if needed
     if let Ok(storage) = get_storage() {
-        if storage.get_item(ADMIN_STORAGE_KEY).unwrap_or(None).is_none() {
-            let empty_limits: HashMap<String, HashMap<String, AdminRateLimitEntry>> = HashMap::new();
+        if storage
+            .get_item(ADMIN_STORAGE_KEY)
+            .unwrap_or(None)
+            .is_none()
+        {
+            let empty_limits: HashMap<String, HashMap<String, AdminRateLimitEntry>> =
+                HashMap::new();
             let serialized = serde_json::to_string(&empty_limits).unwrap_or_default();
             let _ = storage.set_item(ADMIN_STORAGE_KEY, &serialized);
         }
-        
-        if storage.get_item(LOCKOUT_STORAGE_KEY).unwrap_or(None).is_none() {
+
+        if storage
+            .get_item(LOCKOUT_STORAGE_KEY)
+            .unwrap_or(None)
+            .is_none()
+        {
             let empty_lockouts: HashMap<String, DateTime<Utc>> = HashMap::new();
             let serialized = serde_json::to_string(&empty_lockouts).unwrap_or_default();
             let _ = storage.set_item(LOCKOUT_STORAGE_KEY, &serialized);
@@ -61,16 +70,20 @@ pub fn check_rate_limit(client_id: &str, operation: &str, limit: u32, window_sec
 
     let now = Utc::now();
     let mut all_limits = load_admin_rate_limits(&storage);
-    
+
     // Get or create client limits
-    let client_limits = all_limits.entry(client_id.to_string()).or_insert_with(HashMap::new);
-    
+    let client_limits = all_limits
+        .entry(client_id.to_string())
+        .or_insert_with(HashMap::new);
+
     // Check specific operation limit
-    let entry = client_limits.entry(operation.to_string()).or_insert_with(|| AdminRateLimitEntry {
-        count: 0,
-        window_start: now,
-        last_request: now,
-    });
+    let entry = client_limits
+        .entry(operation.to_string())
+        .or_insert_with(|| AdminRateLimitEntry {
+            count: 0,
+            window_start: now,
+            last_request: now,
+        });
 
     // Check if we need to reset the window
     let window_duration = chrono::Duration::seconds(window_seconds as i64);
@@ -94,7 +107,7 @@ pub fn check_rate_limit(client_id: &str, operation: &str, limit: u32, window_sec
 
     // Save updated limits
     save_admin_rate_limits(&storage, &all_limits);
-    
+
     // Clean old entries periodically
     if entry.count % 5 == 0 {
         cleanup_old_admin_entries(&storage, &mut all_limits);
@@ -106,27 +119,29 @@ pub fn check_rate_limit(client_id: &str, operation: &str, limit: u32, window_sec
 pub fn get_admin_status(client_id: &str) -> AdminRateLimitStatus {
     let storage = match get_storage() {
         Ok(s) => s,
-        Err(_) => return AdminRateLimitStatus {
-            client_id: client_id.to_string(),
-            admin_limits: HashMap::new(),
-            is_locked_out: false,
-            lockout_expires: None,
-        },
+        Err(_) => {
+            return AdminRateLimitStatus {
+                client_id: client_id.to_string(),
+                admin_limits: HashMap::new(),
+                is_locked_out: false,
+                lockout_expires: None,
+            }
+        }
     };
 
     let all_limits = load_admin_rate_limits(&storage);
     let client_limits = all_limits.get(client_id).cloned().unwrap_or_default();
-    
+
     let mut admin_limits = HashMap::new();
     let now = Utc::now();
 
     // Admin operations and their stricter limits
     let operations = [
-        ("auth", 5, 3600),        // 5 auth attempts per hour
-        ("dashboard", 60, 3600),   // 60 dashboard requests per hour
-        ("beds", 30, 3600),        // 30 bed requests per hour
-        ("bed_update", 20, 3600),  // 20 bed updates per hour
-        ("gov_retry", 10, 3600),   // 10 government retries per hour
+        ("auth", 5, 3600),            // 5 auth attempts per hour
+        ("dashboard", 60, 3600),      // 60 dashboard requests per hour
+        ("beds", 30, 3600),           // 30 bed requests per hour
+        ("bed_update", 20, 3600),     // 20 bed updates per hour
+        ("gov_retry", 10, 3600),      // 10 government retries per hour
         ("booking_update", 15, 3600), // 15 booking updates per hour
     ];
 
@@ -143,13 +158,16 @@ pub fn get_admin_status(client_id: &str) -> AdminRateLimitStatus {
             (0, now + chrono::Duration::seconds(*window_seconds as i64))
         };
 
-        admin_limits.insert(operation.to_string(), AdminRateLimitInfo {
-            current_count,
-            limit: *limit,
-            window_seconds: *window_seconds,
-            remaining: limit.saturating_sub(current_count),
-            reset_time,
-        });
+        admin_limits.insert(
+            operation.to_string(),
+            AdminRateLimitInfo {
+                current_count,
+                limit: *limit,
+                window_seconds: *window_seconds,
+                remaining: limit.saturating_sub(current_count),
+                reset_time,
+            },
+        );
     }
 
     let (is_locked_out, lockout_expires) = check_lockout_status(client_id, &storage);
@@ -177,8 +195,11 @@ fn implement_lockout(client_id: &str, storage: &Storage) {
     let mut lockouts = load_lockouts(storage);
     lockouts.insert(client_id.to_string(), Utc::now());
     save_lockouts(storage, &lockouts);
-    
-    console_log!("Admin BFF: Client {} locked out due to repeated auth failures", client_id);
+
+    console_log!(
+        "Admin BFF: Client {} locked out due to repeated auth failures",
+        client_id
+    );
 }
 
 fn check_lockout_status(client_id: &str, storage: &Storage) -> (bool, Option<DateTime<Utc>>) {
@@ -187,7 +208,7 @@ fn check_lockout_status(client_id: &str, storage: &Storage) -> (bool, Option<Dat
         let now = Utc::now();
         let lockout_duration = chrono::Duration::hours(1);
         let lockout_expires = *lockout_time + lockout_duration;
-        
+
         if now < lockout_expires {
             return (true, Some(lockout_expires));
         } else {
@@ -208,7 +229,9 @@ fn get_storage() -> Result<Storage, JsValue> {
         .ok_or("localStorage not available".into())
 }
 
-fn load_admin_rate_limits(storage: &Storage) -> HashMap<String, HashMap<String, AdminRateLimitEntry>> {
+fn load_admin_rate_limits(
+    storage: &Storage,
+) -> HashMap<String, HashMap<String, AdminRateLimitEntry>> {
     let data = storage
         .get_item(ADMIN_STORAGE_KEY)
         .unwrap_or(None)
@@ -217,7 +240,10 @@ fn load_admin_rate_limits(storage: &Storage) -> HashMap<String, HashMap<String, 
     serde_json::from_str(&data).unwrap_or_default()
 }
 
-fn save_admin_rate_limits(storage: &Storage, limits: &HashMap<String, HashMap<String, AdminRateLimitEntry>>) {
+fn save_admin_rate_limits(
+    storage: &Storage,
+    limits: &HashMap<String, HashMap<String, AdminRateLimitEntry>>,
+) {
     if let Ok(serialized) = serde_json::to_string(limits) {
         let _ = storage.set_item(ADMIN_STORAGE_KEY, &serialized);
     }
@@ -238,25 +264,25 @@ fn save_lockouts(storage: &Storage, lockouts: &HashMap<String, DateTime<Utc>>) {
     }
 }
 
-fn cleanup_old_admin_entries(storage: &Storage, all_limits: &mut HashMap<String, HashMap<String, AdminRateLimitEntry>>) {
+fn cleanup_old_admin_entries(
+    storage: &Storage,
+    all_limits: &mut HashMap<String, HashMap<String, AdminRateLimitEntry>>,
+) {
     let now = Utc::now();
     let cleanup_threshold = chrono::Duration::hours(12); // More aggressive cleanup for admin
 
     all_limits.retain(|_, client_limits| {
-        client_limits.retain(|_, entry| {
-            now.signed_duration_since(entry.last_request) < cleanup_threshold
-        });
+        client_limits
+            .retain(|_, entry| now.signed_duration_since(entry.last_request) < cleanup_threshold);
         !client_limits.is_empty()
     });
 
     save_admin_rate_limits(storage, all_limits);
-    
+
     // Also cleanup old lockouts
     let mut lockouts = load_lockouts(storage);
     let lockout_threshold = chrono::Duration::hours(24);
-    lockouts.retain(|_, lockout_time| {
-        now.signed_duration_since(*lockout_time) < lockout_threshold
-    });
+    lockouts.retain(|_, lockout_time| now.signed_duration_since(*lockout_time) < lockout_threshold);
     save_lockouts(storage, &lockouts);
 }
 
@@ -286,15 +312,25 @@ pub fn detect_admin_abuse_patterns(client_id: &str) -> bool {
 
     if recent_admin_requests > 20 {
         suspicious_activity = true;
-        console_error!("Admin BFF: Suspicious rapid requests detected from {}", client_id);
+        console_error!(
+            "Admin BFF: Suspicious rapid requests detected from {}",
+            client_id
+        );
     }
 
     // Check for failed authentication patterns
     if let Some(auth_entry) = client_limits.get("auth") {
-        if auth_entry.count > 3 && 
-           now.signed_duration_since(auth_entry.window_start).num_minutes() < 10 {
+        if auth_entry.count > 3
+            && now
+                .signed_duration_since(auth_entry.window_start)
+                .num_minutes()
+                < 10
+        {
             suspicious_activity = true;
-            console_error!("Admin BFF: Suspicious auth failure pattern from {}", client_id);
+            console_error!(
+                "Admin BFF: Suspicious auth failure pattern from {}",
+                client_id
+            );
         }
     }
 
@@ -340,7 +376,7 @@ pub fn get_admin_client_fingerprint() -> String {
     // Add timestamp component for admin sessions
     fingerprint_parts.push(format!("admin:{}", chrono::Utc::now().timestamp()));
 
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(fingerprint_parts.join("|"));
     let result = hasher.finalize();

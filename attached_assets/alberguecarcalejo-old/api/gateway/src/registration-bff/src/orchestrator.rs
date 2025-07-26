@@ -1,15 +1,15 @@
-use crate::{RegistrationData, AvailabilityRequest};
 use crate::validator;
+use crate::{AvailabilityRequest, RegistrationData};
+use serde_json::{json, Value};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{window, Request, RequestInit, Headers, Response};
-use serde_json::{json, Value};
+use web_sys::{window, Headers, Request, RequestInit, Response};
 
 /// Orchestrate availability check with backend
 pub async fn check_availability(request: &AvailabilityRequest) -> Result<Value, String> {
     // First check with backend API
     let api_url = "/api/availability";
-    
+
     let request_body = json!({
         "checkInDate": request.check_in_date,
         "checkOutDate": request.check_out_date,
@@ -31,7 +31,10 @@ pub async fn process_registration(data: &RegistrationData) -> Result<Value, Stri
 
     // Step 1: Final validation before processing
     if let Err(validation_errors) = validator::validate_registration(data) {
-        return Err(format!("Validation failed: {}", validation_errors.join(", ")));
+        return Err(format!(
+            "Validation failed: {}",
+            validation_errors.join(", ")
+        ));
     }
 
     // Step 2: Check availability again to ensure no race conditions
@@ -42,7 +45,11 @@ pub async fn process_registration(data: &RegistrationData) -> Result<Value, Stri
     };
 
     let availability = check_availability(&availability_check).await?;
-    if !availability.get("available").and_then(|v| v.as_bool()).unwrap_or(false) {
+    if !availability
+        .get("available")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+    {
         return Err("No beds available for selected dates".to_string());
     }
 
@@ -87,12 +94,12 @@ pub async fn process_registration(data: &RegistrationData) -> Result<Value, Stri
     match make_api_request("POST", "/api/register", Some(&registration_payload)).await {
         Ok(response) => {
             console_log!("BFF: Registration successful");
-            
+
             // Step 4: If registration successful, trigger government submission
             if let Some(booking_id) = response.get("bookingId").and_then(|v| v.as_u64()) {
                 let _ = trigger_government_submission(booking_id as u32).await;
             }
-            
+
             Ok(response)
         }
         Err(e) => {
@@ -104,8 +111,11 @@ pub async fn process_registration(data: &RegistrationData) -> Result<Value, Stri
 
 /// Trigger government submission (async, don't wait for completion)
 async fn trigger_government_submission(booking_id: u32) -> Result<(), String> {
-    console_log!("BFF: Triggering government submission for booking {}", booking_id);
-    
+    console_log!(
+        "BFF: Triggering government submission for booking {}",
+        booking_id
+    );
+
     let submission_payload = json!({
         "bookingId": booking_id,
         "autoSubmit": true
@@ -128,12 +138,14 @@ async fn trigger_government_submission(booking_id: u32) -> Result<(), String> {
 /// Make HTTP request to backend API
 async fn make_api_request(method: &str, url: &str, body: Option<&Value>) -> Result<Value, String> {
     let window = window().ok_or("No global window")?;
-    
+
     let mut opts = RequestInit::new();
     opts.method(method);
-    
+
     let headers = Headers::new().map_err(|_| "Failed to create headers")?;
-    headers.set("Content-Type", "application/json").map_err(|_| "Failed to set content type")?;
+    headers
+        .set("Content-Type", "application/json")
+        .map_err(|_| "Failed to set content type")?;
     opts.headers(&headers);
 
     if let Some(body_data) = body {
@@ -142,15 +154,15 @@ async fn make_api_request(method: &str, url: &str, body: Option<&Value>) -> Resu
         opts.body(Some(&JsValue::from_str(&body_str)));
     }
 
-    let request = Request::new_with_str_and_init(url, &opts)
-        .map_err(|_| "Failed to create request")?;
+    let request =
+        Request::new_with_str_and_init(url, &opts).map_err(|_| "Failed to create request")?;
 
     let resp_value = JsFuture::from(window.fetch_with_request(&request))
         .await
         .map_err(|_| "Request failed")?;
 
     let resp: Response = resp_value.dyn_into().map_err(|_| "Invalid response type")?;
-    
+
     if !resp.ok() {
         let status = resp.status();
         let status_text = resp.status_text();
@@ -166,8 +178,7 @@ async fn make_api_request(method: &str, url: &str, body: Option<&Value>) -> Resu
         .as_string()
         .ok_or("Failed to convert to string")?;
 
-    serde_json::from_str(&json_string)
-        .map_err(|e| format!("Failed to parse JSON response: {}", e))
+    serde_json::from_str(&json_string).map_err(|e| format!("Failed to parse JSON response: {}", e))
 }
 
 /// Health check for backend connectivity
@@ -190,7 +201,7 @@ pub async fn get_system_status() -> Result<Value, String> {
 pub async fn process_ocr_backend(request: &crate::OCRProcessingRequest) -> Result<Value, String> {
     let payload = serde_json::to_value(request)
         .map_err(|e| format!("Failed to serialize OCR request: {}", e))?;
-    
+
     make_api_request("POST", "/api/ocr/process", Some(payload)).await
 }
 
@@ -200,7 +211,7 @@ pub async fn validate_document_backend(doc_type: &str, doc_number: &str) -> Resu
         "document_type": doc_type,
         "document_number": doc_number
     });
-    
+
     make_api_request("POST", "/api/validate/document", Some(payload)).await
 }
 
@@ -215,23 +226,30 @@ where
     F: std::future::Future<Output = Result<T, String>>,
 {
     console_log!("BFF: Starting secure operation: {}", operation_name);
-    
+
     // Add timing to detect potential attacks
     let start_time = js_sys::Date::now();
-    
+
     let result = operation.await;
-    
+
     let end_time = js_sys::Date::now();
     let duration = end_time - start_time;
-    
+
     // Log timing for security monitoring
-    console_log!("BFF: Operation {} completed in {}ms", operation_name, duration);
-    
+    console_log!(
+        "BFF: Operation {} completed in {}ms",
+        operation_name,
+        duration
+    );
+
     // Check for suspiciously fast operations (potential automated attacks)
     if duration < 100.0 {
-        console_error!("BFF: Suspiciously fast operation detected: {}", operation_name);
+        console_error!(
+            "BFF: Suspiciously fast operation detected: {}",
+            operation_name
+        );
     }
-    
+
     result
 }
 
@@ -245,10 +263,15 @@ where
     F: Fn() -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<T, String>>>>,
 {
     let mut last_error = String::new();
-    
+
     for attempt in 1..=max_retries {
-        console_log!("BFF: Attempt {} of {} for {}", attempt, max_retries, operation_name);
-        
+        console_log!(
+            "BFF: Attempt {} of {} for {}",
+            attempt,
+            max_retries,
+            operation_name
+        );
+
         match operation().await {
             Ok(result) => return Ok(result),
             Err(e) => {
@@ -257,12 +280,15 @@ where
                     // Exponential backoff
                     let delay_ms = 1000 * (2_u32.pow(attempt - 1));
                     console_log!("BFF: Retrying {} in {}ms", operation_name, delay_ms);
-                    
+
                     // Simple delay using setTimeout (simplified for WASM)
                     let promise = js_sys::Promise::new(&mut |resolve, _| {
                         let window = window().unwrap();
                         window
-                            .set_timeout_with_callback_and_timeout_and_arguments_0(&resolve, delay_ms as i32)
+                            .set_timeout_with_callback_and_timeout_and_arguments_0(
+                                &resolve,
+                                delay_ms as i32,
+                            )
                             .unwrap();
                     });
                     let _ = JsFuture::from(promise).await;
@@ -270,6 +296,9 @@ where
             }
         }
     }
-    
-    Err(format!("Operation {} failed after {} attempts: {}", operation_name, max_retries, last_error))
+
+    Err(format!(
+        "Operation {} failed after {} attempts: {}",
+        operation_name, max_retries, last_error
+    ))
 }

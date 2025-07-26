@@ -1,12 +1,12 @@
 use crate::domain::Notification;
 use crate::ports::EmailPort;
-use shared::{AlbergueError, AlbergueResult};
+use async_trait::async_trait;
 use lettre::{
     message::{header::ContentType, Message},
     transport::smtp::{authentication::Credentials, response::Response},
     AsyncSmtpTransport, AsyncTransport, Tokio1Executor,
 };
-use async_trait::async_trait;
+use shared::{AlbergueError, AlbergueResult};
 
 pub struct NodemailerAdapter {
     smtp_transport: AsyncSmtpTransport<Tokio1Executor>,
@@ -15,15 +15,16 @@ pub struct NodemailerAdapter {
 
 impl NodemailerAdapter {
     pub fn new() -> Self {
-        let smtp_host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "smtp.resend.com".to_string());
+        let smtp_host =
+            std::env::var("SMTP_HOST").unwrap_or_else(|_| "smtp.resend.com".to_string());
         let smtp_port = std::env::var("SMTP_PORT")
             .unwrap_or_else(|_| "587".to_string())
             .parse::<u16>()
             .unwrap_or(587);
         let smtp_user = std::env::var("SMTP_USER").unwrap_or_else(|_| "resend".to_string());
         let smtp_password = std::env::var("SMTP_PASSWORD").unwrap_or_default();
-        let from_email = std::env::var("FROM_EMAIL")
-            .unwrap_or_else(|_| "albergue@carrascalejo.com".to_string());
+        let from_email =
+            std::env::var("FROM_EMAIL").unwrap_or_else(|_| "albergue@carrascalejo.com".to_string());
 
         let creds = Credentials::new(smtp_user, smtp_password);
 
@@ -52,20 +53,27 @@ impl EmailPort for NodemailerAdapter {
             .from(
                 format!("Albergue del Carrascalejo <{}>", self.from_email)
                     .parse()
-                    .map_err(|e| AlbergueError::ValidationError(format!("Invalid from email: {}", e)))?,
+                    .map_err(|e| {
+                        AlbergueError::ValidationError(format!("Invalid from email: {}", e))
+                    })?,
             )
-            .to(notification
-                .recipient
-                .parse()
-                .map_err(|e| AlbergueError::ValidationError(format!("Invalid recipient email: {}", e)))?)
+            .to(notification.recipient.parse().map_err(|e| {
+                AlbergueError::ValidationError(format!("Invalid recipient email: {}", e))
+            })?)
             .subject(subject)
             .header(ContentType::TEXT_PLAIN)
             .body(notification.message.clone())
             .map_err(|e| AlbergueError::ValidationError(format!("Failed to build email: {}", e)))?;
 
         match self.smtp_transport.send(email).await {
-            Ok(response) => Ok(format!("Email sent: {}", response.message().iter().next().unwrap_or(&"No message"))),
-            Err(e) => Err(AlbergueError::ExternalServiceError(format!("SMTP error: {}", e))),
+            Ok(response) => Ok(format!(
+                "Email sent: {}",
+                response.message().iter().next().unwrap_or(&"No message")
+            )),
+            Err(e) => Err(AlbergueError::ExternalServiceError(format!(
+                "SMTP error: {}",
+                e
+            ))),
         }
     }
 

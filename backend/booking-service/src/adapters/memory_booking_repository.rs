@@ -1,11 +1,11 @@
-use crate::ports::booking_repository::BookingRepository;
 use crate::domain::entities::booking::Booking;
-use shared::{AlbergueResult, BedType};
+use crate::ports::booking_repository::BookingRepository;
 use chrono::{DateTime, Utc};
-use uuid::Uuid;
+use shared::{AlbergueResult, BedType};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
+use uuid::Uuid;
 
 pub struct MemoryBookingRepository {
     bookings: Arc<Mutex<HashMap<Uuid, Booking>>>,

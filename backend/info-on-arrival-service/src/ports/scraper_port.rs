@@ -1,6 +1,6 @@
 use crate::domain::ScrapedContent;
-use shared::AlbergueResult;
 use async_trait::async_trait;
+use shared::AlbergueResult;
 
 #[async_trait]
 pub trait ScraperPort: Send + Sync {

@@ -1,5 +1,6 @@
-use shared::{BookingDto, BedType, BookingStatus};
-use chrono::{DateTime, Utc};
+
+se chrono::{DateTime, Utc};
+use shared::{BedType, BookingDto, BookingStatus};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -90,7 +91,7 @@ impl Booking {
             BookingStatus::Reserved => {
                 let expiry_time = self.created_at + chrono::Duration::hours(2);
                 Utc::now() > expiry_time
-            },
+            }
             _ => false,
         }
     }

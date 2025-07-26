@@ -1,6 +1,6 @@
 use crate::domain::*;
-use shared::AlbergueResult;
 use async_trait::async_trait;
+use shared::AlbergueResult;
 use uuid::Uuid;
 
 #[async_trait]

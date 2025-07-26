@@ -35,7 +35,7 @@ pub struct DocumentData {
     pub provincia: Option<String>,
     pub municipio: Option<String>,
     pub support_number: Option<String>, // Número soporte
-    pub can_number: Option<String>, // CAN for modern DNIs
+    pub can_number: Option<String>,     // CAN for modern DNIs
 }
 
 #[derive(Debug, Serialize)]
@@ -69,7 +69,7 @@ impl DocumentType {
             _ => Self::Other,
         }
     }
-    
+
     pub fn to_string(&self) -> String {
         match self {
             Self::DniFront => "DNI_FRONT".to_string(),

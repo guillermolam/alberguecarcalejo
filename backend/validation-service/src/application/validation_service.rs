@@ -1,11 +1,14 @@
-use shared::{ValidationRequest, ValidationResponse, ExtractedData, DocumentType, AlbergueResult, AlbergueError};
+use crate::adapters::tesseract_ocr::TesseractOCR;
+use crate::domain::ocr::{ConfidenceScorer, ImageProcessor, TextExtractor};
 use crate::domain::validators::dni_validator::DniValidator;
+use crate::domain::validators::mrz_validator::MrzValidator;
 use crate::domain::validators::nie_validator::NieValidator;
 use crate::domain::validators::passport_validator::PassportValidator;
-use crate::domain::validators::mrz_validator::MrzValidator;
-use crate::domain::ocr::{ImageProcessor, TextExtractor, ConfidenceScorer};
 use crate::ports::ocr_client::OCRClient;
-use crate::adapters::tesseract_ocr::TesseractOCR;
+use shared::{
+    AlbergueError, AlbergueResult, DocumentType, ExtractedData, ValidationRequest,
+    ValidationResponse,
+};
 use std::collections::HashMap;
 
 pub struct ValidationService {
@@ -33,18 +36,22 @@ impl ValidationService {
         }
     }
 
-    pub async fn validate_document(&self, request: ValidationRequest) -> AlbergueResult<ValidationResponse> {
+    pub async fn validate_document(
+        &self,
+        request: ValidationRequest,
+    ) -> AlbergueResult<ValidationResponse> {
         // Decode base64 images
-        let front_image = base64::decode(&request.front_image)
-            .map_err(|e| AlbergueError::Validation {
-                message: format!("Invalid front image encoding: {}", e)
+        let front_image =
+            base64::decode(&request.front_image).map_err(|e| AlbergueError::Validation {
+                message: format!("Invalid front image encoding: {}", e),
             })?;
 
         let back_image = if let Some(back_b64) = &request.back_image {
-            Some(base64::decode(back_b64)
-                .map_err(|e| AlbergueError::Validation {
-                    message: format!("Invalid back image encoding: {}", e)
-                })?)
+            Some(
+                base64::decode(back_b64).map_err(|e| AlbergueError::Validation {
+                    message: format!("Invalid back image encoding: {}", e),
+                })?,
+            )
         } else {
             None
         };
@@ -72,7 +79,7 @@ impl ValidationService {
 
         // Validate document
         let is_valid = self.validate_document_logic(&request.document_type, &extracted_data)?;
-        
+
         // Calculate confidence score
         let confidence_score = self.calculate_confidence(&extracted_data);
 
@@ -108,7 +115,11 @@ impl ValidationService {
         })
     }
 
-    fn validate_document_logic(&self, doc_type: &DocumentType, data: &ExtractedData) -> AlbergueResult<bool> {
+    fn validate_document_logic(
+        &self,
+        doc_type: &DocumentType,
+        data: &ExtractedData,
+    ) -> AlbergueResult<bool> {
         match doc_type {
             DocumentType::DNI => {
                 if let Some(doc_number) = &data.document_number {
@@ -116,8 +127,8 @@ impl ValidationService {
                 } else {
                     Ok(false)
                 }
-            },
-            DocumentType::NIE => Ok(true), // Simplified
+            }
+            DocumentType::NIE => Ok(true),      // Simplified
             DocumentType::Passport => Ok(true), // Simplified
         }
     }

@@ -1,6 +1,6 @@
-use worker::*;
-use serde_json::json;
 use crate::types::*;
+use serde_json::json;
+use worker::*;
 
 pub struct DatabaseService {
     connection_string: String,
@@ -14,13 +14,17 @@ impl DatabaseService {
 
     pub async fn check_availability(&self, mut req: Request) -> Result<Response> {
         let body: AvailabilityRequest = req.json().await?;
-        
+
         // Validate dates
         if let Err(msg) = self.validate_dates(&body.check_in_date, &body.check_out_date) {
             return Response::from_json(&json!({
                 "error": "Invalid request",
                 "details": msg
-            })).map(|mut r| { r.with_status(400); r });
+            }))
+            .map(|mut r| {
+                r.with_status(400);
+                r
+            });
         }
 
         // Mock availability check (in production, query actual database)
@@ -34,7 +38,11 @@ impl DatabaseService {
             total_beds,
             available_beds,
             occupied_beds,
-            suggested_dates: if !available { Some(vec!["2025-07-21".to_string(), "2025-07-22".to_string()]) } else { None },
+            suggested_dates: if !available {
+                Some(vec!["2025-07-21".to_string(), "2025-07-22".to_string()])
+            } else {
+                None
+            },
             message: if available {
                 format!("{} bed(s) available for your stay.", available_beds)
             } else {
@@ -68,31 +76,48 @@ impl DatabaseService {
 
     pub async fn register_pilgrim(&self, mut req: Request) -> Result<Response> {
         let body: serde_json::Value = req.json().await?;
-        
+
         // Extract pilgrim, booking, and payment data
         let pilgrim_data = body.get("pilgrim").ok_or("Missing pilgrim data")?;
         let booking_data = body.get("booking").ok_or("Missing booking data")?;
         let payment_data = body.get("payment").ok_or("Missing payment data")?;
-        
+
         // Validate required fields
         if let Some(document_number) = pilgrim_data.get("documentNumber").and_then(|v| v.as_str()) {
             if document_number.is_empty() {
                 return Response::from_json(&json!({
                     "success": false,
                     "error": "Document number is required"
-                })).map(|mut r| { r.with_status(400); r });
+                }))
+                .map(|mut r| {
+                    r.with_status(400);
+                    r
+                });
             }
         } else {
             return Response::from_json(&json!({
                 "success": false,
                 "error": "Document number is required"
-            })).map(|mut r| { r.with_status(400); r });
+            }))
+            .map(|mut r| {
+                r.with_status(400);
+                r
+            });
         }
-        
+
         // Generate booking reference
         let booking_id = format!("BOOK-{}", chrono::Utc::now().timestamp());
-        let reference_number = format!("ALB-{}", chrono::Utc::now().timestamp().to_string().chars().rev().take(6).collect::<String>());
-        
+        let reference_number = format!(
+            "ALB-{}",
+            chrono::Utc::now()
+                .timestamp()
+                .to_string()
+                .chars()
+                .rev()
+                .take(6)
+                .collect::<String>()
+        );
+
         // In a real implementation, this would:
         // 1. Connect to PostgreSQL database using self.connection_string
         // 2. Insert pilgrim data (or update if exists)
@@ -100,7 +125,7 @@ impl DatabaseService {
         // 4. Process payment
         // 5. Assign bed automatically
         // 6. Generate government compliance XML
-        
+
         // For now, return success with mock data structure
         Response::from_json(&json!({
             "success": true,

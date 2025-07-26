@@ -1,5 +1,7 @@
 { pkgs }: {
   deps = [
+    pkgs.rustup
+    pkgs.outils
     # Essential tools
     pkgs.tree
     pkgs.git
@@ -21,6 +23,9 @@
     pkgs.clippy
     pkgs.wasm-pack
     pkgs.wasmtime
+
+    # TLS/SSL
+    pkgs.openssl
     
     # Database
     pkgs.postgresql_16
@@ -33,6 +38,9 @@
     pkgs.pkg-config
     pkgs.openssl
     pkgs.libiconv
+
+    # Linting | SAST
+    pkgs.trunk-io
     
     # Development tools
     pkgs.go-task
@@ -46,5 +54,8 @@
     
     # Go (for additional tooling)
     pkgs.go
+
+    #DAST | Pentesting
+    pkgs.nuclei
   ];
 }

@@ -1,5 +1,5 @@
-use crate::ports::notification_sender::NotificationSender;
 use crate::domain::entities::booking::Booking;
+use crate::ports::notification_sender::NotificationSender;
 use shared::AlbergueResult;
 use wasm_bindgen::prelude::*;
 

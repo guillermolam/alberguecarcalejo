@@ -1,8 +1,8 @@
 use crate::domain::ScrapedContent;
 use crate::ports::ScraperPort;
-use shared::{AlbergueError, AlbergueResult};
 use async_trait::async_trait;
 use chrono::Utc;
+use shared::{AlbergueError, AlbergueResult};
 
 pub struct CarrascalejoScraperAdapter;
 
@@ -16,7 +16,9 @@ impl CarrascalejoScraperAdapter {
 impl ScraperPort for CarrascalejoScraperAdapter {
     async fn scrape_merida_attractions(&self) -> AlbergueResult<ScrapedContent> {
         // Delegate to MeridaScraperAdapter
-        Err(AlbergueError::NotImplemented("Use MeridaScraperAdapter for Mérida content".to_string()))
+        Err(AlbergueError::NotImplemented(
+            "Use MeridaScraperAdapter for Mérida content".to_string(),
+        ))
     }
 
     async fn scrape_carrascalejo_info(&self) -> AlbergueResult<ScrapedContent> {
@@ -64,7 +66,10 @@ impl ScraperPort for CarrascalejoScraperAdapter {
     async fn scrape_weather_info(&self, location: &str) -> AlbergueResult<ScrapedContent> {
         // Return realistic weather information for the region
         Ok(ScrapedContent {
-            source_url: format!("https://www.aemet.es/es/eltiempo/prediccion/municipios/carrascalejo-{}", location),
+            source_url: format!(
+                "https://www.aemet.es/es/eltiempo/prediccion/municipios/carrascalejo-{}",
+                location
+            ),
             title: format!("Previsión Meteorológica - {}", location),
             content: r#"**Clima Continental Mediterráneo:**
 - Veranos calurosos y secos (máximas 35-40°C)
@@ -82,7 +87,8 @@ impl ScraperPort for CarrascalejoScraperAdapter {
 - Temperatura: 18°C (mañana), 28°C (tarde)
 - Viento: Moderado del oeste (15 km/h)
 - Humedad: 45%
-- Probabilidad de lluvia: 10%"#.to_string(),
+- Probabilidad de lluvia: 10%"#
+                .to_string(),
             links: vec!["https://www.aemet.es/".to_string()],
             images: Vec::new(),
             last_scraped: Utc::now(),
@@ -122,7 +128,8 @@ impl ScraperPort for CarrascalejoScraperAdapter {
 - Junio: Jornada de puertas abiertas del albergue
 - Septiembre: Encuentro de antiguos peregrinos
 
-**Nota:** Las fechas pueden variar según el año. Consultar en el Ayuntamiento."#.to_string(),
+**Nota:** Las fechas pueden variar según el año. Consultar en el Ayuntamiento."#
+                .to_string(),
             links: vec![
                 "tel:+34927123456".to_string(), // Ayuntamiento
                 "https://www.facebook.com/CarrascalejoOficial".to_string(),
@@ -136,7 +143,9 @@ impl ScraperPort for CarrascalejoScraperAdapter {
 
     async fn scrape_restaurants(&self) -> AlbergueResult<Vec<ScrapedContent>> {
         // Carrascalejo is too small for restaurants - refer to nearby Mérida
-        Err(AlbergueError::NotImplemented("Use MeridaScraperAdapter for restaurant data".to_string()))
+        Err(AlbergueError::NotImplemented(
+            "Use MeridaScraperAdapter for restaurant data".to_string(),
+        ))
     }
 
     async fn scrape_taxi_services(&self) -> AlbergueResult<Vec<ScrapedContent>> {
@@ -157,6 +166,8 @@ impl ScraperPort for CarrascalejoScraperAdapter {
 
     async fn scrape_car_rentals(&self) -> AlbergueResult<Vec<ScrapedContent>> {
         // No car rentals in Carrascalejo - refer to Mérida
-        Err(AlbergueError::NotImplemented("Use MeridaScraperAdapter for car rental data".to_string()))
+        Err(AlbergueError::NotImplemented(
+            "Use MeridaScraperAdapter for car rental data".to_string(),
+        ))
     }
 }

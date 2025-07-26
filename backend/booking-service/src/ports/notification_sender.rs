@@ -1,5 +1,5 @@
-use shared::AlbergueResult;
 use crate::domain::entities::booking::Booking;
+use shared::AlbergueResult;
 
 #[async_trait::async_trait(?Send)]
 pub trait NotificationSender {

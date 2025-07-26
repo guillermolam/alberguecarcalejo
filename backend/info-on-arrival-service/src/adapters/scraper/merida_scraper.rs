@@ -1,9 +1,9 @@
 use crate::domain::ScrapedContent;
 use crate::ports::ScraperPort;
-use shared::{AlbergueError, AlbergueResult};
 use async_trait::async_trait;
-use reqwest::Client;
 use chrono::Utc;
+use reqwest::Client;
+use shared::{AlbergueError, AlbergueResult};
 
 pub struct MeridaScraperAdapter {
     client: Client,
@@ -32,13 +32,14 @@ impl MeridaScraperAdapter {
                 .header("User-Agent", "Mozilla/5.0 (compatible; AlbergueBot/1.0)")
                 .send()
                 .await
-                .map_err(|e| AlbergueError::ExternalServiceError(format!("Failed to fetch {}: {}", url, e)))?;
+                .map_err(|e| {
+                    AlbergueError::ExternalServiceError(format!("Failed to fetch {}: {}", url, e))
+                })?;
 
             if response.status().is_success() {
-                response
-                    .text()
-                    .await
-                    .map_err(|e| AlbergueError::ExternalServiceError(format!("Failed to read response: {}", e)))
+                response.text().await.map_err(|e| {
+                    AlbergueError::ExternalServiceError(format!("Failed to read response: {}", e))
+                })
             } else {
                 Err(AlbergueError::ExternalServiceError(format!(
                     "HTTP error {}: {}",
@@ -66,12 +67,12 @@ impl MeridaScraperAdapter {
 impl ScraperPort for MeridaScraperAdapter {
     async fn scrape_merida_attractions(&self) -> AlbergueResult<ScrapedContent> {
         let url = "https://www.consorciomerida.org/";
-        
+
         match self.scrape_url(url).await {
             Ok(html) => {
                 let attractions = self.extract_attractions_from_html(&html);
                 let content = attractions.join("\n• ");
-                
+
                 Ok(ScrapedContent {
                     source_url: url.to_string(),
                     title: "Atracciones de Mérida".to_string(),
@@ -104,7 +105,8 @@ impl ScraperPort for MeridaScraperAdapter {
         Ok(ScrapedContent {
             source_url: "https://www.carrascalejo.es/".to_string(),
             title: "Información de Carrascalejo".to_string(),
-            content: "Pequeño pueblo extremeño en la Vía de la Plata con gran tradición peregrina".to_string(),
+            content: "Pequeño pueblo extremeño en la Vía de la Plata con gran tradición peregrina"
+                .to_string(),
             links: Vec::new(),
             images: Vec::new(),
             last_scraped: Utc::now(),
@@ -114,13 +116,18 @@ impl ScraperPort for MeridaScraperAdapter {
     }
 
     async fn scrape_weather_info(&self, location: &str) -> AlbergueResult<ScrapedContent> {
-        let url = format!("https://www.aemet.es/es/eltiempo/prediccion/municipios/{}", location.to_lowercase());
-        
+        let url = format!(
+            "https://www.aemet.es/es/eltiempo/prediccion/municipios/{}",
+            location.to_lowercase()
+        );
+
         // For demo purposes, return mock weather data
         Ok(ScrapedContent {
             source_url: url,
             title: format!("Tiempo en {}", location),
-            content: "Tiempo soleado, temperatura máxima 25°C, mínima 12°C. Viento suave del oeste.".to_string(),
+            content:
+                "Tiempo soleado, temperatura máxima 25°C, mínima 12°C. Viento suave del oeste."
+                    .to_string(),
             links: Vec::new(),
             images: Vec::new(),
             last_scraped: Utc::now(),
@@ -145,7 +152,7 @@ impl ScraperPort for MeridaScraperAdapter {
 
     async fn scrape_restaurants(&self) -> AlbergueResult<Vec<ScrapedContent>> {
         let url = "https://turismomerida.org/donde-comer/";
-        
+
         match self.scrape_url(url).await {
             Ok(_html) => {
                 // Return structured data from official tourism sources
@@ -193,11 +200,11 @@ impl ScraperPort for MeridaScraperAdapter {
     async fn scrape_taxi_services(&self) -> AlbergueResult<Vec<ScrapedContent>> {
         let urls = vec![
             "https://www.radiotaximerida.es/",
-            "https://meridavisitas.com/taxi-merida-24-horas/"
+            "https://meridavisitas.com/taxi-merida-24-horas/",
         ];
-        
+
         let mut services = Vec::new();
-        
+
         for url in urls {
             match self.scrape_url(url).await {
                 Ok(_html) => {
@@ -217,7 +224,8 @@ impl ScraperPort for MeridaScraperAdapter {
                     services.push(ScrapedContent {
                         source_url: url.to_string(),
                         title: "Taxi Mérida".to_string(),
-                        content: "Contacte con el 924 371 111 para servicios de taxi en Mérida.".to_string(),
+                        content: "Contacte con el 924 371 111 para servicios de taxi en Mérida."
+                            .to_string(),
                         links: vec!["tel:+34924371111".to_string()],
                         images: Vec::new(),
                         last_scraped: Utc::now(),
@@ -227,18 +235,21 @@ impl ScraperPort for MeridaScraperAdapter {
                 }
             }
         }
-        
+
         Ok(services)
     }
 
     async fn scrape_car_rentals(&self) -> AlbergueResult<Vec<ScrapedContent>> {
         let rental_urls = vec![
-            ("https://www.hertz.es/p/alquiler-de-coches/espana/merida", "Hertz"),
+            (
+                "https://www.hertz.es/p/alquiler-de-coches/espana/merida",
+                "Hertz",
+            ),
             ("https://www.europcar.es/", "Europcar"),
         ];
-        
+
         let mut rentals = Vec::new();
-        
+
         for (url, company) in rental_urls {
             match self.scrape_url(url).await {
                 Ok(_html) => {
@@ -247,7 +258,7 @@ impl ScraperPort for MeridaScraperAdapter {
                         "Europcar" => ("+34924305842", "Situada cerca de la estación con buenos precios para alquileres largos"),
                         _ => ("", "Empresa de alquiler de vehículos"),
                     };
-                    
+
                     rentals.push(ScrapedContent {
                         source_url: url.to_string(),
                         title: format!("{} Mérida", company),
@@ -263,7 +274,9 @@ impl ScraperPort for MeridaScraperAdapter {
                     rentals.push(ScrapedContent {
                         source_url: url.to_string(),
                         title: format!("{} (información no disponible)", company),
-                        content: "Consulte directamente con la empresa para disponibilidad y precios.".to_string(),
+                        content:
+                            "Consulte directamente con la empresa para disponibilidad y precios."
+                                .to_string(),
                         links: vec![url.to_string()],
                         images: Vec::new(),
                         last_scraped: Utc::now(),
@@ -273,7 +286,7 @@ impl ScraperPort for MeridaScraperAdapter {
                 }
             }
         }
-        
+
         Ok(rentals)
     }
 }

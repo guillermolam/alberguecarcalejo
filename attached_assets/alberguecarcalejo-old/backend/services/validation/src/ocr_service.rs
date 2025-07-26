@@ -1,7 +1,7 @@
-use wasm_bindgen::prelude::*;
-use serde::{Deserialize, Serialize};
 use crate::spanish_validator::*;
 use crate::types::*;
+use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OCRProcessingRequest {
@@ -108,7 +108,11 @@ impl OCRService {
         Ok("OCR TEXT EXTRACTION PLACEHOLDER".to_string())
     }
 
-    fn extract_all_document_data(&self, text: &str, context: &OCRProcessingRequest) -> ExtractedDocumentData {
+    fn extract_all_document_data(
+        &self,
+        text: &str,
+        context: &OCRProcessingRequest,
+    ) -> ExtractedDocumentData {
         let lines: Vec<&str> = text.lines().collect();
         let mut result = ExtractedDocumentData::default();
         let mut detected_fields = Vec::new();
@@ -144,7 +148,11 @@ impl OCRService {
 
             // Extract names
             if upper_line.contains("NOMBRE") || upper_line.contains("NAME") {
-                let clean_line = upper_line.replace("NOMBRE", "").replace("NAME", "").trim().to_string();
+                let clean_line = upper_line
+                    .replace("NOMBRE", "")
+                    .replace("NAME", "")
+                    .trim()
+                    .to_string();
                 if !clean_line.is_empty() {
                     let parts: Vec<&str> = clean_line.split_whitespace().collect();
                     if !parts.is_empty() {
@@ -155,7 +163,11 @@ impl OCRService {
             }
 
             if upper_line.contains("APELLIDOS") || upper_line.contains("SURNAME") {
-                let clean_line = upper_line.replace("APELLIDOS", "").replace("SURNAME", "").trim().to_string();
+                let clean_line = upper_line
+                    .replace("APELLIDOS", "")
+                    .replace("SURNAME", "")
+                    .trim()
+                    .to_string();
                 if !clean_line.is_empty() {
                     let parts: Vec<&str> = clean_line.split_whitespace().collect();
                     if !parts.is_empty() {
@@ -170,23 +182,36 @@ impl OCRService {
             }
 
             // Extract gender
-            if upper_line.contains("MASCULINO") || upper_line.contains("MALE") || upper_line.contains("HOMBRE") {
+            if upper_line.contains("MASCULINO")
+                || upper_line.contains("MALE")
+                || upper_line.contains("HOMBRE")
+            {
                 result.gender = Some("H".to_string());
                 detected_fields.push("gender".to_string());
-            } else if upper_line.contains("FEMENINO") || upper_line.contains("FEMALE") || upper_line.contains("MUJER") {
+            } else if upper_line.contains("FEMENINO")
+                || upper_line.contains("FEMALE")
+                || upper_line.contains("MUJER")
+            {
                 result.gender = Some("M".to_string());
                 detected_fields.push("gender".to_string());
             }
 
             // Extract nationality
-            if upper_line.contains("ESP") || upper_line.contains("ESPAÑA") || upper_line.contains("SPAIN") {
+            if upper_line.contains("ESP")
+                || upper_line.contains("ESPAÑA")
+                || upper_line.contains("SPAIN")
+            {
                 result.nationality = Some("ESP".to_string());
                 detected_fields.push("nationality".to_string());
             }
         }
 
         result.detected_fields = detected_fields;
-        result.confidence = if result.detected_fields.len() > 3 { 0.9 } else { 0.6 };
+        result.confidence = if result.detected_fields.len() > 3 {
+            0.9
+        } else {
+            0.6
+        };
         result.is_valid = !result.detected_fields.is_empty();
 
         result
@@ -210,7 +235,9 @@ impl OCRService {
         let mut chars = word.chars();
         match chars.next() {
             None => String::new(),
-            Some(first) => first.to_uppercase().collect::<String>() + &chars.as_str().to_lowercase(),
+            Some(first) => {
+                first.to_uppercase().collect::<String>() + &chars.as_str().to_lowercase()
+            }
         }
     }
 
@@ -218,7 +245,11 @@ impl OCRService {
         let mut errors = Vec::new();
 
         if let Some(ref birth_date) = data.birth_date {
-            if let Some(year) = birth_date.split('-').next().and_then(|y| y.parse::<u32>().ok()) {
+            if let Some(year) = birth_date
+                .split('-')
+                .next()
+                .and_then(|y| y.parse::<u32>().ok())
+            {
                 let current_year = 2025; // js_sys::Date::new_0().get_full_year() as u32;
                 if year < 1900 || year > current_year {
                     errors.push("Invalid birth year detected".to_string());
@@ -226,10 +257,20 @@ impl OCRService {
             }
         }
 
-        if let (Some(ref doc_num), Some(ref doc_type)) = (&data.document_number, &data.document_type) {
-            if doc_type == "NIF" && !regex::Regex::new(r"^\d{8}[A-Z]$").unwrap().is_match(doc_num) {
+        if let (Some(ref doc_num), Some(ref doc_type)) =
+            (&data.document_number, &data.document_type)
+        {
+            if doc_type == "NIF"
+                && !regex::Regex::new(r"^\d{8}[A-Z]$")
+                    .unwrap()
+                    .is_match(doc_num)
+            {
                 errors.push("Invalid DNI/NIF format".to_string());
-            } else if doc_type == "NIE" && !regex::Regex::new(r"^[XYZ]\d{7}[A-Z]$").unwrap().is_match(doc_num) {
+            } else if doc_type == "NIE"
+                && !regex::Regex::new(r"^[XYZ]\d{7}[A-Z]$")
+                    .unwrap()
+                    .is_match(doc_num)
+            {
                 errors.push("Invalid NIE format".to_string());
             }
         }

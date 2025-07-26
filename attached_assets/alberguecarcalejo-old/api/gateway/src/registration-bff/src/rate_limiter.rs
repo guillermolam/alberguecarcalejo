@@ -1,8 +1,8 @@
-use wasm_bindgen::prelude::*;
-use web_sys::{window, Storage};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use wasm_bindgen::prelude::*;
+use web_sys::{window, Storage};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct RateLimitEntry {
@@ -47,16 +47,20 @@ pub fn check_rate_limit(client_id: &str, operation: &str, limit: u32, window_sec
 
     let now = Utc::now();
     let mut all_limits = load_rate_limits(&storage);
-    
+
     // Get or create client limits
-    let client_limits = all_limits.entry(client_id.to_string()).or_insert_with(HashMap::new);
-    
+    let client_limits = all_limits
+        .entry(client_id.to_string())
+        .or_insert_with(HashMap::new);
+
     // Check specific operation limit
-    let entry = client_limits.entry(operation.to_string()).or_insert_with(|| RateLimitEntry {
-        count: 0,
-        window_start: now,
-        last_request: now,
-    });
+    let entry = client_limits
+        .entry(operation.to_string())
+        .or_insert_with(|| RateLimitEntry {
+            count: 0,
+            window_start: now,
+            last_request: now,
+        });
 
     // Check if we need to reset the window
     let window_duration = chrono::Duration::seconds(window_seconds as i64);
@@ -76,7 +80,7 @@ pub fn check_rate_limit(client_id: &str, operation: &str, limit: u32, window_sec
 
     // Save updated limits
     save_rate_limits(&storage, &all_limits);
-    
+
     // Clean old entries periodically
     if entry.count % 10 == 0 {
         cleanup_old_entries(&storage, &mut all_limits);
@@ -88,15 +92,17 @@ pub fn check_rate_limit(client_id: &str, operation: &str, limit: u32, window_sec
 pub fn get_status(client_id: &str) -> RateLimitStatus {
     let storage = match get_storage() {
         Ok(s) => s,
-        Err(_) => return RateLimitStatus {
-            client_id: client_id.to_string(),
-            operation_limits: HashMap::new(),
-        },
+        Err(_) => {
+            return RateLimitStatus {
+                client_id: client_id.to_string(),
+                operation_limits: HashMap::new(),
+            }
+        }
     };
 
     let all_limits = load_rate_limits(&storage);
     let client_limits = all_limits.get(client_id).cloned().unwrap_or_default();
-    
+
     let mut operation_limits = HashMap::new();
     let now = Utc::now();
 
@@ -120,13 +126,16 @@ pub fn get_status(client_id: &str) -> RateLimitStatus {
             (0, now + chrono::Duration::seconds(*window_seconds as i64))
         };
 
-        operation_limits.insert(operation.to_string(), RateLimitInfo {
-            current_count,
-            limit: *limit,
-            window_seconds: *window_seconds,
-            remaining: limit.saturating_sub(current_count),
-            reset_time,
-        });
+        operation_limits.insert(
+            operation.to_string(),
+            RateLimitInfo {
+                current_count,
+                limit: *limit,
+                window_seconds: *window_seconds,
+                remaining: limit.saturating_sub(current_count),
+                reset_time,
+            },
+        );
     }
 
     RateLimitStatus {
@@ -158,14 +167,16 @@ fn save_rate_limits(storage: &Storage, limits: &HashMap<String, HashMap<String, 
     }
 }
 
-fn cleanup_old_entries(storage: &Storage, all_limits: &mut HashMap<String, HashMap<String, RateLimitEntry>>) {
+fn cleanup_old_entries(
+    storage: &Storage,
+    all_limits: &mut HashMap<String, HashMap<String, RateLimitEntry>>,
+) {
     let now = Utc::now();
     let cleanup_threshold = chrono::Duration::hours(24);
 
     all_limits.retain(|_, client_limits| {
-        client_limits.retain(|_, entry| {
-            now.signed_duration_since(entry.last_request) < cleanup_threshold
-        });
+        client_limits
+            .retain(|_, entry| now.signed_duration_since(entry.last_request) < cleanup_threshold);
         !client_limits.is_empty()
     });
 
@@ -239,7 +250,7 @@ pub fn get_client_fingerprint() -> String {
         fingerprint_parts.push(location);
     }
 
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(fingerprint_parts.join("|"));
     let result = hasher.finalize();

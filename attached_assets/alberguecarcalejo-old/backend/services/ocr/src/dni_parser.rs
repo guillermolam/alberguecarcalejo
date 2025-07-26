@@ -1,8 +1,8 @@
-use regex::Regex;
-use image::{DynamicImage, GrayImage};
-use crate::models::{DocumentData, ValidationResult, DocumentType};
 use crate::image_processor::ImageProcessor;
+use crate::models::{DocumentData, DocumentType, ValidationResult};
 use crate::ocr_engine::OCREngine;
+use image::{DynamicImage, GrayImage};
+use regex::Regex;
 use std::collections::HashMap;
 
 pub struct SpanishDNIParser {
@@ -15,7 +15,11 @@ impl SpanishDNIParser {
         Ok(Self { ocr_engine })
     }
 
-    pub fn parse_dni(&mut self, image: &DynamicImage, document_type: &DocumentType) -> Result<DocumentData, Box<dyn std::error::Error>> {
+    pub fn parse_dni(
+        &mut self,
+        image: &DynamicImage,
+        document_type: &DocumentType,
+    ) -> Result<DocumentData, Box<dyn std::error::Error>> {
         let mut data = DocumentData {
             document_number: None,
             first_name: None,
@@ -42,14 +46,14 @@ impl SpanishDNIParser {
 
         // Preprocess image for better OCR
         let processed_image = ImageProcessor::preprocess(image)?;
-        
+
         match document_type {
             DocumentType::DniFront | DocumentType::NieFront => {
                 self.parse_dni_front(&processed_image, &mut data)?;
-            },
+            }
             DocumentType::DniBack | DocumentType::NieBack => {
                 self.parse_dni_back(&processed_image, &mut data)?;
-            },
+            }
             _ => {
                 // Try to auto-detect if it's front or back
                 let full_text = self.ocr_engine.extract_text(&processed_image)?;
@@ -74,25 +78,29 @@ impl SpanishDNIParser {
         Ok(data)
     }
 
-    fn parse_dni_front(&mut self, image: &GrayImage, data: &mut DocumentData) -> Result<(), Box<dyn std::error::Error>> {
+    fn parse_dni_front(
+        &mut self,
+        image: &GrayImage,
+        data: &mut DocumentData,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Extract full text first
         let full_text = self.ocr_engine.extract_text(image)?;
-        
+
         // Parse DNI number patterns
         self.extract_dni_number(&full_text, data);
-        
+
         // Parse names
         self.extract_names(&full_text, data);
-        
+
         // Parse dates
         self.extract_dates(&full_text, data);
-        
+
         // Parse gender
         self.extract_gender(&full_text, data);
-        
+
         // Parse nationality (should be ESP for DNI)
         self.extract_nationality(&full_text, data);
-        
+
         // Parse support number
         self.extract_support_number(&full_text, data);
 
@@ -102,15 +110,19 @@ impl SpanishDNIParser {
         Ok(())
     }
 
-    fn parse_dni_back(&mut self, image: &GrayImage, data: &mut DocumentData) -> Result<(), Box<dyn std::error::Error>> {
+    fn parse_dni_back(
+        &mut self,
+        image: &GrayImage,
+        data: &mut DocumentData,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let full_text = self.ocr_engine.extract_text(image)?;
-        
+
         // Parse address information
         self.extract_address(&full_text, data);
-        
+
         // Parse MRZ if present (modern DNIs)
         self.extract_mrz_data(&full_text, data);
-        
+
         // Try region-based OCR for address details
         self.extract_regions_back(image, data)?;
 
@@ -120,12 +132,12 @@ impl SpanishDNIParser {
     fn extract_dni_number(&self, text: &str, data: &mut DocumentData) {
         // Multiple patterns for DNI/NIE numbers
         let patterns = vec![
-            r"(?i)(?:dni|nif)[\s\.:]*([0-9]{8}[A-Z])",      // DNI: 12345678A
-            r"(?i)(?:nie)[\s\.:]*([XYZ][0-9]{7}[A-Z])",     // NIE: X1234567A
-            r"\b([0-9]{8}[A-Z])\b",                          // Just the number: 12345678A
-            r"\b([XYZ][0-9]{7}[A-Z])\b",                     // Just NIE: X1234567A
-            r"(?i)num[\s\.:]*([0-9]{8}[A-Z])",              // NUM: 12345678A
-            r"(?i)número[\s\.:]*([0-9]{8}[A-Z])",           // NÚMERO: 12345678A
+            r"(?i)(?:dni|nif)[\s\.:]*([0-9]{8}[A-Z])", // DNI: 12345678A
+            r"(?i)(?:nie)[\s\.:]*([XYZ][0-9]{7}[A-Z])", // NIE: X1234567A
+            r"\b([0-9]{8}[A-Z])\b",                    // Just the number: 12345678A
+            r"\b([XYZ][0-9]{7}[A-Z])\b",               // Just NIE: X1234567A
+            r"(?i)num[\s\.:]*([0-9]{8}[A-Z])",         // NUM: 12345678A
+            r"(?i)número[\s\.:]*([0-9]{8}[A-Z])",     // NÚMERO: 12345678A
         ];
 
         for pattern in patterns {
@@ -146,7 +158,7 @@ impl SpanishDNIParser {
 
     fn extract_names(&self, text: &str, data: &mut DocumentData) {
         let lines: Vec<&str> = text.lines().collect();
-        
+
         // Look for name patterns - names usually appear in uppercase after certain keywords
         let name_patterns = vec![
             r"(?i)(?:apellidos?|apellido|surname)[\s:]*([A-ZÁÉÍÓÚÑÜ][A-ZÁÉÍÓÚÑÜ\s]+)",
@@ -156,16 +168,18 @@ impl SpanishDNIParser {
         // Try to find structured name fields
         for line in &lines {
             let clean_line = line.trim();
-            
+
             // Skip very short lines or lines with mostly numbers
-            if clean_line.len() < 3 || clean_line.chars().filter(|c| c.is_numeric()).count() > clean_line.len() / 2 {
+            if clean_line.len() < 3
+                || clean_line.chars().filter(|c| c.is_numeric()).count() > clean_line.len() / 2
+            {
                 continue;
             }
 
             // Look for lines that are mostly uppercase letters (likely names)
             if clean_line.chars().filter(|c| c.is_uppercase()).count() > clean_line.len() / 2 {
                 let words: Vec<&str> = clean_line.split_whitespace().collect();
-                
+
                 // If we find a line with 2-4 words in uppercase, it's likely names
                 if words.len() >= 2 && words.len() <= 4 {
                     // First word(s) are usually surnames, last word is first name
@@ -179,7 +193,7 @@ impl SpanishDNIParser {
                         data.last_names = Some(format!("{} {}", words[0], words[1]));
                         data.first_name = Some(format!("{} {}", words[2], words[3]));
                     }
-                    
+
                     if data.last_names.is_some() && data.first_name.is_some() {
                         break;
                     }
@@ -220,23 +234,33 @@ impl SpanishDNIParser {
         for pattern in date_patterns {
             if let Ok(regex) = Regex::new(pattern) {
                 for captures in regex.captures_iter(text) {
-                    if let (Some(day), Some(month), Some(year)) = (captures.get(1), captures.get(2), captures.get(3)) {
+                    if let (Some(day), Some(month), Some(year)) =
+                        (captures.get(1), captures.get(2), captures.get(3))
+                    {
                         let day_str = day.as_str();
                         let month_str = month.as_str();
                         let year_str = year.as_str();
-                        
+
                         // Validate date components
-                        if let (Ok(d), Ok(m), Ok(y)) = (day_str.parse::<u32>(), month_str.parse::<u32>(), year_str.parse::<u32>()) {
+                        if let (Ok(d), Ok(m), Ok(y)) = (
+                            day_str.parse::<u32>(),
+                            month_str.parse::<u32>(),
+                            year_str.parse::<u32>(),
+                        ) {
                             if d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900 && y <= 2050 {
                                 let formatted_date = format!("{:02}-{:02}-{}", d, m, y);
-                                
+
                                 // Categorize dates based on context
                                 let context = captures.get(0).unwrap().as_str().to_lowercase();
                                 if context.contains("nacimiento") || context.contains("born") {
                                     data.birth_date = Some(formatted_date);
-                                } else if context.contains("válido") || context.contains("expir") || context.contains("caducidad") {
+                                } else if context.contains("válido")
+                                    || context.contains("expir")
+                                    || context.contains("caducidad")
+                                {
                                     data.expiry_date = Some(formatted_date);
-                                } else if context.contains("expedido") || context.contains("issued") {
+                                } else if context.contains("expedido") || context.contains("issued")
+                                {
                                     data.issue_date = Some(formatted_date);
                                 } else {
                                     found_dates.push((formatted_date, y));
@@ -251,7 +275,7 @@ impl SpanishDNIParser {
         // If we couldn't categorize dates, assign them based on year logic
         if data.birth_date.is_none() || data.expiry_date.is_none() {
             found_dates.sort_by_key(|&(_, year)| year);
-            
+
             for (date, year) in found_dates {
                 if data.birth_date.is_none() && year < 2010 {
                     data.birth_date = Some(date);
@@ -263,10 +287,7 @@ impl SpanishDNIParser {
     }
 
     fn extract_gender(&self, text: &str, data: &mut DocumentData) {
-        let gender_patterns = vec![
-            r"(?i)(?:sexo|gender)[\s:]*([MFV])",
-            r"(?i)\b([MFV])\b",
-        ];
+        let gender_patterns = vec![r"(?i)(?:sexo|gender)[\s:]*([MFV])", r"(?i)\b([MFV])\b"];
 
         for pattern in gender_patterns {
             if let Ok(regex) = Regex::new(pattern) {
@@ -294,7 +315,10 @@ impl SpanishDNIParser {
                 if let Some(captures) = regex.captures(text) {
                     if let Some(nat_match) = captures.get(1) {
                         let nationality = nat_match.as_str().to_uppercase();
-                        if nationality == "ESP" || nationality == "SPA" || nationality.contains("ESPAÑOL") {
+                        if nationality == "ESP"
+                            || nationality == "SPA"
+                            || nationality.contains("ESPAÑOL")
+                        {
                             data.nationality = Some("ESP".to_string());
                         } else {
                             data.nationality = Some(nationality);
@@ -366,9 +390,8 @@ impl SpanishDNIParser {
             }
         }
 
-        let municipio_patterns = vec![
-            r"(?i)(?:municipio|localidad|ciudad)[\s:]*([A-ZÁÉÍÓÚÑÜ][a-záéíóúñü\s]+)",
-        ];
+        let municipio_patterns =
+            vec![r"(?i)(?:municipio|localidad|ciudad)[\s:]*([A-ZÁÉÍÓÚÑÜ][a-záéíóúñü\s]+)"];
 
         for pattern in municipio_patterns {
             if let Ok(regex) = Regex::new(pattern) {
@@ -389,10 +412,13 @@ impl SpanishDNIParser {
         // Find MRZ lines (they contain specific patterns and are usually at the bottom)
         for line in &lines {
             let clean_line = line.trim().replace(" ", "");
-            
+
             // MRZ lines for Spanish DNI typically start with "IDESP" and have specific patterns
-            if clean_line.starts_with("IDESP") || clean_line.contains("ESP<") || 
-               (clean_line.len() > 30 && clean_line.chars().all(|c| c.is_alphanumeric() || c == '<')) {
+            if clean_line.starts_with("IDESP")
+                || clean_line.contains("ESP<")
+                || (clean_line.len() > 30
+                    && clean_line.chars().all(|c| c.is_alphanumeric() || c == '<'))
+            {
                 mrz_lines.push(clean_line);
             }
         }
@@ -418,12 +444,13 @@ impl SpanishDNIParser {
                     if let Some(esp_pos) = line.find("ESP<") {
                         let names_part = &line[esp_pos + 4..];
                         let names: Vec<&str> = names_part.split('<').collect();
-                        
+
                         if names.len() >= 2 {
                             if data.last_names.is_none() && !names[0].is_empty() {
                                 data.last_names = Some(names[0].to_string());
                             }
-                            if data.first_name.is_none() && names.len() > 1 && !names[1].is_empty() {
+                            if data.first_name.is_none() && names.len() > 1 && !names[1].is_empty()
+                            {
                                 data.first_name = Some(names[1].to_string());
                             }
                         }
@@ -433,15 +460,19 @@ impl SpanishDNIParser {
         }
     }
 
-    fn extract_regions_front(&mut self, image: &GrayImage, data: &mut DocumentData) -> Result<(), Box<dyn std::error::Error>> {
+    fn extract_regions_front(
+        &mut self,
+        image: &GrayImage,
+        data: &mut DocumentData,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Define regions for different parts of the DNI front
         let (width, height) = image.dimensions();
-        
+
         // Region coordinates as percentages (x, y, width, height)
         let regions = vec![
-            ("names", 0.3, 0.15, 0.65, 0.25),      // Names area
-            ("dates", 0.3, 0.4, 0.65, 0.25),       // Dates area  
-            ("numbers", 0.0, 0.8, 1.0, 0.2),       // Bottom area for DNI number
+            ("names", 0.3, 0.15, 0.65, 0.25), // Names area
+            ("dates", 0.3, 0.4, 0.65, 0.25),  // Dates area
+            ("numbers", 0.0, 0.8, 1.0, 0.2),  // Bottom area for DNI number
         ];
 
         for (region_name, x_pct, y_pct, w_pct, h_pct) in regions {
@@ -459,17 +490,17 @@ impl SpanishDNIParser {
                             if data.first_name.is_none() || data.last_names.is_none() {
                                 self.extract_names(&region_text, data);
                             }
-                        },
+                        }
                         "dates" => {
                             if data.birth_date.is_none() || data.expiry_date.is_none() {
                                 self.extract_dates(&region_text, data);
                             }
-                        },
+                        }
                         "numbers" => {
                             if data.document_number.is_none() {
                                 self.extract_dni_number(&region_text, data);
                             }
-                        },
+                        }
                         _ => {}
                     }
                 }
@@ -479,13 +510,17 @@ impl SpanishDNIParser {
         Ok(())
     }
 
-    fn extract_regions_back(&mut self, image: &GrayImage, data: &mut DocumentData) -> Result<(), Box<dyn std::error::Error>> {
+    fn extract_regions_back(
+        &mut self,
+        image: &GrayImage,
+        data: &mut DocumentData,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Define regions for DNI back
         let (width, height) = image.dimensions();
-        
+
         let regions = vec![
-            ("address", 0.0, 0.0, 0.7, 0.6),        // Address area
-            ("mrz", 0.0, 0.7, 1.0, 0.3),            // MRZ area at bottom
+            ("address", 0.0, 0.0, 0.7, 0.6), // Address area
+            ("mrz", 0.0, 0.7, 1.0, 0.3),     // MRZ area at bottom
         ];
 
         for (region_name, x_pct, y_pct, w_pct, h_pct) in regions {
@@ -511,12 +546,21 @@ impl SpanishDNIParser {
 
     fn is_dni_back(&self, text: &str) -> bool {
         let back_indicators = vec![
-            "domicilio", "dirección", "address", "municipio", "provincia",
-            "idesp", "mrz", "<<<", "lugar de nacimiento"
+            "domicilio",
+            "dirección",
+            "address",
+            "municipio",
+            "provincia",
+            "idesp",
+            "mrz",
+            "<<<",
+            "lugar de nacimiento",
         ];
 
         let text_lower = text.to_lowercase();
-        back_indicators.iter().any(|&indicator| text_lower.contains(indicator))
+        back_indicators
+            .iter()
+            .any(|&indicator| text_lower.contains(indicator))
     }
 
     fn is_valid_dni_format(&self, dni: &str) -> bool {
@@ -526,7 +570,7 @@ impl SpanishDNIParser {
 
         // DNI format: 8 digits + 1 letter
         let (numbers, letter) = dni.split_at(8);
-        
+
         // Check if first 8 characters are digits
         if !numbers.chars().all(|c| c.is_ascii_digit()) {
             // Check for NIE format: X/Y/Z + 7 digits + 1 letter
@@ -551,22 +595,23 @@ impl SpanishDNIParser {
         }
 
         let letters = "TRWAGMYFPDXBNJZSQVHLCKE";
-        
-        let (number_part, check_letter) = if dni.starts_with('X') || dni.starts_with('Y') || dni.starts_with('Z') {
-            // NIE validation
-            let first_char = dni.chars().next().unwrap();
-            let replacement = match first_char {
-                'X' => '0',
-                'Y' => '1',
-                'Z' => '2',
-                _ => return false,
+
+        let (number_part, check_letter) =
+            if dni.starts_with('X') || dni.starts_with('Y') || dni.starts_with('Z') {
+                // NIE validation
+                let first_char = dni.chars().next().unwrap();
+                let replacement = match first_char {
+                    'X' => '0',
+                    'Y' => '1',
+                    'Z' => '2',
+                    _ => return false,
+                };
+                let number_str = format!("{}{}", replacement, &dni[1..8]);
+                (number_str, dni.chars().nth(8).unwrap())
+            } else {
+                // DNI validation
+                (dni[..8].to_string(), dni.chars().nth(8).unwrap())
             };
-            let number_str = format!("{}{}", replacement, &dni[1..8]);
-            (number_str, dni.chars().nth(8).unwrap())
-        } else {
-            // DNI validation
-            (dni[..8].to_string(), dni.chars().nth(8).unwrap())
-        };
 
         if let Ok(number) = number_part.parse::<u32>() {
             let expected_letter = letters.chars().nth((number % 23) as usize).unwrap();
@@ -581,30 +626,46 @@ impl SpanishDNIParser {
         let mut total_fields = 0.0;
 
         // Essential fields
-        if data.document_number.is_some() { score += 2.0; }
+        if data.document_number.is_some() {
+            score += 2.0;
+        }
         total_fields += 2.0;
 
-        if data.first_name.is_some() { score += 1.5; }
+        if data.first_name.is_some() {
+            score += 1.5;
+        }
         total_fields += 1.5;
 
-        if data.last_names.is_some() { score += 1.5; }
+        if data.last_names.is_some() {
+            score += 1.5;
+        }
         total_fields += 1.5;
 
-        if data.birth_date.is_some() { score += 1.0; }
+        if data.birth_date.is_some() {
+            score += 1.0;
+        }
         total_fields += 1.0;
 
         // Optional fields
-        if data.gender.is_some() { score += 0.5; }
+        if data.gender.is_some() {
+            score += 0.5;
+        }
         total_fields += 0.5;
 
-        if data.nationality.is_some() { score += 0.5; }
+        if data.nationality.is_some() {
+            score += 0.5;
+        }
         total_fields += 0.5;
 
-        if data.expiry_date.is_some() { score += 0.5; }
+        if data.expiry_date.is_some() {
+            score += 0.5;
+        }
         total_fields += 0.5;
 
         // Bonus for validation
-        if data.validation.checksum_valid { score += 1.0; }
+        if data.validation.checksum_valid {
+            score += 1.0;
+        }
         total_fields += 1.0;
 
         if total_fields > 0.0 {

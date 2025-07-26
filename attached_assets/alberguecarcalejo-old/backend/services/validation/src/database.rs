@@ -1,9 +1,9 @@
 use crate::models::*;
+use chrono::{DateTime, NaiveDate, Utc};
 use serde_json::{json, Value};
+use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use web_sys::Storage;
-use chrono::{DateTime, NaiveDate, Utc};
-use std::collections::HashMap;
 
 // Database abstraction layer using browser localStorage for persistence
 pub struct Database {
@@ -17,7 +17,7 @@ impl Database {
             .local_storage()
             .map_err(|_| "Failed to get localStorage")?
             .ok_or("localStorage not available")?;
-        
+
         Ok(Database { storage })
     }
 
@@ -31,7 +31,7 @@ impl Database {
         let mut pilgrims = self.get_pilgrims()?;
         pilgrims.push(pilgrim.clone());
         self.save_pilgrims(&pilgrims)?;
-        
+
         Ok(pilgrim)
     }
 
@@ -40,11 +40,15 @@ impl Database {
         Ok(pilgrims.into_iter().find(|p| p.id == Some(id)))
     }
 
-    pub fn get_pilgrim_by_document(&self, doc_type: &str, doc_number: &str) -> Result<Option<Pilgrim>, JsValue> {
+    pub fn get_pilgrim_by_document(
+        &self,
+        doc_type: &str,
+        doc_number: &str,
+    ) -> Result<Option<Pilgrim>, JsValue> {
         let pilgrims = self.get_pilgrims()?;
-        Ok(pilgrims.into_iter().find(|p| {
-            p.document_type == doc_type && p.document_number == doc_number
-        }))
+        Ok(pilgrims
+            .into_iter()
+            .find(|p| p.document_type == doc_type && p.document_number == doc_number))
     }
 
     // Booking operations
@@ -57,7 +61,7 @@ impl Database {
         let mut bookings = self.get_bookings()?;
         bookings.push(booking.clone());
         self.save_bookings(&bookings)?;
-        
+
         Ok(booking)
     }
 
@@ -66,11 +70,16 @@ impl Database {
         Ok(bookings.into_iter().find(|b| b.id == Some(id)))
     }
 
-    pub fn get_bookings_by_date_range(&self, start_date: &NaiveDate, end_date: &NaiveDate) -> Result<Vec<Booking>, JsValue> {
+    pub fn get_bookings_by_date_range(
+        &self,
+        start_date: &NaiveDate,
+        end_date: &NaiveDate,
+    ) -> Result<Vec<Booking>, JsValue> {
         let bookings = self.get_bookings()?;
-        Ok(bookings.into_iter().filter(|b| {
-            b.check_in_date >= *start_date && b.check_out_date <= *end_date
-        }).collect())
+        Ok(bookings
+            .into_iter()
+            .filter(|b| b.check_in_date >= *start_date && b.check_out_date <= *end_date)
+            .collect())
     }
 
     pub fn update_booking_status(&self, id: u32, status: &str) -> Result<(), JsValue> {
@@ -118,10 +127,14 @@ impl Database {
         Ok(())
     }
 
-    pub fn get_available_beds(&self, check_in_date: &NaiveDate, check_out_date: &NaiveDate) -> Result<Vec<Bed>, JsValue> {
+    pub fn get_available_beds(
+        &self,
+        check_in_date: &NaiveDate,
+        check_out_date: &NaiveDate,
+    ) -> Result<Vec<Bed>, JsValue> {
         let beds = self.get_all_beds()?;
         let bookings = self.get_bookings()?;
-        
+
         // Find occupied bed IDs during the requested period
         let occupied_bed_ids: Vec<u32> = bookings
             .iter()
@@ -136,8 +149,7 @@ impl Database {
         Ok(beds
             .into_iter()
             .filter(|bed| {
-                bed.status == "available" 
-                    && !occupied_bed_ids.contains(&bed.id.unwrap_or(0))
+                bed.status == "available" && !occupied_bed_ids.contains(&bed.id.unwrap_or(0))
             })
             .collect())
     }
@@ -151,17 +163,23 @@ impl Database {
         let mut payments = self.get_payments()?;
         payments.push(payment.clone());
         self.save_payments(&payments)?;
-        
+
         Ok(payment)
     }
 
     pub fn get_payments_by_booking(&self, booking_id: u32) -> Result<Vec<Payment>, JsValue> {
         let payments = self.get_payments()?;
-        Ok(payments.into_iter().filter(|p| p.booking_id == booking_id).collect())
+        Ok(payments
+            .into_iter()
+            .filter(|p| p.booking_id == booking_id)
+            .collect())
     }
 
     // Government submission operations
-    pub fn create_government_submission(&self, mut submission: GovernmentSubmission) -> Result<GovernmentSubmission, JsValue> {
+    pub fn create_government_submission(
+        &self,
+        mut submission: GovernmentSubmission,
+    ) -> Result<GovernmentSubmission, JsValue> {
         let id = self.get_next_id("government_submissions")?;
         submission.id = Some(id);
         submission.created_at = Some(Utc::now());
@@ -169,7 +187,7 @@ impl Database {
         let mut submissions = self.get_government_submissions()?;
         submissions.push(submission.clone());
         self.save_government_submissions(&submissions)?;
-        
+
         Ok(submission)
     }
 
@@ -203,13 +221,11 @@ impl Database {
     pub fn get_occupancy_stats(&self, date: &NaiveDate) -> Result<OccupancyStats, JsValue> {
         let beds = self.get_all_beds()?;
         let bookings = self.get_bookings()?;
-        
+
         let occupied_count = bookings
             .iter()
             .filter(|b| {
-                b.check_in_date <= *date
-                    && b.check_out_date >= *date
-                    && b.status == "confirmed"
+                b.check_in_date <= *date && b.check_out_date >= *date && b.status == "confirmed"
             })
             .count() as u32;
 
@@ -225,7 +241,7 @@ impl Database {
 
     pub fn get_revenue_stats(&self, date: &NaiveDate) -> Result<RevenueStats, JsValue> {
         let payments = self.get_payments()?;
-        
+
         let total = payments
             .iter()
             .filter(|p| {
@@ -246,7 +262,7 @@ impl Database {
 
     pub fn get_compliance_stats(&self) -> Result<ComplianceStats, JsValue> {
         let submissions = self.get_government_submissions()?;
-        
+
         let total_count = submissions.len();
         let success_count = submissions
             .iter()
@@ -389,7 +405,10 @@ impl Database {
         self.get_from_storage("government_submissions")
     }
 
-    fn save_government_submissions(&self, submissions: &[GovernmentSubmission]) -> Result<(), JsValue> {
+    fn save_government_submissions(
+        &self,
+        submissions: &[GovernmentSubmission],
+    ) -> Result<(), JsValue> {
         self.save_to_storage("government_submissions", submissions)
     }
 
@@ -410,8 +429,8 @@ impl Database {
     where
         T: serde::Serialize,
     {
-        let json = serde_json::to_string(data)
-            .map_err(|e| format!("Failed to serialize: {}", e))?;
+        let json =
+            serde_json::to_string(data).map_err(|e| format!("Failed to serialize: {}", e))?;
 
         self.storage
             .set_item(key, &json)

@@ -2,9 +2,7 @@ use shared::AlbergueResult;
 
 pub fn init_logging() {
     tracing_subscriber::fmt()
-        .with_env_filter(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string())
-        )
+        .with_env_filter(std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string()))
         .init();
 }
 
@@ -32,7 +30,8 @@ impl NotificationConfig {
                 .unwrap_or(587),
             smtp_user: std::env::var("SMTP_USER").unwrap_or_else(|_| "resend".to_string()),
             smtp_password: std::env::var("SMTP_PASSWORD").unwrap_or_default(),
-            from_email: std::env::var("FROM_EMAIL").unwrap_or_else(|_| "albergue@carrascalejo.com".to_string()),
+            from_email: std::env::var("FROM_EMAIL")
+                .unwrap_or_else(|_| "albergue@carrascalejo.com".to_string()),
             twilio_account_sid: std::env::var("TWILIO_ACCOUNT_SID").unwrap_or_default(),
             twilio_auth_token: std::env::var("TWILIO_AUTH_TOKEN").unwrap_or_default(),
             twilio_phone_number: std::env::var("TWILIO_PHONE_NUMBER").unwrap_or_default(),

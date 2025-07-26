@@ -1,5 +1,5 @@
-use shared::{DocumentType, ExtractedData};
 use chrono::{DateTime, Utc};
+use shared::{DocumentType, ExtractedData};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -17,11 +17,7 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn new(
-        document_type: DocumentType,
-        extracted_data: ExtractedData,
-        is_valid: bool,
-    ) -> Self {
+    pub fn new(document_type: DocumentType, extracted_data: ExtractedData, is_valid: bool) -> Self {
         Self {
             id: Uuid::new_v4(),
             document_type,
@@ -62,12 +58,12 @@ impl Document {
         if let Ok(number) = number_part.parse::<u32>() {
             let letters = "TRWAGMYFPDXBNJZSQVHLCKE";
             let expected_letter = letters.chars().nth((number % 23) as usize);
-            
+
             if let Some(expected) = expected_letter {
                 return letter_part.chars().next() == Some(expected);
             }
         }
-        
+
         false
     }
 
@@ -93,12 +89,12 @@ impl Document {
 
             let letters = "TRWAGMYFPDXBNJZSQVHLCKE";
             let expected_letter = letters.chars().nth((number % 23) as usize);
-            
+
             if let Some(expected) = expected_letter {
                 return letter_part.chars().next() == Some(expected);
             }
         }
-        
+
         false
     }
 }

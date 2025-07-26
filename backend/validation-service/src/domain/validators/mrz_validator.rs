@@ -1,6 +1,6 @@
-use shared::{ExtractedData, AlbergueResult};
+use chrono::{DateTime, NaiveDate, Utc};
 use regex::Regex;
-use chrono::{DateTime, Utc, NaiveDate};
+use shared::{AlbergueResult, ExtractedData};
 
 pub struct MrzValidator;
 
@@ -25,7 +25,7 @@ impl MrzValidator {
                 '<' => 0,
                 _ => return Ok(false),
             };
-            
+
             sum += value * weights[i % 3];
         }
 
@@ -34,10 +34,10 @@ impl MrzValidator {
 
     pub fn extract_mrz_data(&self, mrz_text: &str) -> AlbergueResult<ExtractedData> {
         let mut extracted = ExtractedData::default();
-        
+
         // TD1 format (3 lines, 30 characters each) - ID cards
         let td1_regex = Regex::new(r"([A-Z0-9<]{30})\n([A-Z0-9<]{30})\n([A-Z0-9<]{30})").unwrap();
-        
+
         // TD3 format (2 lines, 44 characters each) - Passports
         let td3_regex = Regex::new(r"([A-Z0-9<]{44})\n([A-Z0-9<]{44})").unwrap();
 
@@ -50,12 +50,17 @@ impl MrzValidator {
         Ok(extracted)
     }
 
-    fn parse_td3_format(&self, line1: &str, line2: &str, extracted: &mut ExtractedData) -> AlbergueResult<()> {
+    fn parse_td3_format(
+        &self,
+        line1: &str,
+        line2: &str,
+        extracted: &mut ExtractedData,
+    ) -> AlbergueResult<()> {
         // Line 1: P<COUNTRY<SURNAME<<GIVEN_NAMES<<<<<<<<<<<<<<<
         if line1.len() >= 44 {
             let country = &line1[2..5];
             let name_part = &line1[5..44];
-            
+
             // Extract surname and given names
             let parts: Vec<&str> = name_part.split("<<").collect();
             if !parts.is_empty() {
@@ -64,7 +69,7 @@ impl MrzValidator {
                     extracted.name = Some(parts[1].replace('<', " ").trim().to_string());
                 }
             }
-            
+
             extracted.nationality = Some(country.to_string());
         }
 
@@ -89,12 +94,18 @@ impl MrzValidator {
         Ok(())
     }
 
-    fn parse_td1_format(&self, line1: &str, line2: &str, line3: &str, extracted: &mut ExtractedData) -> AlbergueResult<()> {
+    fn parse_td1_format(
+        &self,
+        line1: &str,
+        line2: &str,
+        line3: &str,
+        extracted: &mut ExtractedData,
+    ) -> AlbergueResult<()> {
         // Line 1: DOCUMENT_TYPE<COUNTRY<DOCUMENT_NUMBER
         if line1.len() >= 30 {
             let country = &line1[2..5];
             let doc_number = &line1[5..14].replace('<', "");
-            
+
             extracted.nationality = Some(country.to_string());
             extracted.document_number = Some(doc_number.to_string());
         }
@@ -136,12 +147,16 @@ impl MrzValidator {
         let day: u32 = date_str[4..6].parse().map_err(|_| "Invalid day")?;
 
         // Handle 2-digit year (assume 20xx for years < 50, 19xx for years >= 50)
-        let year = if year_part < 50 { 2000 + year_part } else { 1900 + year_part };
+        let year = if year_part < 50 {
+            2000 + year_part
+        } else {
+            1900 + year_part
+        };
 
         if let Some(naive_date) = NaiveDate::from_ymd_opt(year, month, day) {
             Ok(DateTime::from_naive_utc_and_offset(
                 naive_date.and_hms_opt(0, 0, 0).unwrap(),
-                Utc
+                Utc,
             ))
         } else {
             Err("Invalid date")

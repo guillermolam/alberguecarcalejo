@@ -20,7 +20,7 @@
 use std::error::Error;
 
 use image::{DynamicImage, GenericImageView};
-use tesseract::{TessApi, TessInitError, PageSegMode};
+use tesseract::{PageSegMode, TessApi, TessInitError};
 
 /// Data extracted from the front side of a Spanish DNI
 #[derive(Debug, Clone)]

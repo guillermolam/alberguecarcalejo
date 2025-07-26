@@ -1,7 +1,7 @@
 use crate::domain::*;
 use crate::ports::*;
-use shared::{AlbergueError, AlbergueResult};
 use serde_json;
+use shared::{AlbergueError, AlbergueResult};
 
 pub struct CardsServiceImpl {
     storage: Box<dyn StoragePort>,
@@ -18,7 +18,11 @@ impl CardsServiceImpl {
 
     pub async fn get_merida_attractions(&self) -> AlbergueResult<String> {
         // Try to get cached content first
-        if let Ok(cached_card) = self.storage.get_card_by_type(CardType::MeridaAttractions).await {
+        if let Ok(cached_card) = self
+            .storage
+            .get_card_by_type(CardType::MeridaAttractions)
+            .await
+        {
             if !cached_card.is_cache_expired() {
                 return Ok(serde_json::to_string(&cached_card)?);
             }
@@ -26,7 +30,7 @@ impl CardsServiceImpl {
 
         // Scrape fresh content
         let scraped_content = self.scraper.scrape_merida_attractions().await?;
-        
+
         let attractions_card = InfoCard::new(
             CardType::MeridaAttractions,
             "Qué ver en Mérida".to_string(),
@@ -71,7 +75,11 @@ impl CardsServiceImpl {
     }
 
     pub async fn get_carrascalejo_info(&self) -> AlbergueResult<String> {
-        if let Ok(cached_card) = self.storage.get_card_by_type(CardType::CarrascalejoInfo).await {
+        if let Ok(cached_card) = self
+            .storage
+            .get_card_by_type(CardType::CarrascalejoInfo)
+            .await
+        {
             if !cached_card.is_cache_expired() {
                 return Ok(serde_json::to_string(&cached_card)?);
             }
@@ -103,7 +111,8 @@ Este pequeño pueblo de apenas 300 habitantes guarda secretos fascinantes:
 **El Albergue:**
 • Único albergue del pueblo, referencia en la Vía de la Plata
 • Atención personalizada y ambiente familiar
-• Desayuno casero con productos locales"#.to_string(),
+• Desayuno casero con productos locales"#
+                .to_string(),
         )
         .with_links(vec![
             InfoLink {
@@ -245,7 +254,11 @@ Este pequeño pueblo de apenas 300 habitantes guarda secretos fascinantes:
 
     pub async fn get_restaurants_eat(&self) -> AlbergueResult<String> {
         // Try to get cached content first
-        if let Ok(cached_card) = self.storage.get_card_by_type(CardType::RestaurantsEat).await {
+        if let Ok(cached_card) = self
+            .storage
+            .get_card_by_type(CardType::RestaurantsEat)
+            .await
+        {
             if !cached_card.is_cache_expired() {
                 return Ok(serde_json::to_string(&cached_card)?);
             }
@@ -446,15 +459,19 @@ Este pequeño pueblo de apenas 300 habitantes guarda secretos fascinantes:
         Ok(serde_json::to_string(&all_cards)?)
     }
 
-    pub async fn update_card_content(&self, card_id: &str, content: &str) -> AlbergueResult<String> {
+    pub async fn update_card_content(
+        &self,
+        card_id: &str,
+        content: &str,
+    ) -> AlbergueResult<String> {
         let card_uuid = uuid::Uuid::parse_str(card_id)
             .map_err(|_| AlbergueError::ValidationError("Invalid card ID format".to_string()))?;
 
         let mut card = self.storage.get_card_by_id(card_uuid).await?;
         card.update_content(content.to_string());
-        
+
         self.storage.save_card(card.clone()).await?;
-        
+
         Ok(serde_json::to_string(&card)?)
     }
 }

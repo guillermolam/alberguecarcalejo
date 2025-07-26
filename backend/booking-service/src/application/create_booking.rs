@@ -1,9 +1,9 @@
-use shared::{BookingDto, AlbergueResult, AlbergueError};
+use crate::adapters::console_notification_sender::ConsoleNotificationSender;
+use crate::adapters::memory_booking_repository::MemoryBookingRepository;
 use crate::domain::entities::booking::Booking;
 use crate::ports::booking_repository::BookingRepository;
 use crate::ports::notification_sender::NotificationSender;
-use crate::adapters::memory_booking_repository::MemoryBookingRepository;
-use crate::adapters::console_notification_sender::ConsoleNotificationSender;
+use shared::{AlbergueError, AlbergueResult, BookingDto};
 
 pub struct CreateBookingUseCase {
     booking_repository: MemoryBookingRepository,
@@ -36,7 +36,9 @@ impl CreateBookingUseCase {
         let saved_booking = self.booking_repository.save(booking).await?;
 
         // Send notification
-        self.notification_sender.send_booking_confirmation(&saved_booking).await?;
+        self.notification_sender
+            .send_booking_confirmation(&saved_booking)
+            .await?;
 
         Ok(saved_booking.to_dto())
     }
@@ -75,7 +77,8 @@ impl CreateBookingUseCase {
 
     async fn check_availability(&self, booking: &Booking) -> AlbergueResult<bool> {
         // Check for overlapping bookings
-        let overlapping_bookings = self.booking_repository
+        let overlapping_bookings = self
+            .booking_repository
             .find_overlapping_bookings(booking.check_in, booking.check_out, &booking.bed_type)
             .await?;
 

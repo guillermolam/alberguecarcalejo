@@ -1,8 +1,8 @@
 use crate::{BedUpdateRequest, GovernmentSubmissionRequest};
+use serde_json::{json, Value};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{window, Request, RequestInit, Headers, Response};
-use serde_json::{json, Value};
+use web_sys::{window, Headers, Request, RequestInit, Response};
 
 /// Orchestrate dashboard data retrieval from backend
 pub async fn get_dashboard_data() -> Result<Value, String> {
@@ -14,11 +14,8 @@ pub async fn get_dashboard_data() -> Result<Value, String> {
     let recent_bookings_future = make_api_request("GET", "/api/bookings/recent", None);
 
     // Execute requests in parallel
-    let (stats_result, beds_result, bookings_result) = futures_join3(
-        stats_future,
-        beds_future,
-        recent_bookings_future,
-    ).await;
+    let (stats_result, beds_result, bookings_result) =
+        futures_join3(stats_future, beds_future, recent_bookings_future).await;
 
     let stats = stats_result.unwrap_or_else(|_| json!({}));
     let beds = beds_result.unwrap_or_else(|_| json!([]));
@@ -44,24 +41,24 @@ pub async fn get_beds_data() -> Result<Value, String> {
     console_log!("Admin BFF: Orchestrating beds data retrieval");
 
     let beds_data = make_api_request("GET", "/api/beds", None).await?;
-    
+
     // Enhance beds data with additional information
     if let Some(beds_array) = beds_data.as_array() {
         let mut enhanced_beds = Vec::new();
-        
+
         for bed in beds_array {
             let mut enhanced_bed = bed.clone();
-            
+
             // Add current occupancy information if available
             if let Some(bed_id) = bed.get("id").and_then(|id| id.as_u64()) {
                 if let Ok(occupancy) = get_bed_occupancy_info(bed_id as u32).await {
                     enhanced_bed["occupancy"] = occupancy;
                 }
             }
-            
+
             enhanced_beds.push(enhanced_bed);
         }
-        
+
         Ok(json!(enhanced_beds))
     } else {
         Ok(beds_data)
@@ -70,7 +67,10 @@ pub async fn get_beds_data() -> Result<Value, String> {
 
 /// Orchestrate bed status update with validation
 pub async fn update_bed_status(request: &BedUpdateRequest) -> Result<Value, String> {
-    console_log!("Admin BFF: Orchestrating bed status update for bed {}", request.bed_id);
+    console_log!(
+        "Admin BFF: Orchestrating bed status update for bed {}",
+        request.bed_id
+    );
 
     // Validate bed exists first
     let bed_check = make_api_request("GET", &format!("/api/beds/{}", request.bed_id), None).await;
@@ -82,7 +82,10 @@ pub async fn update_bed_status(request: &BedUpdateRequest) -> Result<Value, Stri
     let current_bed = bed_check.unwrap();
     if let Some(current_status) = current_bed.get("status").and_then(|s| s.as_str()) {
         if !is_valid_status_transition(current_status, &request.status) {
-            return Err(format!("Invalid status transition from {} to {}", current_status, request.status));
+            return Err(format!(
+                "Invalid status transition from {} to {}",
+                current_status, request.status
+            ));
         }
     }
 
@@ -93,10 +96,11 @@ pub async fn update_bed_status(request: &BedUpdateRequest) -> Result<Value, Stri
     });
 
     let update_result = make_api_request(
-        "PATCH", 
-        &format!("/api/beds/{}", request.bed_id), 
-        Some(&update_payload)
-    ).await?;
+        "PATCH",
+        &format!("/api/beds/{}", request.bed_id),
+        Some(&update_payload),
+    )
+    .await?;
 
     // If bed is being marked as maintenance or out of order, check for existing bookings
     if ["maintenance", "out_of_order"].contains(&request.status.as_str()) {
@@ -108,15 +112,21 @@ pub async fn update_bed_status(request: &BedUpdateRequest) -> Result<Value, Stri
 }
 
 /// Orchestrate government submission retry with enhanced error handling
-pub async fn retry_government_submission(request: &GovernmentSubmissionRequest) -> Result<Value, String> {
-    console_log!("Admin BFF: Orchestrating government submission retry for booking {}", request.booking_id);
+pub async fn retry_government_submission(
+    request: &GovernmentSubmissionRequest,
+) -> Result<Value, String> {
+    console_log!(
+        "Admin BFF: Orchestrating government submission retry for booking {}",
+        request.booking_id
+    );
 
     // Get booking information
     let booking_data = make_api_request(
-        "GET", 
-        &format!("/api/bookings/{}", request.booking_id), 
-        None
-    ).await?;
+        "GET",
+        &format!("/api/bookings/{}", request.booking_id),
+        None,
+    )
+    .await?;
 
     // Validate booking is eligible for government submission
     if let Some(status) = booking_data.get("status").and_then(|s| s.as_str()) {
@@ -127,13 +137,18 @@ pub async fn retry_government_submission(request: &GovernmentSubmissionRequest) 
 
     // Check previous submission attempts
     let submission_history = make_api_request(
-        "GET", 
-        &format!("/api/government/submissions/booking/{}", request.booking_id), 
-        None
-    ).await.unwrap_or(json!([]));
+        "GET",
+        &format!("/api/government/submissions/booking/{}", request.booking_id),
+        None,
+    )
+    .await
+    .unwrap_or(json!([]));
 
-    let attempt_count = submission_history.as_array().map(|arr| arr.len()).unwrap_or(0);
-    
+    let attempt_count = submission_history
+        .as_array()
+        .map(|arr| arr.len())
+        .unwrap_or(0);
+
     if attempt_count >= 3 && !request.force_retry {
         return Err("Maximum retry attempts reached. Use force_retry to override.".to_string());
     }
@@ -147,11 +162,8 @@ pub async fn retry_government_submission(request: &GovernmentSubmissionRequest) 
     });
 
     // Submit to government API
-    let submission_result = make_api_request(
-        "POST", 
-        "/api/government/submit", 
-        Some(&submission_payload)
-    ).await?;
+    let submission_result =
+        make_api_request("POST", "/api/government/submit", Some(&submission_payload)).await?;
 
     console_log!("Admin BFF: Government submission retry completed");
     Ok(submission_result)
@@ -160,17 +172,20 @@ pub async fn retry_government_submission(request: &GovernmentSubmissionRequest) 
 /// Get government submission status for compliance monitoring
 async fn get_government_submission_status() -> Result<Value, String> {
     let submissions = make_api_request("GET", "/api/government/submissions/status", None).await?;
-    
+
     // Calculate compliance metrics
     if let Some(submissions_array) = submissions.as_array() {
         let total_submissions = submissions_array.len();
-        let successful = submissions_array.iter()
+        let successful = submissions_array
+            .iter()
             .filter(|s| s.get("status").and_then(|st| st.as_str()) == Some("success"))
             .count();
-        let pending = submissions_array.iter()
+        let pending = submissions_array
+            .iter()
             .filter(|s| s.get("status").and_then(|st| st.as_str()) == Some("pending"))
             .count();
-        let failed = submissions_array.iter()
+        let failed = submissions_array
+            .iter()
             .filter(|s| s.get("status").and_then(|st| st.as_str()) == Some("failed"))
             .count();
 
@@ -179,10 +194,10 @@ async fn get_government_submission_status() -> Result<Value, String> {
             "successful": successful,
             "pending": pending,
             "failed": failed,
-            "compliance_rate": if total_submissions > 0 { 
-                (successful as f64 / total_submissions as f64 * 100.0) as u32 
-            } else { 
-                100 
+            "compliance_rate": if total_submissions > 0 {
+                (successful as f64 / total_submissions as f64 * 100.0) as u32
+            } else {
+                100
             }
         }))
     } else {
@@ -217,10 +232,11 @@ async fn get_pending_alerts() -> Result<Value, String> {
     // Check for beds needing maintenance
     if let Ok(beds_data) = make_api_request("GET", "/api/beds", None).await {
         if let Some(beds_array) = beds_data.as_array() {
-            let maintenance_beds: Vec<_> = beds_array.iter()
+            let maintenance_beds: Vec<_> = beds_array
+                .iter()
                 .filter(|bed| bed.get("status").and_then(|s| s.as_str()) == Some("maintenance"))
                 .count();
-            
+
             if maintenance_beds > 0 {
                 alerts.push(json!({
                     "type": "maintenance",
@@ -249,11 +265,9 @@ async fn get_pending_alerts() -> Result<Value, String> {
 
 /// Get bed occupancy information
 async fn get_bed_occupancy_info(bed_id: u32) -> Result<Value, String> {
-    let occupancy_data = make_api_request(
-        "GET", 
-        &format!("/api/beds/{}/occupancy", bed_id), 
-        None
-    ).await.unwrap_or(json!({}));
+    let occupancy_data = make_api_request("GET", &format!("/api/beds/{}/occupancy", bed_id), None)
+        .await
+        .unwrap_or(json!({}));
 
     Ok(occupancy_data)
 }
@@ -262,10 +276,12 @@ async fn get_bed_occupancy_info(bed_id: u32) -> Result<Value, String> {
 async fn check_overdue_checkouts() -> Result<Value, String> {
     let today = chrono::Utc::now().date_naive().to_string();
     let overdue_bookings = make_api_request(
-        "GET", 
-        &format!("/api/bookings/overdue?date={}", today), 
-        None
-    ).await.unwrap_or(json!([]));
+        "GET",
+        &format!("/api/bookings/overdue?date={}", today),
+        None,
+    )
+    .await
+    .unwrap_or(json!([]));
 
     Ok(overdue_bookings)
 }
@@ -292,16 +308,21 @@ fn is_valid_status_transition(current_status: &str, new_status: &str) -> bool {
 async fn check_and_notify_affected_bookings(bed_id: u32) -> Result<(), String> {
     // Get current bookings for this bed
     let affected_bookings = make_api_request(
-        "GET", 
-        &format!("/api/beds/{}/bookings/current", bed_id), 
-        None
-    ).await.unwrap_or(json!([]));
+        "GET",
+        &format!("/api/beds/{}/bookings/current", bed_id),
+        None,
+    )
+    .await
+    .unwrap_or(json!([]));
 
     if let Some(bookings_array) = affected_bookings.as_array() {
         if !bookings_array.is_empty() {
-            console_log!("Admin BFF: {} bookings affected by bed {} status change", 
-                        bookings_array.len(), bed_id);
-            
+            console_log!(
+                "Admin BFF: {} bookings affected by bed {} status change",
+                bookings_array.len(),
+                bed_id
+            );
+
             // In a real implementation, this would trigger notifications
             // to affected guests and staff
         }
@@ -313,16 +334,20 @@ async fn check_and_notify_affected_bookings(bed_id: u32) -> Result<(), String> {
 /// Make HTTP request to backend API with enhanced error handling
 async fn make_api_request(method: &str, url: &str, body: Option<&Value>) -> Result<Value, String> {
     let window = window().ok_or("No global window")?;
-    
+
     let mut opts = RequestInit::new();
     opts.method(method);
-    
+
     let headers = Headers::new().map_err(|_| "Failed to create headers")?;
-    headers.set("Content-Type", "application/json").map_err(|_| "Failed to set content type")?;
-    
+    headers
+        .set("Content-Type", "application/json")
+        .map_err(|_| "Failed to set content type")?;
+
     // Add admin context header
-    headers.set("X-Admin-Request", "true").map_err(|_| "Failed to set admin header")?;
-    
+    headers
+        .set("X-Admin-Request", "true")
+        .map_err(|_| "Failed to set admin header")?;
+
     opts.headers(&headers);
 
     if let Some(body_data) = body {
@@ -331,26 +356,26 @@ async fn make_api_request(method: &str, url: &str, body: Option<&Value>) -> Resu
         opts.body(Some(&JsValue::from_str(&body_str)));
     }
 
-    let request = Request::new_with_str_and_init(url, &opts)
-        .map_err(|_| "Failed to create request")?;
+    let request =
+        Request::new_with_str_and_init(url, &opts).map_err(|_| "Failed to create request")?;
 
     let resp_value = JsFuture::from(window.fetch_with_request(&request))
         .await
         .map_err(|_| format!("Request to {} failed", url))?;
 
     let resp: Response = resp_value.dyn_into().map_err(|_| "Invalid response type")?;
-    
+
     if !resp.ok() {
         let status = resp.status();
         let status_text = resp.status_text();
-        
+
         // Try to get error details from response body
         if let Ok(error_body) = JsFuture::from(resp.text().unwrap()).await {
             if let Some(error_text) = error_body.as_string() {
                 return Err(format!("HTTP {} {}: {}", status, status_text, error_text));
             }
         }
-        
+
         return Err(format!("HTTP {} {}", status, status_text));
     }
 
@@ -363,8 +388,7 @@ async fn make_api_request(method: &str, url: &str, body: Option<&Value>) -> Resu
         .as_string()
         .ok_or("Failed to convert to string")?;
 
-    serde_json::from_str(&json_string)
-        .map_err(|e| format!("Failed to parse JSON response: {}", e))
+    serde_json::from_str(&json_string).map_err(|e| format!("Failed to parse JSON response: {}", e))
 }
 
 /// Simple futures join for parallel execution (WASM-compatible)
@@ -378,6 +402,6 @@ async fn futures_join3<T, E>(
     let result1 = future1.await;
     let result2 = future2.await;
     let result3 = future3.await;
-    
+
     (result1, result2, result3)
 }

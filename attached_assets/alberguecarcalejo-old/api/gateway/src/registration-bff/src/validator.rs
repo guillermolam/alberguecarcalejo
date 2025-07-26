@@ -1,25 +1,25 @@
-use crate::{RegistrationData, PilgrimData, BookingData, PaymentData};
-use regex::Regex;
+use crate::{BookingData, PaymentData, PilgrimData, RegistrationData};
 use chrono::{NaiveDate, Utc};
+use regex::Regex;
 
 /// Validate dates for availability checks
 pub fn validate_dates(check_in_date: &str, check_out_date: &str) -> Result<(), String> {
     let check_in = NaiveDate::parse_from_str(check_in_date, "%Y-%m-%d")
         .map_err(|_| "Invalid check-in date format. Use YYYY-MM-DD".to_string())?;
-    
+
     let check_out = NaiveDate::parse_from_str(check_out_date, "%Y-%m-%d")
         .map_err(|_| "Invalid check-out date format. Use YYYY-MM-DD".to_string())?;
 
     let today = Utc::now().date_naive();
-    
+
     if check_in < today {
         return Err("Check-in date cannot be in the past".to_string());
     }
-    
+
     if check_out <= check_in {
         return Err("Check-out date must be after check-in date".to_string());
     }
-    
+
     let max_stay = chrono::Duration::days(14);
     if check_out.signed_duration_since(check_in) > max_stay {
         return Err("Maximum stay is 14 nights".to_string());
@@ -62,7 +62,7 @@ fn validate_pilgrim_data(pilgrim: &PilgrimData) -> Result<(), Vec<String>> {
     if pilgrim.first_name.trim().is_empty() || pilgrim.first_name.len() > 50 {
         errors.push("First name is required and must be less than 50 characters".to_string());
     }
-    
+
     if pilgrim.last_name_1.trim().is_empty() || pilgrim.last_name_1.len() > 50 {
         errors.push("Last name is required and must be less than 50 characters".to_string());
     }
@@ -81,7 +81,7 @@ fn validate_pilgrim_data(pilgrim: &PilgrimData) -> Result<(), Vec<String>> {
         let today = Utc::now().date_naive();
         let min_age = today - chrono::Duration::days(365 * 16); // 16 years minimum
         let max_age = today - chrono::Duration::days(365 * 120); // 120 years maximum
-        
+
         if birth_date > min_age {
             errors.push("Pilgrim must be at least 16 years old".to_string());
         }
@@ -242,12 +242,12 @@ fn validate_dni(dni: &str) -> bool {
     let letters = "TRWAGMYFPDXBNJZSQVHLCKE";
     let number_part = &dni[..8];
     let letter_part = &dni[8..9];
-    
+
     if let Ok(number) = number_part.parse::<u32>() {
         let expected_letter = letters.chars().nth((number % 23) as usize).unwrap();
         return letter_part == expected_letter.to_string();
     }
-    
+
     false
 }
 
@@ -259,12 +259,15 @@ fn validate_nie(nie: &str) -> bool {
     }
 
     let letters = "TRWAGMYFPDXBNJZSQVHLCKE";
-    let prefix_map = [('X', 0), ('Y', 1), ('Z', 2)].iter().cloned().collect::<std::collections::HashMap<_, _>>();
-    
+    let prefix_map = [('X', 0), ('Y', 1), ('Z', 2)]
+        .iter()
+        .cloned()
+        .collect::<std::collections::HashMap<_, _>>();
+
     let prefix = nie.chars().next().unwrap();
     let number_part = &nie[1..8];
     let letter_part = &nie[8..9];
-    
+
     if let Some(&prefix_value) = prefix_map.get(&prefix) {
         if let Ok(number) = number_part.parse::<u32>() {
             let full_number = prefix_value * 10_000_000 + number;
@@ -272,7 +275,7 @@ fn validate_nie(nie: &str) -> bool {
             return letter_part == expected_letter.to_string();
         }
     }
-    
+
     false
 }
 
@@ -314,10 +317,27 @@ fn validate_language_code(lang: &str) -> bool {
 pub fn validate_input_security(input: &str) -> bool {
     // Check for common injection patterns
     let dangerous_patterns = [
-        "<script", "javascript:", "vbscript:", "onload=", "onerror=",
-        "<?php", "<?xml", "SELECT ", "INSERT ", "UPDATE ", "DELETE ",
-        "DROP ", "ALTER ", "CREATE ", "EXEC ", "UNION ",
-        "../", "..\\", "%2e%2e", "file://", "data:",
+        "<script",
+        "javascript:",
+        "vbscript:",
+        "onload=",
+        "onerror=",
+        "<?php",
+        "<?xml",
+        "SELECT ",
+        "INSERT ",
+        "UPDATE ",
+        "DELETE ",
+        "DROP ",
+        "ALTER ",
+        "CREATE ",
+        "EXEC ",
+        "UNION ",
+        "../",
+        "..\\",
+        "%2e%2e",
+        "file://",
+        "data:",
     ];
 
     let input_lower = input.to_lowercase();

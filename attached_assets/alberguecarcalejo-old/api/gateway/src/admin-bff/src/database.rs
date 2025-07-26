@@ -1,7 +1,7 @@
+use js_sys::{Promise, JSON};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use web_sys::{Request, RequestInit, RequestMode, Response};
-use js_sys::{Promise, JSON};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DatabaseConnection {
@@ -26,22 +26,10 @@ pub struct DatabaseResult {
 }
 
 // Whitelist of allowed database operations for security
-const ALLOWED_OPERATIONS: &[&str] = &[
-    "SELECT",
-    "INSERT", 
-    "UPDATE",
-    "DELETE"
-];
+const ALLOWED_OPERATIONS: &[&str] = &["SELECT", "INSERT", "UPDATE", "DELETE"];
 
 const RESTRICTED_KEYWORDS: &[&str] = &[
-    "DROP",
-    "TRUNCATE", 
-    "ALTER",
-    "CREATE",
-    "GRANT",
-    "REVOKE",
-    "EXEC",
-    "EXECUTE"
+    "DROP", "TRUNCATE", "ALTER", "CREATE", "GRANT", "REVOKE", "EXEC", "EXECUTE",
 ];
 
 pub struct SecureDatabase {
@@ -59,11 +47,12 @@ impl SecureDatabase {
 
     pub fn validate_query(&self, query: &DatabaseQuery) -> Result<(), String> {
         let sql_upper = query.sql.to_uppercase();
-        
+
         // Check if operation is allowed
-        let is_allowed = ALLOWED_OPERATIONS.iter()
+        let is_allowed = ALLOWED_OPERATIONS
+            .iter()
             .any(|&op| sql_upper.trim_start().starts_with(op));
-        
+
         if !is_allowed {
             return Err("Operation not permitted".to_string());
         }
@@ -117,7 +106,8 @@ impl SecureDatabase {
                 COUNT(*) as total_beds,
                 (SELECT COUNT(*) FROM bookings WHERE status = 'active') as active_bookings,
                 (SELECT COUNT(*) FROM bookings WHERE status = 'checked_in') as checked_in_bookings
-                FROM beds".to_string(),
+                FROM beds"
+                .to_string(),
             params: vec![],
             operation_type: "SELECT".to_string(),
         };
@@ -149,7 +139,8 @@ impl SecureDatabase {
     pub async fn get_beds(&self) -> Result<serde_json::Value, String> {
         let query = DatabaseQuery {
             sql: "SELECT id, room_number, bed_number, status, notes, updated_at 
-                  FROM beds ORDER BY room_number, bed_number".to_string(),
+                  FROM beds ORDER BY room_number, bed_number"
+                .to_string(),
             params: vec![],
             operation_type: "SELECT".to_string(),
         };
@@ -163,12 +154,19 @@ impl SecureDatabase {
         }
     }
 
-    pub async fn update_bed_status(&self, bed_id: u32, status: &str, notes: Option<&str>) -> Result<serde_json::Value, String> {
-        let notes_value = notes.map(|n| serde_json::Value::String(n.to_string()))
+    pub async fn update_bed_status(
+        &self,
+        bed_id: u32,
+        status: &str,
+        notes: Option<&str>,
+    ) -> Result<serde_json::Value, String> {
+        let notes_value = notes
+            .map(|n| serde_json::Value::String(n.to_string()))
             .unwrap_or(serde_json::Value::Null);
 
         let query = DatabaseQuery {
-            sql: "UPDATE beds SET status = $1, notes = $2, updated_at = NOW() WHERE id = $3".to_string(),
+            sql: "UPDATE beds SET status = $1, notes = $2, updated_at = NOW() WHERE id = $3"
+                .to_string(),
             params: vec![
                 serde_json::Value::String(status.to_string()),
                 notes_value,
@@ -178,25 +176,26 @@ impl SecureDatabase {
         };
 
         match self.execute_query(&query).await {
-            Ok(_result) => {
-                Ok(serde_json::json!({
-                    "bed_id": bed_id,
-                    "status": status,
-                    "updated": true
-                }))
-            }
+            Ok(_result) => Ok(serde_json::json!({
+                "bed_id": bed_id,
+                "status": status,
+                "updated": true
+            })),
             Err(e) => Err(e),
         }
     }
 
     pub async fn get_bookings(&self, limit: Option<u32>) -> Result<serde_json::Value, String> {
         let limit_clause = limit.map(|l| format!(" LIMIT {}", l)).unwrap_or_default();
-        
+
         let query = DatabaseQuery {
-            sql: format!("SELECT b.*, p.first_name, p.last_name 
+            sql: format!(
+                "SELECT b.*, p.first_name, p.last_name 
                          FROM bookings b 
                          JOIN pilgrims p ON b.pilgrim_id = p.id 
-                         ORDER BY b.created_at DESC{}", limit_clause),
+                         ORDER BY b.created_at DESC{}",
+                limit_clause
+            ),
             params: vec![],
             operation_type: "SELECT".to_string(),
         };
@@ -213,7 +212,8 @@ impl SecureDatabase {
     pub async fn get_government_submissions(&self) -> Result<serde_json::Value, String> {
         let query = DatabaseQuery {
             sql: "SELECT * FROM government_submissions 
-                  ORDER BY created_at DESC LIMIT 100".to_string(),
+                  ORDER BY created_at DESC LIMIT 100"
+                .to_string(),
             params: vec![],
             operation_type: "SELECT".to_string(),
         };
@@ -238,7 +238,5 @@ pub fn init_database() {
 }
 
 pub fn get_database() -> &'static SecureDatabase {
-    unsafe {
-        DATABASE.as_ref().expect("Database not initialized")
-    }
+    unsafe { DATABASE.as_ref().expect("Database not initialized") }
 }
