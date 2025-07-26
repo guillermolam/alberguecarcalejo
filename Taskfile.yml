@@ -14,7 +14,15 @@ env:
 tasks:
   default:
     desc: Run all services in production mode
-    deps: [build, preview]
+    deps: [nix, build, preview]
+    deps_order:
+      - build
+      - preview
+
+  nix:
+    desc: Run all services in production mode using Nix shell
+    cmds:
+      - nix-shell --run "rustc --version && node --version && bun --version && caddy version"
     
   dev:
     desc: Run all services in dev mode
