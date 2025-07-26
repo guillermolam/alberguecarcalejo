@@ -50,18 +50,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "auth_verify"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "http 0.2.12",
- "serde",
- "serde_json",
- "spin-sdk 3.1.1",
- "uuid",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -317,6 +305,17 @@ dependencies = [
  "pin-project-lite",
  "pin-utils",
  "slab",
+]
+
+[[package]]
+name = "gateway_bff"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "http 0.2.12",
+ "serde",
+ "serde_json",
+ "spin-sdk 3.1.1",
 ]
 
 [[package]]
