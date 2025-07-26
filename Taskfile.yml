@@ -20,9 +20,9 @@ tasks:
       - preview
 
   nix:
-    desc: Run all services in production mode using Nix shell
+    desc: Verify Nix packages are available
     cmds:
-      - nix-shell --run "rustc --version && node --version && bun --version && caddy version"
+      - rustc --version && node --version && bun --version && caddy version
     
   dev:
     desc: Run all services in dev mode
