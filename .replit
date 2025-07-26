@@ -49,7 +49,7 @@ externalPort = 3000
 PORT = "8000"
 
 [workflows]
-runButton = "Frontend Dev"
+runButton = "Development"
 
 [[workflows.workflow]]
 name = "Dev"
@@ -62,10 +62,10 @@ args = "npm run dev:replit"
 waitForPort = 5173
 
 [[workflows.workflow]]
-name = "Frontend Dev"
+name = "Development"
 author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd frontend && bun run dev -- --host 0.0.0.0 --port 5173"
+args = "task dev"
