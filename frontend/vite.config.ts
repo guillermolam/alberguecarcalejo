@@ -1,52 +1,65 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
-export default defineConfig({
-  root: '.',
-  plugins: [react()],
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '') // '' loads all vars, not just VITE_
 
-  server: {
-    host: '0.0.0.0',
-    port: 5173,
-    strictPort: true,
-    open: false,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      }
-    }
-  },
+  const host = env.VITE_HOST || '0.0.0.0'
+  const port = Number(env.VITE_PORT || 5173)
+  const previewPort = Number(env.VITE_PREVIEW_PORT || 4173)
+  const proxyTarget = env.VITE_API_PROXY || 'http://localhost:8000'
 
-  preview: {
-    host: '0.0.0.0',
-    port: 4173,
-    strictPort: true,
-  },
+  return {
+    root: '.',
+    plugins: [react()],
 
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-      '@/components': resolve(__dirname, 'src/components'),
-      '@/lib': resolve(__dirname, 'src/lib'),
-      '@/hooks': resolve(__dirname, 'src/hooks'),
-      '@/pages': resolve(__dirname, 'src/pages'),
-      '@/store': resolve(__dirname, 'src/stores'),
-      '@/contexts': resolve(__dirname, 'src/contexts'),
-      '@/utils': resolve(__dirname, 'src/lib'),
-      '@assets': resolve(__dirname, '../tests/attached_assets'),
-      '@shared': resolve(__dirname, '../backend/shared/src'),
+    server: {
+      host,
+      port,
+      strictPort: true,
+      open: false,
+      proxy: {
+        '/api': {
+          target: proxyTarget,
+          changeOrigin: true,
+        },
+      },
     },
-  },
 
-  build: {
-    outDir: 'dist',
-    rollupOptions: {
-      input: resolve(__dirname, 'index.html'),
+    preview: {
+      host,
+      port: previewPort,
+      strictPort: true,
     },
-  },
+
+    resolve: {
+      alias: {
+        '@': resolve(__dirname, 'src'),
+        '@/components': resolve(__dirname, 'src/components'),
+        '@/lib': resolve(__dirname, 'src/lib'),
+        '@/hooks': resolve(__dirname, 'src/hooks'),
+        '@/pages': resolve(__dirname, 'src/pages'),
+        '@/store': resolve(__dirname, 'src/stores'),
+        '@/contexts': resolve(__dirname, 'src/contexts'),
+        '@/utils': resolve(__dirname, 'src/lib'),
+        '@assets': resolve(__dirname, '../tests/attached_assets'),
+        '@shared': resolve(__dirname, '../backend/shared/src'),
+      },
+    },
+
+    build: {
+      outDir: 'dist',
+      rollupOptions: {
+        input: resolve(__dirname, 'index.html'),
+      },
+    },
+  }
 })
+
+console.log(import.meta.env.VITE_PORT);
+const env = loadEnv(mode, process.cwd(), '')
+

@@ -1,73 +1,17 @@
-
 {
-  "name": "albergue-del-carrascalejo",
+  "name": "pilgrim-registration",
   "version": "1.0.0",
-  "type": "module",
-  "private": true,
-  "description": "Hostel Management System - Albergue Del Carrascalejo",
   "scripts": {
-    "dev:replit": "task dev",
-    "dev": "task dev",
-    "build": "task build:all",
-    "build:all": "task build:all",
-    "build:gateway": "task build:gateway",
-    "build:backend": "task build:backend",
-    "build:frontend": "task build:frontend",
-    "test": "task test:unit",
-    "test:unit": "task test:unit",
-    "test:unit:rust": "task test:unit:rust",
-    "test:unit:frontend": "task test:unit:frontend",
-    "test:unit:coverage": "task test:unit:coverage",
-    "test:integration": "task test:integration",
-    "test:e2e": "task test:e2e",
-    "lint": "task lint:all",
-    "lint:all": "task lint:all",
-    "lint:rust": "task lint:rust",
-    "lint:frontend": "task lint:frontend",
-    "lint:trunk": "task lint:trunk",
-    "format": "task format:all",
-    "format:all": "task format:all",
-    "format:rust": "task format:rust",
-    "format:frontend": "task format:frontend",
-    "format:check": "task format:check",
-    "sast:all": "task sast:all",
-    "sast:semgrep": "task sast:semgrep",
-    "sast:cargo-audit": "task sast:cargo-audit",
-    "sast:trunk-security": "task sast:trunk-security",
-    "security:dast": "task security:dast",
-    "security:dast:zap": "task security:dast:zap",
-    "security:dast:nuclei": "task security:dast:nuclei",
-    "performance": "task performance:all",
-    "performance:all": "task performance:all",
-    "performance:lighthouse": "task performance:lighthouse",
-    "performance:k6": "task performance:k6",
-    "compatibility:all": "task compatibility:all",
-    "compatibility:browsers": "task compatibility:browsers",
-    "compatibility:devices": "task compatibility:devices",
-    "dev:services": "task dev:services",
-    "dev:gateway": "task dev:gateway",
-    "dev:backend": "task dev:backend",
-    "dev:frontend": "task dev:frontend",
-    "clean": "task clean",
-    "preview": "task preview",
-    "deploy": "task deploy",
-    "health:check": "task health:check",
-    "db:migrate": "task db:migrate",
-    "db:seed": "task db:seed",
-    "db:reset": "task db:reset",
-    "setup:check": "task setup:check",
-    "setup:deps": "task setup:deps",
-    "setup:deps:frontend": "task setup:deps:frontend",
-    "setup:deps:rust": "task setup:deps:rust",
-    "setup:trunk": "task setup:trunk",
-    "ci:full": "task ci:full",
-    "nix": "task nix"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "workspaces": [
-    "frontend"
-  ],
-  "engines": {
-    "node": ">=20.0.0"
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
-  "packageManager": "bun@1.0.0"
+  "devDependencies": {
+    "vite": "^5.2.0",
+    "@vitejs/plugin-react": "^4.2.1"
+  }
 }

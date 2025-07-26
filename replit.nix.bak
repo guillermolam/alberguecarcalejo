@@ -1,0 +1,28 @@
+{ pkgs }: {
+  deps = [
+    pkgs.tree
+    pkgs.git
+    pkgs.curl
+    pkgs.jq
+    pkgs.caddy
+    pkgs.bun
+    pkgs.yarn
+    pkgs.rustc
+    pkgs.cargo
+    pkgs.wasm-pack
+    pkgs.wasmtime
+    pkgs.openssl
+    pkgs.postgresql_16
+    pkgs.sqlx-cli
+    pkgs.fermyon-spin
+    pkgs.pkg-config
+    pkgs.openssl
+    pkgs.libiconv
+    pkgs.trunk-io
+    pkgs.go-task
+    pkgs.chromium
+    pkgs.k6
+    pkgs.act
+    pkgs.nuclei
+  ];
+}
