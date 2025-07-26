@@ -90,29 +90,16 @@ async fn handle_request(req: Request) -> Result<impl IntoResponse> {
         }
     };
 
-    // Add CORS headers to response
+    // Return result with CORS headers already added in OPTIONS handling
     match result {
-        Ok(mut response) => {
-            // Add CORS headers to existing response
-            for (key, value) in cors_headers {
-                response.headers_mut().insert(key.try_into()?, value.try_into()?);
-            }
-            Ok(response)
-        }
+        Ok(response) => Ok(response),
         Err(e) => {
-            let mut error_response = Response::builder()
+            let error_response = Response::builder()
                 .status(500)
-                .header("Content-Type", "application/json");
-            
-            for (key, value) in cors_headers {
-                error_response = error_response.header(key, value);
-            }
-            
-            Ok(error_response.body(serde_json::to_string(&serde_json::json!({
-                "error": "Internal server error",
-                "message": e.to_string()
-            }))?)
-            .build())
+                .header("Content-Type", "application/json")
+                .body(format!(r#"{{"error": "{}"}}"#, e))?
+                .build();
+            Ok(error_response)
         }
     }
 }
