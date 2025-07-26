@@ -1,3 +1,4 @@
+
 // Pure Frontend Server - WASM Services Architecture
 // This serves only static files, all backend logic runs in WASM
 import { createServer } from 'vite';
@@ -12,7 +13,19 @@ async function startServer() {
     server: {
       port: parseInt(process.env.PORT || '5173'),
       host: '0.0.0.0',
-      open: false
+      open: false,
+      proxy: {
+        '/api': {
+          target: 'http://0.0.0.0:8000',
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy, options) => {
+            proxy.on('error', (err, req, res) => {
+              console.log('Gateway connection failed, check Spin service on port 8000');
+            });
+          }
+        }
+      }
     },
     define: {
       'process.env.NODE_ENV': '"development"'
@@ -35,7 +48,7 @@ async function startServer() {
   
   console.log('✅ WASM microservices architecture active');
   console.log('🔧 Build WASM: bash scripts/build-wasm.sh');
-  console.log('🚀 All backend logic runs in browser WASM');
+  console.log('🚀 All backend logic runs in Spin WASM services');
 }
 
 startServer().catch(console.error);

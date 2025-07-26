@@ -1,41 +1,33 @@
+
 #!/usr/bin/env node
-/**
- * Development script for Replit environment
- * Starts Vite development server with Bun
- */
 
-const { spawn } = require('child_process');
+console.log('🦀 Starting Pure WASM Microservices Architecture');
+console.log('🚀 Spin Gateway (standalone): http://localhost:8000');
+console.log('📊 All API endpoints served by Rust WASM services');
+console.log('💡 Frontend served by Vite dev server');
 
-console.log('🚀 Starting Albergue Management System with Bun...');
+import { spawn } from 'child_process';
+import path from 'path';
 
-// Start Vite dev server from frontend directory using bun
-const viteProcess = spawn('bun', ['run', 'dev'], {
-  cwd: './frontend',
-  stdio: 'inherit',
-  env: {
-    ...process.env,
-    HOST: '0.0.0.0',
-    PORT: '5173'
-  }
+// Start Vite dev server for frontend only
+const viteProcess = spawn('npx', ['vite', '--host', '0.0.0.0', '--port', '5173'], {
+  cwd: path.join(process.cwd(), 'frontend'),
+  stdio: 'inherit'
 });
 
-viteProcess.on('error', (error) => {
-  console.error('Failed to start Vite server:', error);
-  process.exit(1);
-});
-
-viteProcess.on('close', (code) => {
-  console.log(`Vite server exited with code ${code}`);
-  process.exit(code);
-});
-
-// Handle graceful shutdown
+// Handle process cleanup
 process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down...');
+  console.log('\n🛑 Shutting down services...');
   viteProcess.kill('SIGINT');
+  process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Shutting down...');
   viteProcess.kill('SIGTERM');
+  process.exit(0);
+});
+
+viteProcess.on('close', (code) => {
+  console.log(`Vite process exited with code ${code}`);
+  process.exit(code);
 });
