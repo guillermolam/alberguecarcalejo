@@ -17,91 +17,21 @@ deploymentTarget = "cloudrun"
 ignorePorts = false
 
 [workflows]
-runButton = "Development"
+runButton = "Dev"
 
 [[workflows.workflow]]
-name = "Development"
-author = 41744552
-mode = "sequential"
+name = "Dev"
+mode = "parallel"
+author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "task dev"
-
-[[workflows.workflow]]
-name = "Build All"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task build:all"
-
-[[workflows.workflow]]
-name = "Test Suite"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task test:unit"
-
-[[workflows.workflow]]
-name = "Full CI Pipeline"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task ci:full"
-
-[[workflows.workflow]]
-name = "Gateway Only"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task dev:gateway"
-
-[[workflows.workflow]]
-name = "Frontend Only"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task dev:frontend"
-
-[[workflows.workflow]]
-name = "Backend Services"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task dev:backend"
-
-[[workflows.workflow]]
-name = "Format Code"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task format:all"
-
-[[workflows.workflow]]
-name = "Lint All"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task lint:all"
-
-[[workflows.workflow]]
-name = "Security Scan"
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "task sast:all"
+args = "npm run dev:replit"
+waitForPort = 5173
 
 [[workflows.workflow]]
 name = "Integration Tests"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -110,6 +40,7 @@ args = "task test:integration"
 
 [[workflows.workflow]]
 name = "E2E Tests"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -118,6 +49,7 @@ args = "task test:e2e"
 
 [[workflows.workflow]]
 name = "Performance Tests"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -126,6 +58,7 @@ args = "task performance:all"
 
 [[workflows.workflow]]
 name = "Browser Compatibility"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -134,6 +67,7 @@ args = "task compatibility:all"
 
 [[workflows.workflow]]
 name = "DAST Security"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -142,6 +76,7 @@ args = "task security:dast"
 
 [[workflows.workflow]]
 name = "Clean Build"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -150,6 +85,7 @@ args = "task clean"
 
 [[workflows.workflow]]
 name = "Preview App"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -158,6 +94,7 @@ args = "task preview"
 
 [[workflows.workflow]]
 name = "Health Check"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -166,6 +103,7 @@ args = "task health:check"
 
 [[workflows.workflow]]
 name = "Database Reset"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -174,6 +112,7 @@ args = "task db:reset"
 
 [[workflows.workflow]]
 name = "Deploy"
+author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
