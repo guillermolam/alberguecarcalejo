@@ -31,7 +31,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
-      '@assets': resolve(__dirname, '../attached_assets'),
+      '@/components': resolve(__dirname, 'src/components'),
+      '@/lib': resolve(__dirname, 'src/lib'),
+      '@/hooks': resolve(__dirname, 'src/hooks'),
+      '@/pages': resolve(__dirname, 'src/pages'),
+      '@/store': resolve(__dirname, 'src/stores'),
+      '@/contexts': resolve(__dirname, 'src/contexts'),
+      '@/utils': resolve(__dirname, 'src/lib'),
+      '@assets': resolve(__dirname, '../tests/attached_assets'),
+      '@shared': resolve(__dirname, '../backend/shared/src'),
     },
   },
 

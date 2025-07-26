@@ -42,7 +42,7 @@
     "server",
     "src/types/global.d.ts",
     "../tests/attached_assets",
-    "../services/shared/src"
+    "../backend/shared/src"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
