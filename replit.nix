@@ -1,5 +1,6 @@
 { pkgs }: {
   deps = [
+    pkgs.tree
     pkgs.caddy
     pkgs.nodejs_20
     pkgs.rustc
@@ -9,5 +10,7 @@
     pkgs.sqlx-cli
     pkgs.fermyon-spin
     pkgs.chromium
+    pkgs.go-task
+    pkgs.bun
   ];
 }
