@@ -17,7 +17,7 @@ deploymentTarget = "cloudrun"
 ignorePorts = false
 
 [workflows]
-runButton = "Dev"
+runButton = "Development"
 
 [[workflows.workflow]]
 name = "Dev"
@@ -118,3 +118,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "task deploy"
+
+[[workflows.workflow]]
+name = "Development"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task dev"
