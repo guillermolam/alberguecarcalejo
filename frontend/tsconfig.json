@@ -33,11 +33,13 @@
       "@/utils/*": ["./src/utils/*"],
       "@assets/*": ["../tests/attached_assets/*"],
       "@shared/*": ["../services/shared/src/*"],
-      "@wasm/*": ["../pkg/*"]
+      "@wasm/*": ["../pkg/*"],
+      "@server/*": ["./server/*"]
     }
   },
   "include": [
     "src",
+    "server",
     "src/types/global.d.ts",
     "../tests/attached_assets",
     "../services/shared/src"
