@@ -4,7 +4,7 @@ alberguedelcarrascalejo.com {
 
     # API routes to standalone Spin gateway
     route /api/* {
-        reverse_proxy http://127.0.0.1:8000 {
+        reverse_proxy http://127.0.0.1:8100 {
             transport http {
                 versions h2 http/1.1 h3
             }
@@ -49,7 +49,7 @@ e8cc356a-247c-4e26-bebe-c81e2720d706-00-c9097ozkhla1.picard.replit.dev {
     
     # API routes to standalone Spin gateway
     route /api/* {
-        reverse_proxy http://127.0.0.1:8000 {
+        reverse_proxy http://127.0.0.1:3000 {
             transport http {
                 versions h2 http/1.1 h3
             }

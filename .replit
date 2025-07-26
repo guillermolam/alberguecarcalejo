@@ -1,4 +1,4 @@
-run = "npm run dev:replit"
+run = "bun run dev:replit"
 modules = ["nodejs-20", "rust-stable", "postgresql-16", "web", "fermyon-spin"]
 
 hidden = [
@@ -22,8 +22,8 @@ packages = [
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
+build = ["bun", "run", "build"]
+run = ["bun", "run", "start"]
 
 [[ports]]
 localPort = 3001
@@ -57,5 +57,5 @@ mode = "parallel"
 author = "agent"
   [[workflows.workflow.tasks]]
   task = "shell.exec"
-  args = "npm run dev:replit"
+  args = "bun run dev:replit"
   waitForPort = 5173
