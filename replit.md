@@ -70,6 +70,9 @@ Ready for deployment to alberguecarrascalejo.fermyon.app
 ✓ **Created dedicated /admin route with AdminDashboard component for hostel management**
 ✓ **Added admin API endpoints: /api/booking/admin/stats and /api/booking/admin/bookings**
 ✓ **Implemented comprehensive admin panel with bed management, booking overview, and revenue tracking**
+✓ **Removed api-server.js - gateway now runs standalone on port 8000**
+✓ **Updated Caddyfile to proxy API requests to standalone Spin gateway (port 8000)**
+✓ **Created start-gateway.sh script for standalone Spin deployment**
 
 ### July 25, 2025 - Deployment Build Fixes Applied
 ✓ Fixed Vite build configuration issues for deployment

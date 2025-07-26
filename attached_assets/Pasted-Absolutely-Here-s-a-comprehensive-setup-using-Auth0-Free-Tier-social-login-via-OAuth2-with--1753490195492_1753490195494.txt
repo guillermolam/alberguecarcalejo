@@ -1,0 +1,245 @@
+Absolutely. Here’s a comprehensive setup using **Auth0 Free Tier (social login via OAuth2)**, with **social login redirect URIs**, **logout URLs**, and **allowed origins** configured, plus backend services for **security**, **rate-limiting**, and **booking**, with clear configuration for Auth0 client settings and Let's Encrypt via Caddy.
+
+---
+
+## 🔧 Auth0 Configuration (Free Tier / Social Login)
+
+In your Auth0 Dashboard under your Application settings:
+
+* **Allowed Callback URLs** — e.g. `https://alberguedelcarrascalejo.com/callback,https://alberguedelcarrascalejo.com` ([Auth0 Community](https://community.auth0.com/t/how-to-configure-auth0-application-to-redirect-to-a-specific-url-after-login/89544?utm_source=chatgpt.com), [Auth0](https://auth0.com/docs/get-started/architecture-scenarios/sso-for-regular-web-apps/part-2?utm_source=chatgpt.com))
+* **Allowed Logout URLs** — e.g. `https://alberguedelcarrascalejo.com/logout` ([MoldStud](https://moldstud.com/articles/p-the-ultimate-checklist-for-setting-up-your-auth0-account-step-by-step-guide-for-developers?utm_source=chatgpt.com))
+* **Allowed Web Origins** — e.g. `https://alberguedelcarrascalejo.com` ([MoldStud](https://moldstud.com/articles/p-the-ultimate-checklist-for-setting-up-your-auth0-account-step-by-step-guide-for-developers?utm_source=chatgpt.com))
+
+These fields accept multiple comma-separated URLs (with HTTPS), allow wildcards, and must match exactly the URLs used in your SPA requests.
+
+---
+
+## 📁 Directory & File Layout
+
+```
+gateway/
+├── Caddyfile
+├── spin.toml
+└── bff/
+    ├── Cargo.toml (for auth_verify, composed)
+    ├── src/
+    │   ├── lib.rs             # entry-point (security → rate → auth → booking)
+    │   ├── auth_verify.rs
+    │   ├── booking_service/
+    │   │   └── src/lib.rs
+    │   ├── rate_limiter_service/
+    │   │   └── src/lib.rs
+    │   └── security_service/
+    │       └── src/lib.rs
+```
+
+---
+
+## 🧾 spin.toml — Component Composition
+
+```toml
+spin_manifest_version = "2"
+[application]
+name = "gateway"
+version = "0.1.0"
+
+[[component]]
+id = "security-service"
+source = "bff/security_service/target/wasm32-wasi/release/security_service.wasm"
+[component.build]
+workdir = "bff/security_service"
+command = "cargo build --release --target wasm32-wasi"
+
+[[component]]
+id = "rate-limiter-service"
+source = "bff/rate_limiter_service/target/wasm32-wasi/release/rate_limiter_service.wasm"
+[component.build]
+workdir = "bff/rate_limiter_service"
+command = "cargo build --release --target wasm32-wasi"
+
+[[component]]
+id = "auth-verify"
+source = "bff/target/wasm32-wasi/release/auth_verify.wasm"
+[component.build]
+workdir = "bff"
+command = "cargo build --release --target wasm32-wasi"
+
+[[component]]
+id = "booking-service"
+source = "bff/booking_service/target/wasm32-wasi/release/booking_service.wasm"
+[component.build]
+workdir = "bff/booking_service"
+command = "cargo build --release --target wasm32-wasi"
+
+[[trigger.http]]
+route = "/api/*"
+component = "security-service"
+```
+
+This ensures **all traffic flows through security → rate-limiter → auth\_verify → booking-service** sequentially.
+
+---
+
+## 🔐 Caddyfile — TLS (Let’s Encrypt) & Proxy
+
+```caddy
+alberguedelcarrascalejo.com {
+  tls you@domain.com         # Let’s Encrypt auto-renew  
+  encode gzip zstd
+
+  route /api/* {
+    reverse_proxy http://127.0.0.1:3000 {
+      transport http {
+        versions h2 http/1.1 h3
+      }
+    }
+  }
+
+  # optional SPA asset route or default
+}
+```
+
+* `tls you@domain.com` triggers automatic TLS provisioning via Let’s Encrypt.
+* All `/api/*` traffic is sent to your Spin runtime at port 3000.
+
+---
+
+## 🚀 bff/Cargo.toml — Auth0 settings via environment variables
+
+```toml
+[package]
+name = "auth_verify"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spin-sdk = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+reqwest = { version = "0.11", features = ["blocking"] }
+
+# No JWT server-side required—just verifying social login ID token
+```
+
+You configure via env:
+
+* `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` (if needed for OIDC flows).
+
+---
+
+## 🔄 bff/src/lib.rs — Composed pipeline logic
+
+```rust
+use spin_sdk::{http_component, http::{Request, Response}};
+#[http_component]
+fn handle(req: Request) -> Response {
+    spin_sdk::http::call(req)  // service chaining via spin.toml order
+}
+```
+
+---
+
+## 🔒 security\_service/src/lib.rs
+
+```rust
+use spin_sdk::{http_component, http::{Request, Response}};
+#[http_component]
+fn handle(req: Request) -> Response {
+    if req.headers().get("X-Forwarded-Proto") != Some("https") {
+         return Response::builder().status(400).body("Use HTTPS").unwrap();
+    }
+    spin_sdk::http::call(req)
+}
+```
+
+---
+
+## 🛡️ rate\_limiter\_service/src/lib.rs
+
+```rust
+use spin_sdk::{http_component, http::{Request, Response}, key_value};
+use std::time::{SystemTime, UNIX_EPOCH};
+
+#[http_component]
+fn handle(req: Request) -> Response {
+   // similar IP-based keying
+   let key = format!("rl:{}:{}", req.headers().get("X-Forwarded-For").unwrap_or("unknown"), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() / 60);
+   let cnt = key_value::get(&key).unwrap_or(0);
+   if cnt >= 100 {
+       return Response::builder().status(429).body("Too Many Requests").unwrap()
+   }
+   key_value::set(&key, cnt + 1).unwrap();
+   spin_sdk::http::call(req)
+}
+```
+
+---
+
+## 🔑 auth\_verify.rs — Validate Auth0 ID Token (OIDC/social)
+
+```rust
+use spin_sdk::{http_component, http::{Request, Response}, key_value};
+use jsonwebtoken::{decode, DecodingKey, Validation};
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct Claims { sub: String, exp: usize, aud: String }
+
+#[http_component]
+fn handle(req: Request) -> Response {
+   let auth_hdr = req.headers().get("Authorization").unwrap_or("");
+   if !auth_hdr.starts_with("Bearer ") { return Response::builder().status(401).body("Missing token").unwrap();}
+   let token = &auth_hdr[7..];
+   let domain = std::env::var("AUTH0_DOMAIN").unwrap();
+   let client_id = std::env::var("AUTH0_CLIENT_ID").unwrap();
+   let jwks = fetch_jwks_cache(&domain).unwrap(); // implement JWKS fetch
+   let decoded = decode::<Claims>(token, &DecodingKey::from_jwk_collection(&jwks).unwrap(), &Validation::new(jwk.alg));
+   match decoded {
+      Ok(data) if data.aud == client_id => spin_sdk::http::Response::builder().status(200).header("X-User-Id", data.claims.sub).body(Vec::new()).unwrap(),
+      _ => Response::builder().status(401).body("Unauthorized").unwrap()
+   }
+}
+```
+
+---
+
+## ✅ booking\_service/src/lib.rs
+
+```rust
+use spin_sdk::{http_component, http::{Request, Response}};
+#[http_component]
+fn handle(req: Request) -> Response {
+    let user = req.headers().get("X-User-Id").unwrap_or("guest");
+    Response::builder().status(200).body(format!("Hello {}, booking confirmed", user)).unwrap()
+}
+```
+
+---
+
+### 🔄 Request Flow Summary
+
+1. Browser OAuth redirect → Auth0 login → callback to your SPA redirect URI.
+2. SPA sends `Authorization: Bearer <ID_token>` on `/api/...`.
+3. Caddy receives request and proxies to Spin.
+4. **security\_service** checks HTTPS, else returns `400`.
+5. **rate\_limiter\_service** enforces limits or returns `429`.
+6. **auth\_verify** validates Auth0 ID token against allowed audience and caches JWKS.
+7. If valid, passes request with `X-User-Id`.
+8. **booking\_service** handles business logic.
+
+---
+
+### 🔧 Where to Insert Auth0 Redirect URI
+
+In your SPA code (React Auth0 SDK):
+
+```js
+auth0.loginWithRedirect({ redirect_uri: "https://alberguedelcarrascalejo.com/callback" });
+```
+
+This URI must be registered under **Allowed Callback URLs** in your Auth0 Application → Settings ([Auth0](https://auth0.com/docs/get-started/architecture-scenarios/sso-for-regular-web-apps/part-2?utm_source=chatgpt.com), [reddit.com](https://www.reddit.com/r/webdev/comments/1khvbw6/i_want_to_understand_auth0s_free_tier_vs/?utm_source=chatgpt.com), [supertokens.com](https://supertokens.com/blog/auth0-sso?utm_source=chatgpt.com), [Auth0 Community](https://community.auth0.com/t/auth0-custom-social-for-google-fails-with-invalid-user-id/114724?utm_source=chatgpt.com), [blog.appsignal.com](https://blog.appsignal.com/2024/07/17/an-introduction-to-auth0-for-ruby-on-rails.html?utm_source=chatgpt.com), [Auth0](https://auth0.com/blog/flutter-authentication-authorization-with-auth0-part-1-adding-authentication-to-an-app/?utm_source=chatgpt.com), [Auth0 Community](https://community.auth0.com/t/callback-url-after-login/106768?utm_source=chatgpt.com))
+
+---
+
+✅ This setup ensures you’re using Auth0 free-tier social login via OAuth2/Identity Provider (no paid JWT management), with **service composition**, **Let’s Encrypt TLS**, **rate limiting**, and **secure flows**.
+
+Let me know if you'd like sample SPA React integration or Docker-compose dev setup next!

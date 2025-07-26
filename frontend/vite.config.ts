@@ -26,12 +26,12 @@ export default defineConfig(({ mode }) => ({
     },
     // Proxy API calls through services
     proxy: {
-      '/booking': {
+      '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
-            console.log('Gateway connection failed, check Spin service');
+            console.log('Gateway connection failed, check Spin service on port 8000');
           });
         }
       },

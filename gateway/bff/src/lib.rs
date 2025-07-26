@@ -31,11 +31,13 @@ async fn handle_request(req: Request) -> Result<impl IntoResponse> {
 
     // Handle preflight requests
     if *req.method() == spin_sdk::http::Method::Options {
-        let mut response = Response::builder().status(200);
-        for (key, value) in cors_headers {
-            response = response.header(key, value);
-        }
-        return Ok(response.body(()).build());
+        return Ok(Response::builder()
+            .status(200)
+            .header("Access-Control-Allow-Origin", "*")
+            .header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+            .header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+            .body(Vec::new())
+            .build());
     }
 
     // Route to appropriate service
@@ -94,12 +96,11 @@ async fn handle_request(req: Request) -> Result<impl IntoResponse> {
     match result {
         Ok(response) => Ok(response),
         Err(e) => {
-            let error_response = Response::builder()
+            Ok(Response::builder()
                 .status(500)
                 .header("Content-Type", "application/json")
-                .body(format!(r#"{{"error": "{}"}}"#, e))?
-                .build();
-            Ok(error_response)
+                .body(format!(r#"{{"error": "{}"}}"#, e))
+                .build())
         }
     }
 }
