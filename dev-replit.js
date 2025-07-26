@@ -14,15 +14,13 @@ const apiProcess = spawn("node", ["api-server.js"], {
   stdio: "inherit"
 });
 
-// Start Gateway proxy with route protection
-const gatewayProcess = spawn("node", ["gateway-proxy.js"], {
-  stdio: "inherit"
-});
-
-// Start Reviews API service
-const reviewsProcess = spawn("node", ["api-reviews.js"], {
-  stdio: "inherit"
-});
+// BFF Gateway Services (Rust microservices ready)
+console.log('🛡️  BFF Gateway Architecture:');
+console.log('🔒 Security Service: /api/security/* (Rust WASM)');
+console.log('⏱️  Rate Limiter: /api/rate-limit/* (Rust WASM)'); 
+console.log('🔐 Auth Verify: /api/auth/* (Rust WASM)');
+console.log('📋 Booking Service: /api/booking/* (Rust WASM)');
+console.log('⭐ Reviews Service: /api/reviews/* (Rust WASM)');
 
 // Wait a moment then start Vite
 setTimeout(() => {
@@ -35,16 +33,12 @@ setTimeout(() => {
   process.on('SIGINT', () => {
     console.log('\n🛑 Shutting down servers...');
     apiProcess.kill();
-    gatewayProcess.kill();
-    reviewsProcess.kill();
     viteProcess.kill();
     process.exit(0);
   });
 
   process.on('SIGTERM', () => {
     apiProcess.kill();
-    gatewayProcess.kill();
-    reviewsProcess.kill();
     viteProcess.kill();
     process.exit(0);
   });

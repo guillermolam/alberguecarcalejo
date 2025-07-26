@@ -1,0 +1,49 @@
+# Caddyfile for Albergue Del Carrascalejo Gateway
+# Serves the frontend dist folder and proxies API requests to Spin components
+
+:80 {
+    # Serve static files from frontend/dist
+    root * /srv/frontend/dist
+    
+    # Handle API routes by proxying to Spin components
+    handle /api/security/* {
+        reverse_proxy localhost:3001
+    }
+    
+    handle /api/rate-limit/* {
+        reverse_proxy localhost:3002
+    }
+    
+    handle /api/auth/* {
+        reverse_proxy localhost:3003
+    }
+    
+    handle /api/booking/* {
+        reverse_proxy localhost:3004
+    }
+    
+    handle /api/reviews/* {
+        reverse_proxy localhost:3005
+    }
+    
+    # Serve static files for everything else
+    try_files {path} {path}/ /index.html
+    file_server
+    
+    # Enable CORS for all responses
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    }
+    
+    # Handle preflight requests
+    @options method OPTIONS
+    respond @options 200
+    
+    # Logging
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}

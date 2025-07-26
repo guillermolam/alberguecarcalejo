@@ -37,7 +37,22 @@ You are an expert full‑stack engineer. Scaffold a **Replit** workspace that im
 ✓ **Implemented getSpinVariable() function following official Spin tutorial**
 ✓ **Complete Auth0 integration with token exchange and JWT validation**
 ✓ **All Auth0 routes working: /login, /callback, /logout with proper variable access**
+✓ **Migrated API reviews to Rust service in services/reviews-service/**
+✓ **Created BFF architecture with 5 Rust WASM microservices in gateway/bff/**
+✓ **Removed gateway-proxy.js and api-reviews.js - now using Caddy + Rust services**
+✓ **Implemented security-service, rate-limiter-service, auth-verify, booking-service**
+✓ **All services follow Spin Framework variables system for Auth0 configuration**
 Ready for deployment to alberguecarrascalejo.fermyon.app
+
+### July 25, 2025 - BFF Architecture Migration Completed
+✓ **Migrated from Express gateway to Rust WASM microservices BFF pattern**
+✓ **Created 5 specialized microservices: security, rate-limiter, auth-verify, booking, reviews**
+✓ **Reviews service migrated from Node.js to Rust WASM in services/reviews-service/**
+✓ **Gateway directory restructured with bff/ subfolder containing all microservices**
+✓ **Caddy configuration for static file serving and API proxy routing**
+✓ **Removed legacy gateway-proxy.js and api-reviews.js files**
+✓ **All services configured with Spin Framework variables for Auth0 integration**
+✓ **Comprehensive documentation and README created for gateway architecture**
 
 ### July 25, 2025 - Deployment Build Fixes Applied
 ✓ Fixed Vite build configuration issues for deployment

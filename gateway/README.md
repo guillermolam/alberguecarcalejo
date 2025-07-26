@@ -1,92 +1,113 @@
-# Gateway Service
+# Gateway - BFF (Backend for Frontend) Architecture
 
-The API Gateway for the Albergue del Carrascalejo hostel management system, built with Fermyon Spin and Rust.
+This gateway implements a microservices-based BFF pattern using Rust WASM components and Caddy for static file serving.
 
-## Architecture
+## Architecture Overview
 
-This gateway serves as the single entry point for all client requests, providing:
-
-- **Authentication & Authorization**: JWT token validation and role-based access control
-- **Request Routing**: Intelligent routing to appropriate microservices
-- **Static File Serving**: Frontend asset delivery (development mode)
-- **Health Monitoring**: System health checks and monitoring endpoints
-- **Rate Limiting**: Request throttling and abuse prevention
-
-## API Routes
-
-### Public Routes
-- `GET /health` - Health check endpoint
-- `GET /` - Frontend application (index.html)
-- `GET /assets/*` - Static assets (CSS, JS, images)
-
-### Authenticated Routes
-- `POST /api/bookings` → `booking-service`
-- `POST /api/validate` → `validation-service`
-- `GET /api/countries` → `country-service`
-- `POST /api/security/*` → `security-service`
-
-### Admin Routes (requires admin role)
-- `GET /admin/*` → `booking-service` (admin context)
-- `PATCH /admin/bookings/*` → `booking-service`
-- `POST /admin/payments/*` → `booking-service`
-
-## Development
-
-### Prerequisites
-- Rust 1.75+
-- `wasm32-wasi` target: `rustup target add wasm32-wasi`
-- Spin CLI: `curl -fsSL https://developer.fermyon.com/downloads/install.sh | bash`
-
-### Building
-```bash
-# Build the gateway WASM component
-cargo build --target wasm32-wasi --release
-
-# Build and run with Spin
-spin build
-spin up --listen 0.0.0.0:8000
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
+│   Frontend      │    │   Caddy Proxy    │    │   Rust Microservices │
+│   (Static)      │◄──►│   (:80)          │◄──►│   (WASM Components)  │
+│                 │    │                  │    │                     │
+│   React + Vite  │    │   /api/security  │    │   security-service  │
+│   Tailwind CSS  │    │   /api/auth      │    │   auth-verify       │
+│   TypeScript    │    │   /api/booking   │    │   booking-service   │
+└─────────────────┘    │   /api/reviews   │    │   reviews-service   │
+                       │   /api/rate-limit│    │   rate-limiter      │
+                       └──────────────────┘    └─────────────────────┘
 ```
 
-### Testing
-```bash
-# Run unit tests
-cargo test
+## Components
 
-# Integration tests with running services
-cargo test --test gateway_integration
+### 1. Security Service (`/api/security/*`)
+- JWT token validation
+- Auth0 integration
+- User authentication state management
+
+### 2. Rate Limiter Service (`/api/rate-limit/*`)
+- Request rate limiting
+- IP-based throttling
+- Per-endpoint rate limits
+
+### 3. Auth Verify Service (`/api/auth/*`)
+- Auth0 login/logout/callback handling
+- Token exchange
+- Session management
+
+### 4. Booking Service (`/api/booking/*`) 
+- Hostel booking management
+- Bed availability
+- Pricing information
+- Dashboard statistics
+
+### 5. Reviews Service (`/api/reviews/*`)
+- Google Reviews integration
+- Booking.com reviews
+- Review aggregation and statistics
+
+## Configuration
+
+### Spin Variables (spin.toml)
+```toml
+[variables]
+auth0_domain = { required = true }
+auth0_client_id = { required = true }
+auth0_client_secret = { required = true }
 ```
 
 ### Environment Variables
-- `JWT_SECRET` - Secret key for JWT token validation (default: "dev-secret-key")
-- `RUST_LOG` - Log level (default: "info")
-
-## Production Deployment
-
-The gateway is deployed as a Spin application to Fermyon Cloud:
-
 ```bash
-# Deploy to production
-spin build --up
-spin deploy
+SPIN_VARIABLE_AUTH0_DOMAIN=guillermolam.auth0.com
+SPIN_VARIABLE_AUTH0_CLIENT_ID=ohunbmaWBOQyEd2ca1orhnFqN1DDPQBd
+SPIN_VARIABLE_AUTH0_CLIENT_SECRET=<secret>
 ```
 
-## Security
+## Development
 
-- All API routes require valid JWT authentication
-- Admin routes require additional role validation
-- Request/response logging for audit trails
-- Rate limiting to prevent abuse
-- CORS headers for browser security
-
-## Monitoring
-
-Health check endpoint provides service status:
+### Build All Services
 ```bash
-curl http://gateway-url/health
+# Build all Rust WASM components
+cd gateway
+spin build
+
+# Start with Caddy proxy
+caddy run --config Caddyfile
 ```
 
-Response includes:
-- Service status and version
-- Component health status
-- System timestamp
-- Performance metrics
+### Individual Service Development
+```bash
+# Build specific service
+cd gateway/bff/security_service
+cargo build --release --target wasm32-wasi
+
+# Test individual component
+spin up --component security-service
+```
+
+## Deployment
+
+The gateway is designed for deployment to alberguecarrascalejo.fermyon.app via Fermyon Spin Cloud:
+
+```bash
+# Deploy to Fermyon Cloud
+spin deploy --environment production
+```
+
+## Static File Serving
+
+Caddy serves the React frontend from `frontend/dist/` and proxies API requests to the appropriate Rust microservices.
+
+### Routes
+- `/` → Static files (React SPA)
+- `/api/security/*` → Security Service
+- `/api/auth/*` → Auth Verify Service  
+- `/api/booking/*` → Booking Service
+- `/api/reviews/*` → Reviews Service
+- `/api/rate-limit/*` → Rate Limiter Service
+
+## Auth0 Integration
+
+All services use Auth0 for authentication with the following configuration:
+- Domain: guillermolam.auth0.com
+- Application Type: Single Page Application
+- Allowed URLs: https://alberguecarrascalejo.fermyon.app/*
