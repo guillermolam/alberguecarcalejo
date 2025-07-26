@@ -1,66 +1,196 @@
+
 version: '3'
 
 vars:
   FRONTEND_PORT: '5173'
   BACKEND_PORT: '8000'
-  GATEWAY_PORT: '8080'
-  FRONTEND_URI: 'http://localhost:{{.FRONTEND_PORT}}'
-  BACKEND_URI: 'http://localhost:{{.BACKEND_PORT}}'
-  GATEWAY_URI: 'http://localhost:{{.GATEWAY_PORT}}'
+  GATEWAY_PORT: '3000'
+  FRONTEND_URI: 'http://0.0.0.0:{{.FRONTEND_PORT}}'
+  BACKEND_URI: 'http://0.0.0.0:{{.BACKEND_PORT}}'
+  GATEWAY_URI: 'http://0.0.0.0:{{.GATEWAY_PORT}}'
 
 env:
-  # Add any global environment variables here
+  RUST_BACKTRACE: '1'
+  RUST_LOG: 'debug'
+  NODE_ENV: 'development'
+  DATABASE_URL: 'postgresql://localhost:5432/albergue_dev'
 
 tasks:
+  # Main entry points
   default:
-    desc: Run all services in production mode
-    deps: [nix, build, preview]
-    deps_order:
-      - build
-      - preview
+    desc: Run full CI/CD pipeline
+    deps: [ci:full]
 
-  nix:
-    desc: Verify Nix packages are available
-    cmds:
-      - rustc --version && node --version && bun --version && caddy version
-    
   dev:
-    desc: Run all services in dev mode
-    deps: [dev:backend, dev:gateway, dev:frontend]
+    desc: Run all services in development mode
+    deps: [setup:check, dev:services]
 
-  dev:backend:
-    desc: Run backend in dev mode
-    dir: backend
+  ci:full:
+    desc: Complete CI/CD pipeline with all checks
+    deps: 
+      - setup:check
+      - format:check
+      - lint:all
+      - sast:all
+      - test:unit
+      - test:integration
+      - build:all
+      - test:e2e
+      - security:dast
+      - performance:all
+      - compatibility:all
+
+  # Setup and verification
+  setup:check:
+    desc: Verify development environment
     cmds:
-      - cargo run
+      - rustc --version
+      - node --version
+      - bun --version
+      - caddy version
+      - echo "✅ Development environment ready"
 
-  dev:gateway:
-    desc: Run gateway in dev mode
-    dir: gateway
-    cmds:
-      - cargo run
+  setup:deps:
+    desc: Install all dependencies
+    deps: [setup:deps:frontend, setup:deps:rust]
 
-  dev:frontend:
-    desc: Run frontend in dev mode
+  setup:deps:frontend:
+    desc: Install frontend dependencies
     dir: frontend
     cmds:
-      - bun run dev -- --port {{.FRONTEND_PORT}}
+      - bun install
 
-  build:
-    desc: Build all services
-    deps: [build:backend, build:gateway, build:frontend]
-
-  build:backend:
-    desc: Build backend
-    dir: backend
+  setup:deps:rust:
+    desc: Install Rust dependencies
     cmds:
-      - cargo build --release
+      - cargo fetch --workspace
+
+  setup:trunk:
+    desc: Install and configure Trunk.io for linting
+    cmds:
+      - curl https://get.trunk.io -fsSL | bash
+      - trunk init
+      - trunk check enable clippy rustfmt eslint prettier semgrep bandit
+
+  # Code formatting
+  format:all:
+    desc: Format all code
+    deps: [format:rust, format:frontend]
+
+  format:rust:
+    desc: Format Rust code
+    cmds:
+      - cargo fmt --all
+
+  format:frontend:
+    desc: Format frontend code
+    dir: frontend
+    cmds:
+      - bun run prettier --write "src/**/*.{ts,tsx,js,jsx,json,css,md}" "server/**/*.{ts,js,json}"
+
+  format:check:
+    desc: Check code formatting
+    deps: [format:check:rust, format:check:frontend]
+
+  format:check:rust:
+    desc: Check Rust formatting
+    cmds:
+      - cargo fmt --all -- --check
+
+  format:check:frontend:
+    desc: Check frontend formatting
+    dir: frontend
+    cmds:
+      - bun run prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}" "server/**/*.{ts,js,json}"
+
+  # Linting
+  lint:all:
+    desc: Run all linters
+    deps: [lint:rust, lint:frontend, lint:trunk]
+
+  lint:rust:
+    desc: Lint Rust code
+    cmds:
+      - cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  lint:frontend:
+    desc: Lint frontend code
+    dir: frontend
+    cmds:
+      - bun run lint
+
+  lint:trunk:
+    desc: Run Trunk.io linting
+    cmds:
+      - trunk check --all
+
+  # Static Application Security Testing (SAST)
+  sast:all:
+    desc: Run all SAST tools
+    deps: [sast:semgrep, sast:cargo-audit, sast:trunk-security]
+
+  sast:semgrep:
+    desc: Run Semgrep security analysis
+    cmds:
+      - semgrep --config=auto --error --strict --verbose .
+
+  sast:cargo-audit:
+    desc: Run Cargo security audit
+    cmds:
+      - cargo audit
+
+  sast:trunk-security:
+    desc: Run Trunk.io security checks
+    cmds:
+      - trunk check --filter=security
+
+  # Unit Testing
+  test:unit:
+    desc: Run all unit tests
+    deps: [test:unit:rust, test:unit:frontend]
+
+  test:unit:rust:
+    desc: Run Rust unit tests
+    cmds:
+      - cargo test --workspace --lib
+
+  test:unit:frontend:
+    desc: Run frontend unit tests
+    dir: frontend
+    cmds:
+      - bun run test
+
+  test:unit:coverage:
+    desc: Generate test coverage reports
+    deps: [test:unit:coverage:rust, test:unit:coverage:frontend]
+
+  test:unit:coverage:rust:
+    desc: Generate Rust coverage
+    cmds:
+      - cargo tarpaulin --workspace --out xml --output-dir coverage/
+
+  test:unit:coverage:frontend:
+    desc: Generate frontend coverage
+    dir: frontend
+    cmds:
+      - bun run test:coverage
+
+  # Build
+  build:all:
+    desc: Build all services
+    deps: [build:gateway, build:backend, build:frontend]
 
   build:gateway:
-    desc: Build gateway
+    desc: Build gateway service
     dir: gateway
     cmds:
-      - cargo build --release
+      - cargo build --target wasm32-wasi --release
+      - spin build
+
+  build:backend:
+    desc: Build backend services
+    cmds:
+      - cargo build --workspace --release
 
   build:frontend:
     desc: Build frontend
@@ -68,62 +198,188 @@ tasks:
     cmds:
       - bun run build
 
-  preview:
-    desc: Preview built server
-    dir: server
+  # Development services
+  dev:services:
+    desc: Run all services in parallel
+    deps: [dev:gateway, dev:backend, dev:frontend]
+
+  dev:gateway:
+    desc: Run gateway in development
+    dir: gateway
     cmds:
-      - node dist/server.js --port {{.BACKEND_PORT}}
+      - spin up --listen 0.0.0.0:{{.GATEWAY_PORT}}
 
-  test:
-    desc: Run all tests
-    deps: [test:unit, test:integration, test:e2e]
+  dev:backend:
+    desc: Run backend services
+    cmds:
+      - cargo run --bin booking-service &
+      - cargo run --bin notification-service &
+      - cargo run --bin validation-service &
+      - wait
 
-  test:unit:
-    desc: Run unit tests
+  dev:frontend:
+    desc: Run frontend development server
     dir: frontend
     cmds:
-      - bun run jest
+      - bun run dev -- --host 0.0.0.0 --port {{.FRONTEND_PORT}}
 
+  # Integration Testing
   test:integration:
     desc: Run integration tests
-    dir: frontend
+    deps: [test:integration:api, test:integration:database]
+
+  test:integration:api:
+    desc: Run API integration tests
+    dir: tests/api
     cmds:
       - node test-dni-api.js
+      - node test-lambda.js
+      - node test-ocr-dni.js
 
+  test:integration:database:
+    desc: Run database integration tests
+    dir: database/test
+    cmds:
+      - psql -f db-integration.test.sql
+
+  # End-to-End Testing
   test:e2e:
-    desc: Run end-to-end tests
-    dir: frontend
-    cmds:
-      - bunx testcafe chrome tests/e2e/
+    desc: Run all E2E tests
+    deps: [test:e2e:testcafe, test:e2e:comprehensive]
 
-  lint:
-    desc: Lint all code
-    dir: frontend
+  test:e2e:testcafe:
+    desc: Run TestCafe E2E tests
+    dir: tests/e2e/testcafe
     cmds:
-      - bun run eslint src/ server/ --ext .ts,.tsx,.js,.jsx
+      - testcafe chrome:headless test-dni-simple.js
+      - testcafe chrome:headless testcafe-document-formats.js
+      - testcafe chrome:headless testcafe-full-registration-flow.js
+      - testcafe chrome:headless testcafe-international-passports.js
+      - testcafe chrome:headless testcafe-nie-documents.js
+      - testcafe chrome:headless testcafe-residence-permits.js
 
-  format:
-    desc: Format all code
+  test:e2e:comprehensive:
+    desc: Run comprehensive E2E test suite
+    dir: tests/runners
+    cmds:
+      - node run-comprehensive-testcafe.js
+
+  # Dynamic Application Security Testing (DAST)
+  security:dast:
+    desc: Run DAST security scans
+    deps: [security:dast:zap, security:dast:nuclei]
+
+  security:dast:zap:
+    desc: Run OWASP ZAP security scan
+    cmds:
+      - |
+        if command -v zap-baseline.py >/dev/null 2>&1; then
+          zap-baseline.py -t {{.FRONTEND_URI}} -c tests/infrastructure/security/zap-rules.tsv
+        else
+          echo "⚠️  OWASP ZAP not installed, skipping DAST scan"
+        fi
+
+  security:dast:nuclei:
+    desc: Run Nuclei vulnerability scanner
+    cmds:
+      - |
+        if command -v nuclei >/dev/null 2>&1; then
+          nuclei -u {{.FRONTEND_URI}} -severity medium,high,critical
+        else
+          echo "⚠️  Nuclei not installed, skipping vulnerability scan"
+        fi
+
+  # Performance Testing
+  performance:all:
+    desc: Run all performance tests
+    deps: [performance:lighthouse, performance:k6]
+
+  performance:lighthouse:
+    desc: Run Lighthouse performance audit
+    cmds:
+      - |
+        if command -v lighthouse >/dev/null 2>&1; then
+          lighthouse {{.FRONTEND_URI}} --output json --output-path ./tests/infrastructure/performance/lighthouse-results.json
+          lighthouse {{.FRONTEND_URI}}/admin --output json --output-path ./tests/infrastructure/performance/lighthouse-admin-results.json
+        else
+          echo "⚠️  Lighthouse not installed, installing..."
+          npm install -g lighthouse
+          lighthouse {{.FRONTEND_URI}} --output json --output-path ./tests/infrastructure/performance/lighthouse-results.json
+        fi
+
+  performance:k6:
+    desc: Run k6 load testing
+    cmds:
+      - |
+        if command -v k6 >/dev/null 2>&1; then
+          k6 run tests/infrastructure/performance/api-load-test.js
+        else
+          echo "⚠️  k6 not installed, skipping load tests"
+        fi
+
+  # Cross-browser and device compatibility
+  compatibility:all:
+    desc: Run cross-browser and device compatibility tests
+    deps: [compatibility:browsers, compatibility:devices]
+
+  compatibility:browsers:
+    desc: Test on major browsers
+    cmds:
+      - testcafe chrome:headless tests/e2e/testcafe/test-dni-simple.js
+      - testcafe firefox:headless tests/e2e/testcafe/test-dni-simple.js
+      - testcafe safari tests/e2e/testcafe/test-dni-simple.js || echo "⚠️  Safari not available"
+      - testcafe edge tests/e2e/testcafe/test-dni-simple.js || echo "⚠️  Edge not available"
+
+  compatibility:devices:
+    desc: Test responsive design on different devices
+    cmds:
+      - testcafe chrome:headless:emulation:device=iPhone tests/e2e/testcafe/test-dni-simple.js
+      - testcafe chrome:headless:emulation:device=iPad tests/e2e/testcafe/test-dni-simple.js
+      - testcafe chrome:headless:emulation:device=desktop tests/e2e/testcafe/test-dni-simple.js
+
+  # Utility tasks
+  clean:
+    desc: Clean build artifacts and caches
+    cmds:
+      - cargo clean
+      - rm -rf frontend/dist/
+      - rm -rf frontend/node_modules/.cache/
+      - rm -rf coverage/
+      - rm -rf tests/e2e/outputs/
+
+  preview:
+    desc: Preview built application
+    deps: [build:all]
     dir: frontend
     cmds:
-      - bun run prettier --write "src/**/*.{ts,tsx,js,jsx,json,css,md}" "server/**/*.{ts,js,json}"
+      - bun run serve -- --host 0.0.0.0 --port 4173
 
   deploy:
-    desc: Deploy all services to Fermyon using Spin
+    desc: Deploy to production
+    deps: [ci:full]
     cmds:
       - spin deploy
 
-  perf:lighthouse:
-    desc: Run Lighthouse performance test
+  # Health checks
+  health:check:
+    desc: Check application health
     cmds:
-      - lighthouse {{.FRONTEND_URI}} --output json --output-path ./infrastructure/performance/results/lighthouse.json
+      - curl -f {{.FRONTEND_URI}}/api/health || echo "Frontend health check failed"
+      - curl -f {{.GATEWAY_URI}}/api/health || echo "Gateway health check failed"
 
-  perf:k6:
-    desc: Run k6 API load test
+  # Database operations
+  db:migrate:
+    desc: Run database migrations
+    dir: database
     cmds:
-      - k6 run infrastructure/performance/api-load-test.js
+      - ./scripts/migrate-postgres.sh
 
-  clean:
-    desc: Clean build artifacts
+  db:seed:
+    desc: Seed database with test data
+    dir: database
     cmds:
-      - rm -rf dist/ coverage/ .next/ node_modules/.cache/
+      - psql -f seed/dev_seed.sql
+
+  db:reset:
+    desc: Reset database
+    deps: [db:migrate, db:seed]
