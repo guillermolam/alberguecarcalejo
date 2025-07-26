@@ -1,9 +1,6 @@
 [workspace]
 members = [
-    "gateway/bff/security_service",
-    "gateway/bff/rate_limiter_service", 
-    "gateway/bff/auth_verify",
-    "gateway/bff/booking_service",
+    "gateway/bff",
     "services/reviews-service"
 ]
 resolver = "2"

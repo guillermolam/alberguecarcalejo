@@ -54,6 +54,18 @@ Ready for deployment to alberguecarrascalejo.fermyon.app
 ✓ **All services configured with Spin Framework variables for Auth0 integration**
 ✓ **Comprehensive documentation and README created for gateway architecture**
 
+### July 26, 2025 - Complete BFF Architecture Restructure
+✓ **Restructured gateway to proper BFF architecture with composed Rust services**
+✓ **Created gateway/bff/ directory with single Cargo.toml for all microservices**
+✓ **Implemented lib.rs entry-point with routing: security → rate → auth → booking**
+✓ **Organized service modules: auth_verify.rs, booking_service/lib.rs, rate_limiter_service/lib.rs, security_service/lib.rs**
+✓ **Updated spin.toml to use single gateway-bff component instead of separate services**
+✓ **Fixed Caddyfile for alberguedelcarrascalejo.com domain with Let's Encrypt TLS**
+✓ **Removed individual service directories and consolidated into composed architecture**
+✓ **Updated Cargo.toml workspace to include gateway/bff and services/reviews-service**
+✓ **Created deployment script and comprehensive documentation**
+✓ **Fixed ReviewsSection.tsx to work with new Rust service data structure**
+
 ### July 25, 2025 - Deployment Build Fixes Applied
 ✓ Fixed Vite build configuration issues for deployment
 ✓ Created root-level vite.config.mjs to handle path aliases correctly  

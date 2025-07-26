@@ -143,11 +143,7 @@ export default function ReviewsSection() {
                     <span className="text-xs px-2 py-1 bg-gray-100 rounded">
                       {review.source}
                     </span>
-                    {review.country && (
-                      <span className="text-xs">
-                        {review.country}
-                      </span>
-                    )}
+
                   </div>
                 </div>
               </CardContent>
