@@ -2,12 +2,12 @@ import express from 'express';
 import cors from 'cors';
 
 const app = express();
-const PORT = 8000;
+const PORT = 8001;
 
 app.use(cors());
 app.use(express.json());
 
-// Mock reviews data
+// Reviews data
 const reviewsData = {
   reviews: [
     {
@@ -79,18 +79,16 @@ const reviewsData = {
   }
 };
 
-// Reviews endpoint
-app.get('/api/reviews/all', (req, res) => {
-  console.log('📝 Reviews API called');
+// Reviews endpoints
+app.get('/all', (req, res) => {
+  console.log('📝 Reviews service: /all called');
   res.json(reviewsData);
 });
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Gateway API server running' });
+app.get('/health', (req, res) => {
+  res.json({ service: 'reviews-service', status: 'ok', port: PORT });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Gateway API server running on port ${PORT}`);
-  console.log(`📍 Reviews endpoint: http://0.0.0.0:${PORT}/api/reviews/all`);
+  console.log(`⭐ Reviews service running on port ${PORT}`);
 });
