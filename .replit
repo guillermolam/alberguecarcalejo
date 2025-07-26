@@ -20,16 +20,6 @@ ignorePorts = false
 runButton = "Development"
 
 [[workflows.workflow]]
-name = "Dev"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev:replit"
-waitForPort = 5173
-
-[[workflows.workflow]]
 name = "Integration Tests"
 author = 41744552
 mode = "sequential"
