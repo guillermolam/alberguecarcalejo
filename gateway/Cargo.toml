@@ -1,6 +1,17 @@
 
 [workspace]
-members = ["bff"]
+members = [
+    "bff",
+    "bff/src/auth_service",
+    "bff/src/booking_service", 
+    "bff/src/info_on_arrival_service",
+    "bff/src/location_service",
+    "bff/src/notification_service",
+    "bff/src/rate_limiter_service",
+    "bff/src/reviews_service",
+    "bff/src/security_service",
+    "bff/src/validation_service"
+]
 resolver = "2"
 
 [workspace.metadata.scripts]

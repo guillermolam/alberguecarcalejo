@@ -28,7 +28,7 @@ struct ReviewsResponse {
 #[http_component]
 async fn handle_request(req: Request) -> Result<impl IntoResponse> {
     let path = req.uri().path();
-    
+
     // Add CORS headers
     let mut response_builder = Response::builder()
         .header("Access-Control-Allow-Origin", "*")
@@ -142,3 +142,18 @@ async fn handle_request(req: Request) -> Result<impl IntoResponse> {
         }
     }
 }
+
+use spin_sdk::http::{IntoResponse, Request, Response};
+use spin_sdk::http_component;
+use anyhow::Result;
+
+pub mod auth_verify;
+pub mod auth_service;
+pub mod booking_service;
+pub mod info_on_arrival_service;
+pub mod location_service;
+pub mod notification_service;
+pub mod rate_limiter_service;
+pub mod reviews_service;
+pub mod security_service;
+pub mod validation_service;
