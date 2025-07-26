@@ -1,69 +1,99 @@
-run = "task build"
 
-hidden = [
-  ".config",
-  ".git",
-  "node_modules",
-  "dist",
-  "pkg",
-  "frontend/public"
-]
+modules = ["nodejs-20", "rust-stable", "nix"]
+hidden = [".config", "tsconfig.tsbuildinfo", ".next", ".swc"]
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-24.05"
+
+[unitTest]
+language = "nodejs"
 
 [deployment]
-deploymentTarget = "autoscale"
-build = ["bun", "run", "build"]
-run = ["bun", "run", "start"]
-
-[[ports]]
-localPort = 80
-externalPort = 4200
-
-[[ports]]
-localPort = 443
-externalPort = 3003
-
-[[ports]]
-localPort = 3001
-externalPort = 3001
-
-[[ports]]
-localPort = 3002
-externalPort = 3002
-
-[[ports]]
-localPort = 5173
-externalPort = 80
-
-[[ports]]
-localPort = 8000
-externalPort = 8000
-
-[[ports]]
-localPort = 8001
-externalPort = 3000
-
-[env]
-PORT = "8000"
+run = ["task", "build"]
+deploymentTarget = "cloudrun"
+ignorePorts = false
 
 [workflows]
-runButton = "Dev"
+runButton = "Development"
 
 [[workflows.workflow]]
-name = "Dev"
-mode = "parallel"
-author = "agent"
+name = "Development"
+author = 41744552
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev:replit"
-waitForPort = 5173
+args = "task dev"
+
+[[workflows.workflow]]
+name = "Build All"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task build:all"
+
+[[workflows.workflow]]
+name = "Test Suite"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task test:unit"
+
+[[workflows.workflow]]
+name = "Full CI Pipeline"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task ci:full"
+
+[[workflows.workflow]]
+name = "Gateway Only"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task dev:gateway"
+
+[[workflows.workflow]]
+name = "Frontend Only"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task dev:frontend"
+
+[[workflows.workflow]]
+name = "Backend Services"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task dev:backend"
+
+[[workflows.workflow]]
+name = "Format Code"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task format:all"
+
+[[workflows.workflow]]
+name = "Lint All"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task lint:all"
 
 [[workflows.workflow]]
 name = "Security Scan"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -72,7 +102,6 @@ args = "task sast:all"
 
 [[workflows.workflow]]
 name = "Integration Tests"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -81,7 +110,6 @@ args = "task test:integration"
 
 [[workflows.workflow]]
 name = "E2E Tests"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -90,7 +118,6 @@ args = "task test:e2e"
 
 [[workflows.workflow]]
 name = "Performance Tests"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -99,7 +126,6 @@ args = "task performance:all"
 
 [[workflows.workflow]]
 name = "Browser Compatibility"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -108,7 +134,6 @@ args = "task compatibility:all"
 
 [[workflows.workflow]]
 name = "DAST Security"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -117,7 +142,6 @@ args = "task security:dast"
 
 [[workflows.workflow]]
 name = "Clean Build"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -126,7 +150,6 @@ args = "task clean"
 
 [[workflows.workflow]]
 name = "Preview App"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -135,7 +158,6 @@ args = "task preview"
 
 [[workflows.workflow]]
 name = "Health Check"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -144,7 +166,6 @@ args = "task health:check"
 
 [[workflows.workflow]]
 name = "Database Reset"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
@@ -153,7 +174,6 @@ args = "task db:reset"
 
 [[workflows.workflow]]
 name = "Deploy"
-author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
