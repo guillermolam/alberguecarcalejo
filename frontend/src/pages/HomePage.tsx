@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import RegistrationForm from "../components/registration-form";
 import AdminDashboard from "../components/AdminDashboard";
 import ReviewsSection from "../components/ReviewsSection";
@@ -9,11 +10,12 @@ import { useI18n } from "../contexts/i18n-context";
 
 export default function HomePage() {
   const { t } = useI18n();
+  const [, setLocation] = useLocation();
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   
   const handleAdminAccess = () => {
-    // Try to access protected admin endpoint - gateway will handle auth
-    setShowAdminDashboard(true);
+    // Navigate to login page for admin access
+    setLocation('/login');
   };
 
   const handleBackToHome = () => {

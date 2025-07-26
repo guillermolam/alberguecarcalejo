@@ -10,6 +10,7 @@ pub async fn handle(req: &Request) -> Result<Response> {
     match path {
         "/api/auth/verify" => verify_token(req).await,
         "/api/auth/login" => handle_login(req).await,
+        "/api/auth/callback" => handle_callback(req).await,
         "/api/auth/logout" => handle_logout(req).await,
         _ => {
             Ok(Response::builder()
@@ -57,11 +58,28 @@ async fn handle_login(_req: &Request) -> Result<Response> {
         .build())
 }
 
+async fn handle_callback(req: &Request) -> Result<Response> {
+    // TODO: Implement Auth0 callback handling for production
+    Ok(Response::builder()
+        .status(200)
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&json!({
+            "access_token": "demo_token_12345",
+            "user": {
+                "name": "Admin User",
+                "email": "admin@alberguedelcarrascalejo.com",
+                "picture": "https://via.placeholder.com/150"
+            }
+        }))?)
+        .build())
+}
+
 async fn handle_logout(_req: &Request) -> Result<Response> {
     Ok(Response::builder()
         .status(200)
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&json!({
+            "success": true,
             "message": "Logged out successfully"
         }))?)
         .build())

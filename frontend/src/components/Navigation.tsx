@@ -9,7 +9,7 @@ export default function Navigation() {
     { path: "/", icon: Home, label: "Inicio" },
     { path: "/info", icon: Info, label: "Información" },
     { path: "/booking", icon: Calendar, label: "Reservar" },
-    { path: "/admin", icon: User, label: "Admin" },
+    { path: "/login", icon: User, label: "Admin" },
   ];
 
   return (
