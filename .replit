@@ -1,5 +1,4 @@
 run = "task build"
-modules = ["nodejs-20", "rust-stable", "postgresql-16", "web", "fermyon-spin"]
 
 hidden = [
   ".config",
@@ -12,13 +11,6 @@ hidden = [
 
 [nix]
 channel = "stable-24_05"
-packages = [
-  "nodejs",
-  "wasm-pack",
-  "sqlx-cli",
-  "fermyon-spin",
-  "chromium"
-]
 
 [deployment]
 deploymentTarget = "autoscale"

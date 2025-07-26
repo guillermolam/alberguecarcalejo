@@ -58,7 +58,7 @@
             sqlx-cli
             
             # Fermyon Spin
-            spin.packages.${system}.spin
+            fermyon-spin
             
             # Build tools
             pkg-config
@@ -69,15 +69,17 @@
             git
             curl
             jq
+            go-task
             
             # Testing tools
             chromium
+            k6
+            
+            # CI/CD
+            act
             
             # System dependencies
             libiconv
-            darwin.apple_sdk.frameworks.Security or null
-            darwin.apple_sdk.frameworks.CoreFoundation or null
-            darwin.apple_sdk.frameworks.SystemConfiguration or null
           ] ++ lib.optionals stdenv.isDarwin [
             darwin.apple_sdk.frameworks.Security
             darwin.apple_sdk.frameworks.CoreFoundation
