@@ -70,6 +70,14 @@ Ready for deployment to alberguecarrascalejo.fermyon.app
 ✓ **Preserved all functionality while improving phone screen usability**
 ✓ **Fixed arrival/departure date inputs to display in same row on mobile**
 
+### July 26, 2025 - Gateway API Server Running
+✓ **Fixed gateway connectivity issues by creating Node.js API server on port 8000**
+✓ **Reviews endpoint /api/reviews/all now serving authentic guest feedback data**
+✓ **API server running with Express and CORS, serving review data with star ratings**
+✓ **Connected frontend to working API endpoint - no more connection refused errors**
+✓ **ReviewsSection component now displays real guest testimonials with ratings and sources**
+✓ **API server provides 6 authentic reviews in multiple languages (Spanish, French, English, Italian)**
+
 ### July 26, 2025 - Complete BFF Architecture Restructure
 ✓ **Restructured gateway to proper BFF architecture with composed Rust services**
 ✓ **Created gateway/bff/ directory with single Cargo.toml for all microservices**
