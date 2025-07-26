@@ -1,87 +1,58 @@
-
-use spin_sdk::http::{IntoResponse, Request, Response};
-use spin_sdk::http_component;
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde_json::json;
+use spin_sdk::http::{Request, Response};
 
-#[derive(Serialize)]
-pub struct InfoCard {
-    pub id: String,
-    pub title: String,
-    pub description: String,
-    pub category: String,
-    pub location: Option<String>,
-    pub contact: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct InfoResponse {
-    pub cards: Vec<InfoCard>,
-    pub total: usize,
-}
-
-#[http_component]
-fn handle_info_service(req: Request) -> Result<impl IntoResponse> {
-    let method = req.method();
+pub async fn handle(req: &Request) -> Result<Response> {
     let path = req.uri().path();
 
-    match (method.as_str(), path) {
-        ("GET", "/info/cards") => get_info_cards(req),
-        ("GET", "/info/eat") => get_restaurant_info(req),
-        ("GET", "/info/transport") => get_transport_info(req),
-        ("GET", "/info/health") => Ok(Response::builder()
-            .status(200)
-            .header("content-type", "application/json")
-            .body(r#"{"status": "healthy"}"#)?),
-        _ => Ok(Response::builder()
-            .status(404)
-            .body("Not Found")?),
+    match path {
+        "/api/info/cards" => handle_info_cards().await,
+        "/api/info/arrival" => handle_arrival_info().await,
+        _ => {
+            Ok(Response::builder()
+                .status(404)
+                .header("Content-Type", "application/json")
+                .body(json!({"error": "Info endpoint not found"}).to_string())
+                .build())
+        }
     }
 }
 
-fn get_info_cards(req: Request) -> Result<impl IntoResponse> {
-    let cards = vec![
-        InfoCard {
-            id: "eat_1".to_string(),
-            title: "Local Restaurants".to_string(),
-            description: "Best places to eat near the albergue".to_string(),
-            category: "food".to_string(),
-            location: Some("Carrascalejo".to_string()),
-            contact: None,
+async fn handle_info_cards() -> Result<Response> {
+    let cards = json!([
+        {
+            "id": "transport",
+            "title": "Transportation",
+            "description": "Taxi and bus services available",
+            "category": "transport"
         },
-        InfoCard {
-            id: "transport_1".to_string(),
-            title: "Bus Services".to_string(),
-            description: "Local bus connections and schedules".to_string(),
-            category: "transport".to_string(),
-            location: Some("Carrascalejo".to_string()),
-            contact: Some("+34 XXX XXX XXX".to_string()),
-        },
-    ];
-
-    let response = InfoResponse {
-        total: cards.len(),
-        cards,
-    };
+        {
+            "id": "dining",
+            "title": "Local Dining",
+            "description": "Restaurants and cafes nearby",
+            "category": "dining"
+        }
+    ]);
 
     Ok(Response::builder()
         .status(200)
-        .header("content-type", "application/json")
-        .body(serde_json::to_string(&response)?)?)
+        .header("Content-Type", "application/json")
+        .body(cards.to_string())
+        .build())
 }
 
-fn get_restaurant_info(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement restaurant info retrieval
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(r#"{"restaurants": []}"#)?)
-}
+async fn handle_arrival_info() -> Result<Response> {
+    let info = json!({
+        "check_in_time": "14:00",
+        "check_out_time": "11:00",
+        "key_pickup": "Reception desk",
+        "wifi_password": "camino2024",
+        "emergency_contact": "+34 927 XXX XXX"
+    });
 
-fn get_transport_info(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement transport info retrieval
     Ok(Response::builder()
         .status(200)
-        .header("content-type", "application/json")
-        .body(r#"{"transport": []}"#)?)
+        .header("Content-Type", "application/json")
+        .body(info.to_string())
+        .build())
 }

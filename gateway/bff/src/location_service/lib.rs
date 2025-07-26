@@ -1,88 +1,47 @@
-
-use spin_sdk::http::{IntoResponse, Request, Response};
-use spin_sdk::http_component;
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde_json::json;
+use spin_sdk::http::{Request, Response};
 
-#[derive(Deserialize)]
-pub struct LocationRequest {
-    pub latitude: f64,
-    pub longitude: f64,
-}
-
-#[derive(Serialize)]
-pub struct LocationResponse {
-    pub address: String,
-    pub city: String,
-    pub country: String,
-    pub postal_code: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct NearbyPlace {
-    pub name: String,
-    pub distance: f64,
-    pub category: String,
-}
-
-#[http_component]
-fn handle_location_service(req: Request) -> Result<impl IntoResponse> {
-    let method = req.method();
+pub async fn handle(req: &Request) -> Result<Response> {
     let path = req.uri().path();
 
-    match (method.as_str(), path) {
-        ("POST", "/location/geocode") => geocode_location(req),
-        ("POST", "/location/reverse") => reverse_geocode(req),
-        ("GET", "/location/nearby") => get_nearby_places(req),
-        ("GET", "/location/health") => Ok(Response::builder()
-            .status(200)
-            .header("content-type", "application/json")
-            .body(r#"{"status": "healthy"}"#)?),
-        _ => Ok(Response::builder()
-            .status(404)
-            .body("Not Found")?),
+    match path {
+        "/api/location/info" => handle_location_info().await,
+        "/api/location/directions" => handle_directions(req).await,
+        _ => {
+            Ok(Response::builder()
+                .status(404)
+                .header("Content-Type", "application/json")
+                .body(json!({"error": "Location endpoint not found"}).to_string())
+                .build())
+        }
     }
 }
 
-fn geocode_location(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement geocoding logic
-    let response = LocationResponse {
-        address: "Calle Principal, 1".to_string(),
-        city: "Carrascalejo".to_string(),
-        country: "Spain".to_string(),
-        postal_code: Some("10920".to_string()),
-    };
+async fn handle_location_info() -> Result<Response> {
+    let location = json!({
+        "name": "Albergue del Carrascalejo",
+        "address": "Carrascalejo, Extremadura, Spain",
+        "coordinates": {
+            "lat": 39.2436,
+            "lng": -5.8739
+        },
+        "camino_stage": "Mérida to Alcuéscar",
+        "distance_from_merida_km": 18.5
+    });
 
     Ok(Response::builder()
         .status(200)
-        .header("content-type", "application/json")
-        .body(serde_json::to_string(&response)?)?)
+        .header("Content-Type", "application/json")
+        .body(location.to_string())
+        .build())
 }
 
-fn reverse_geocode(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement reverse geocoding logic
+async fn handle_directions(_req: &Request) -> Result<Response> {
+    // TODO: Implement directions logic
     Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(r#"{"address": "Unknown location"}"#)?)
-}
-
-fn get_nearby_places(req: Request) -> Result<impl IntoResponse> {
-    let places = vec![
-        NearbyPlace {
-            name: "Supermercado Local".to_string(),
-            distance: 0.2,
-            category: "grocery".to_string(),
-        },
-        NearbyPlace {
-            name: "Farmacia".to_string(),
-            distance: 0.3,
-            category: "health".to_string(),
-        },
-    ];
-
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(serde_json::to_string(&places)?)?)
+        .status(501)
+        .header("Content-Type", "application/json")
+        .body(json!({"error": "Not implemented yet"}).to_string())
+        .build())
 }

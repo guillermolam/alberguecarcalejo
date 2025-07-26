@@ -1,56 +1,49 @@
-// Rate limiter service implementation
 
 use anyhow::Result;
-use spin_sdk::http::{Request, Response};
 use serde_json::json;
+use spin_sdk::http::{Request, Response};
 
 pub async fn handle(req: &Request) -> Result<Response> {
-    let path = req.path();
+    let path = req.uri().path();
     
     match path {
-        "/api/rate-limit/check" => check_limit(req).await,
-        "/api/rate-limit/status" => get_status(req).await,
+        "/api/rate-limit/check" => handle_rate_limit_check(req).await,
+        "/api/rate-limit/status" => handle_rate_limit_status(req).await,
         _ => {
             Ok(Response::builder()
                 .status(404)
                 .header("Content-Type", "application/json")
-                .body(serde_json::to_string(&json!({
-                    "error": "Rate limit endpoint not found"
-                }))?)
+                .body(json!({"error": "Rate limit endpoint not found"}).to_string())
                 .build())
         }
     }
 }
 
-pub async fn check_rate_limit(_req: &Request) -> Result<bool> {
-    // TODO: Implement proper rate limiting with Redis/memory store
-    // For now, allow all requests
-    Ok(true)
-}
+async fn handle_rate_limit_check(_req: &Request) -> Result<Response> {
+    // TODO: Implement actual rate limiting logic
+    let result = json!({
+        "allowed": true,
+        "remaining": 95,
+        "reset_time": "2024-01-01T01:00:00Z"
+    });
 
-async fn check_limit(req: &Request) -> Result<Response> {
-    let allowed = check_rate_limit(req).await?;
-    
     Ok(Response::builder()
         .status(200)
         .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&json!({
-            "allowed": allowed,
-            "remaining": 100,
-            "reset_time": 0i64
-        }))?)
+        .body(result.to_string())
         .build())
 }
 
-async fn get_status(_req: &Request) -> Result<Response> {
+async fn handle_rate_limit_status(_req: &Request) -> Result<Response> {
+    let status = json!({
+        "requests_per_minute": 100,
+        "current_usage": 5,
+        "blocked_requests": 0
+    });
+
     Ok(Response::builder()
         .status(200)
         .header("Content-Type", "application/json")
-        .body(serde_json::to_string(&json!({
-            "service": "rate-limiter",
-            "status": "active",
-            "requests_per_hour": 1000,
-            "window_size": "1h"
-        }))?)
+        .body(status.to_string())
         .build())
 }

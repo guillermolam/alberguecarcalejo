@@ -1,83 +1,46 @@
+` tags. I will ensure that the indentation and formatting are preserved and that no parts are skipped or omitted. I will also avoid using any forbidden words.
 
-use spin_sdk::http::{IntoResponse, Request, Response};
-use spin_sdk::http_component;
-use serde::{Deserialize, Serialize};
+```
+<replit_final_file>
 use anyhow::Result;
+use serde_json::json;
+use spin_sdk::http::{Request, Response};
 
-#[derive(Deserialize)]
-pub struct NotificationRequest {
-    pub recipient: String,
-    pub message: String,
-    pub notification_type: String, // email, sms, telegram
-    pub template_id: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct NotificationResponse {
-    pub id: String,
-    pub status: String,
-    pub sent_at: String,
-}
-
-#[derive(Serialize)]
-pub struct NotificationStatus {
-    pub id: String,
-    pub status: String,
-    pub delivered: bool,
-    pub error: Option<String>,
-}
-
-#[http_component]
-fn handle_notification_service(req: Request) -> Result<impl IntoResponse> {
-    let method = req.method();
+pub async fn handle(req: &Request) -> Result<Response> {
     let path = req.uri().path();
 
-    match (method.as_str(), path) {
-        ("POST", "/notifications/send") => send_notification(req),
-        ("GET", "/notifications/status") => get_notification_status(req),
-        ("POST", "/notifications/bulk") => send_bulk_notifications(req),
-        ("GET", "/notifications/health") => Ok(Response::builder()
-            .status(200)
-            .header("content-type", "application/json")
-            .body(r#"{"status": "healthy"}"#)?),
-        _ => Ok(Response::builder()
-            .status(404)
-            .body("Not Found")?),
+    match path {
+        "/api/notifications/send" => handle_send_notification(req).await,
+        "/api/notifications/status" => handle_notification_status(req).await,
+        _ => {
+            Ok(Response::builder()
+                .status(404)
+                .header("Content-Type", "application/json")
+                .body(json!({"error": "Notification endpoint not found"}).to_string())
+                .build())
+        }
     }
 }
 
-fn send_notification(req: Request) -> Result<impl IntoResponse> {
+async fn handle_send_notification(_req: &Request) -> Result<Response> {
     // TODO: Implement notification sending logic
-    let response = NotificationResponse {
-        id: "notif_123".to_string(),
-        status: "queued".to_string(),
-        sent_at: "2024-01-01T00:00:00Z".to_string(),
-    };
-
     Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(serde_json::to_string(&response)?)?)
+        .status(501)
+        .header("Content-Type", "application/json")
+        .body(json!({"error": "Not implemented yet"}).to_string())
+        .build())
 }
 
-fn get_notification_status(req: Request) -> Result<impl IntoResponse> {
-    let status = NotificationStatus {
-        id: "notif_123".to_string(),
-        status: "delivered".to_string(),
-        delivered: true,
-        error: None,
-    };
+async fn handle_notification_status(_req: &Request) -> Result<Response> {
+    let status = json!({
+        "email_service": "operational",
+        "sms_service": "operational",
+        "telegram_service": "operational"
+    });
 
     Ok(Response::builder()
         .status(200)
-        .header("content-type", "application/json")
-        .body(serde_json::to_string(&status)?)?)
-}
-
-fn send_bulk_notifications(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement bulk notification sending
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(r#"{"queued": 0, "failed": 0}"#)?)
+        .header("Content-Type", "application/json")
+        .body(status.to_string())
+        .build())
 }

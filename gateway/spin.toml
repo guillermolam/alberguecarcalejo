@@ -1,15 +1,27 @@
-spin_manifest_version = "1"
+
+spin_manifest_version = 2
 
 [application]
 name = "albergue-gateway"
 version = "0.1.0"
 authors = ["Albergue Del Carrascalejo"]
 
-[[component]]
-id = "gateway-bff"
-source = "bff/target/wasm32-wasi/release/gateway_bff.wasm"  
-[component.trigger]
+[variables]
+auth0_domain = { default = "guillermolam.auth0.com" }
+auth0_client_id = { default = "ohunbmaWBOQyEd2ca1orhnFqN1DDPQBd" }
+auth0_client_secret = { required = true }
+
+[[trigger.http]]
 route = "/api/..."
-[component.build]
+component = "gateway-bff"
+
+[component.gateway-bff]
+source = "bff/target/wasm32-wasi/release/gateway_bff.wasm"
+allowed_outbound_hosts = ["https://*.auth0.com", "https://api.example.com"]
+[component.gateway-bff.build]
 command = "cargo build --target wasm32-wasi --release"
 workdir = "bff"
+[component.gateway-bff.variables]
+auth0_domain = "{{ auth0_domain }}"
+auth0_client_id = "{{ auth0_client_id }}"
+auth0_client_secret = "{{ auth0_client_secret }}"

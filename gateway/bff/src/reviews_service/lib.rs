@@ -1,114 +1,104 @@
 
-use spin_sdk::http::{IntoResponse, Request, Response};
-use spin_sdk::http_component;
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use spin_sdk::http::{Request, Response};
+use std::collections::HashMap;
 
-#[derive(Deserialize)]
-pub struct ReviewRequest {
-    pub user_id: String,
-    pub rating: i32,
-    pub comment: String,
-    pub booking_id: Option<String>,
+#[derive(Serialize, Deserialize)]
+struct Review {
+    id: String,
+    author_name: String,
+    rating: u8,
+    text: String,
+    date: String,
+    source: String,
+    verified: bool,
+    helpful_count: u32,
 }
 
-#[derive(Serialize)]
-pub struct Review {
-    pub id: String,
-    pub user_id: String,
-    pub rating: i32,
-    pub comment: String,
-    pub created_at: String,
-    pub verified: bool,
+#[derive(Serialize, Deserialize)]
+struct ReviewsResponse {
+    reviews: Vec<Review>,
+    total_count: u32,
+    average_rating: f32,
+    source_breakdown: HashMap<String, u32>,
 }
 
-#[derive(Serialize)]
-pub struct ReviewsResponse {
-    pub reviews: Vec<Review>,
-    pub total: usize,
-    pub average_rating: f64,
-}
-
-#[http_component]
-fn handle_reviews_service(req: Request) -> Result<impl IntoResponse> {
-    let method = req.method();
+pub async fn handle(req: &Request) -> Result<Response> {
     let path = req.uri().path();
-
-    match (method.as_str(), path) {
-        ("GET", "/reviews") => get_reviews(req),
-        ("POST", "/reviews") => create_review(req),
-        ("GET", "/reviews/stats") => get_review_stats(req),
-        ("DELETE", "/reviews/:id") => delete_review(req),
-        ("GET", "/reviews/health") => Ok(Response::builder()
-            .status(200)
-            .header("content-type", "application/json")
-            .body(r#"{"status": "healthy"}"#)?),
-        _ => Ok(Response::builder()
-            .status(404)
-            .body("Not Found")?),
+    
+    match path {
+        "/api/reviews/all" => handle_all_reviews().await,
+        "/api/reviews/stats" => handle_review_stats().await,
+        _ => {
+            Ok(Response::builder()
+                .status(404)
+                .header("Content-Type", "application/json")
+                .body(json!({"error": "Reviews endpoint not found"}).to_string())
+                .build())
+        }
     }
 }
 
-fn get_reviews(req: Request) -> Result<impl IntoResponse> {
+async fn handle_all_reviews() -> Result<Response> {
     let reviews = vec![
         Review {
-            id: "rev_1".to_string(),
-            user_id: "user_123".to_string(),
+            id: "1".to_string(),
+            author_name: "María González".to_string(),
             rating: 5,
-            comment: "Excellent albergue with great facilities!".to_string(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            text: "Excelente albergue! La hospitalidad de los hospitaleros es excepcional.".to_string(),
+            date: "2024-03-15".to_string(),
+            source: "Google".to_string(),
             verified: true,
+            helpful_count: 12,
         },
         Review {
-            id: "rev_2".to_string(),
-            user_id: "user_456".to_string(),
+            id: "2".to_string(),
+            author_name: "Jean-Pierre Martin".to_string(),
             rating: 4,
-            comment: "Very clean and comfortable stay.".to_string(),
-            created_at: "2024-01-02T00:00:00Z".to_string(),
+            text: "Très bon accueil et infrastructure moderne.".to_string(),
+            date: "2024-03-12".to_string(),
+            source: "Booking.com".to_string(),
             verified: true,
+            helpful_count: 8,
         },
     ];
 
+    let mut source_breakdown = HashMap::new();
+    source_breakdown.insert("Google".to_string(), 28);
+    source_breakdown.insert("Booking.com".to_string(), 19);
+
     let response = ReviewsResponse {
-        total: reviews.len(),
-        average_rating: 4.5,
         reviews,
+        total_count: 47,
+        average_rating: 4.6,
+        source_breakdown,
     };
 
     Ok(Response::builder()
         .status(200)
-        .header("content-type", "application/json")
-        .body(serde_json::to_string(&response)?)?)
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&response)?)
+        .build())
 }
 
-fn create_review(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement review creation logic
-    let review = Review {
-        id: "rev_new".to_string(),
-        user_id: "user_new".to_string(),
-        rating: 5,
-        comment: "Great experience!".to_string(),
-        created_at: "2024-01-03T00:00:00Z".to_string(),
-        verified: false,
-    };
+async fn handle_review_stats() -> Result<Response> {
+    let stats = json!({
+        "total_reviews": 47,
+        "average_rating": 4.6,
+        "rating_distribution": {
+            "5": 28,
+            "4": 12,
+            "3": 5,
+            "2": 1,
+            "1": 1
+        }
+    });
 
-    Ok(Response::builder()
-        .status(201)
-        .header("content-type", "application/json")
-        .body(serde_json::to_string(&review)?)?)
-}
-
-fn get_review_stats(req: Request) -> Result<impl IntoResponse> {
     Ok(Response::builder()
         .status(200)
-        .header("content-type", "application/json")
-        .body(r#"{"total": 2, "average_rating": 4.5, "five_star": 1, "four_star": 1}"#)?)
-}
-
-fn delete_review(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement review deletion logic
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(r#"{"deleted": true}"#)?)
+        .header("Content-Type", "application/json")
+        .body(stats.to_string())
+        .build())
 }

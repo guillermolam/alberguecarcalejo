@@ -1,67 +1,49 @@
-
-use spin_sdk::http::{IntoResponse, Request, Response};
-use spin_sdk::http_component;
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde_json::json;
+use spin_sdk::http::{Request, Response};
 
-#[derive(Deserialize)]
-pub struct AuthRequest {
-    pub token: String,
-    pub user_id: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct AuthResponse {
-    pub valid: bool,
-    pub user_id: Option<String>,
-    pub permissions: Vec<String>,
-}
-
-#[http_component]
-fn handle_auth_service(req: Request) -> Result<impl IntoResponse> {
-    let method = req.method();
+pub async fn handle(req: &Request) -> Result<Response> {
     let path = req.uri().path();
 
-    match (method.as_str(), path) {
-        ("POST", "/auth/verify") => verify_token(req),
-        ("POST", "/auth/login") => handle_login(req),
-        ("POST", "/auth/logout") => handle_logout(req),
-        ("GET", "/auth/health") => Ok(Response::builder()
-            .status(200)
-            .header("content-type", "application/json")
-            .body(r#"{"status": "healthy"}"#)?),
-        _ => Ok(Response::builder()
-            .status(404)
-            .body("Not Found")?),
+    match path {
+        "/api/auth/user" => handle_user_info(req).await,
+        "/api/auth/permissions" => handle_permissions(req).await,
+        _ => {
+            Ok(Response::builder()
+                .status(404)
+                .header("Content-Type", "application/json")
+                .body(json!({"error": "Auth service endpoint not found"}).to_string())
+                .build())
+        }
     }
 }
 
-fn verify_token(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement token verification logic
-    let response = AuthResponse {
-        valid: true,
-        user_id: Some("user123".to_string()),
-        permissions: vec!["read".to_string(), "write".to_string()],
-    };
+async fn handle_user_info(_req: &Request) -> Result<Response> {
+    // TODO: Extract user info from JWT token
+    let user = json!({
+        "id": "demo-user",
+        "email": "demo@example.com",
+        "name": "Demo User",
+        "roles": ["user"]
+    });
 
     Ok(Response::builder()
         .status(200)
-        .header("content-type", "application/json")
-        .body(serde_json::to_string(&response)?)?)
+        .header("Content-Type", "application/json")
+        .body(user.to_string())
+        .build())
 }
 
-fn handle_login(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement login logic
-    Ok(Response::builder()
-        .status(200)
-        .header("content-type", "application/json")
-        .body(r#"{"token": "mock_token"}"#)?)
-}
+async fn handle_permissions(_req: &Request) -> Result<Response> {
+    let permissions = json!({
+        "can_book": true,
+        "can_cancel": true,
+        "can_modify": true
+    });
 
-fn handle_logout(req: Request) -> Result<impl IntoResponse> {
-    // TODO: Implement logout logic
     Ok(Response::builder()
         .status(200)
-        .header("content-type", "application/json")
-        .body(r#"{"success": true}"#)?)
+        .header("Content-Type", "application/json")
+        .body(permissions.to_string())
+        .build())
 }
