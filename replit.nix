@@ -1,5 +1,6 @@
 { pkgs }: {
   deps = [
+    pkgs.caddy
     pkgs.nodejs_20
     pkgs.rustc
     pkgs.cargo

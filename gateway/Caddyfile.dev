@@ -1,0 +1,22 @@
+:8080 {
+    # API routes to Spin gateway
+    route /api/* {
+        reverse_proxy http://127.0.0.1:8000
+    }
+
+    # Serve static files from frontend/dist  
+    root * ../frontend/dist
+    try_files {path} {path}/ /index.html
+    file_server
+
+    # Enable CORS
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+    }
+
+    # Handle preflight
+    @options method OPTIONS
+    respond @options 200
+}
