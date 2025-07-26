@@ -4,21 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bunx --bun vite",      // Launch Vite dev server via Bun
-    "build": "vite build",         // Build production assets
-    "serve": "vite preview"        // Preview the production build
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "vite": "^5.0.0",
-    "tailwindcss": "^4.0.0",
-    "autoprefixer": "^10.0.0",
-    "postcss": "^8.0.0"
-  },
-  "bun": {
-    "lockfile": "bun.lockb"
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "vite": "^5.0.0"
   }
 }

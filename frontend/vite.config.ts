@@ -1,93 +1,44 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'path'
+import { resolve } from 'path'
+import { fileURLToPath } from 'url'
 
-export default defineConfig(({ mode }) => ({
-  // Root directory for serving (current frontend directory)
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
+
+export default defineConfig({
   root: '.',
-
-  plugins: [
-    react(),
-  ],
+  plugins: [react()],
 
   server: {
     host: '0.0.0.0',
-    port: parseInt(process.env.VITE_PORT || '5173'),
+    port: 5173,
     strictPort: true,
     open: false,
-    // Allow only Replit dev hosts in development, and your real domain in production
-    allowedHosts:
-      mode === 'development'
-        ? ['.replit.dev']
-        : ['www.alberguedelcarrascalejo.com'],
-    // Ignore heavy service build artifacts in watch mode
-    watch: {
-      ignored: ['**/services/**/target/**', '**/pkg/**']
-    },
-    // Proxy API calls through services
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        configure: (proxy, options) => {
-          proxy.on('error', (err, req, res) => {
-            console.log('Gateway connection failed, check Spin service on port 8000');
-          });
-        }
-      },
-      '/reviews': {
-        target: 'http://localhost:8000',
-        changeOrigin: true
       }
     }
   },
 
   preview: {
     host: '0.0.0.0',
-    port: parseInt(process.env.VITE_PREVIEW_PORT || '4173'),
+    port: 4173,
     strictPort: true,
-    allowedHosts:
-      mode === 'development'
-        ? ['.replit.dev']
-        : ['www.alberguedelcarrascalejo.com'],
   },
 
   resolve: {
     alias: {
-      // Frontend source
-      '@': path.resolve(__dirname, 'src'),
-      // Test and training assets
-      '@assets': path.resolve(__dirname, '../attached_assets'),
-      // Shared Rust DTOs & types exposed to JS via wasm-bindgen or similar
-      '@shared': path.resolve(__dirname, '../services/shared/src'),
-      // All WASM service outputs
-      '@wasm': path.resolve(__dirname, '../pkg'),
+      '@': resolve(__dirname, 'src'),
+      '@assets': resolve(__dirname, '../attached_assets'),
     },
-  },
-
-  optimizeDeps: {
-    // Exclude all wasm-bindgen output directories
-    exclude: ['@wasm', 'wasm-services'],
-    // Pre-bundle frequently used modules to speed up cold start
-    include: ['react', 'react-dom', '@tanstack/react-query']
-  },
-
-  css: {
-    postcss: './postcss.config.js'
   },
 
   build: {
     outDir: 'dist',
-    emptyOutDir: true,
-    sourcemap: mode === 'development'
+    rollupOptions: {
+      input: resolve(__dirname, 'index.html'),
+    },
   },
-
-  define: {
-    // Expose env var for API base
-    __API_BASE_URL__: JSON.stringify(
-      mode === 'development'
-        ? 'http://localhost:8000'
-        : 'https://www.alberguedelcarrascalejo.com/reservas/api'
-    )
-  }
-}))
+})
