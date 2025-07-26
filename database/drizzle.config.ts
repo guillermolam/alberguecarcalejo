@@ -1,12 +1,12 @@
-import type { Config } from 'drizzle-kit';
+import { defineConfig } from 'drizzle-kit';
 
-export default {
-  schema: './database/schema.ts',
-  out: './database/migrations',
+export default defineConfig({
+  schema: './schema.ts',
+  out: './migrations',
   driver: 'pg',
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || '',
+    connectionString: process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || 'postgresql://localhost:5432/albergue',
   },
-  verbose: true,
+  verbose: process.env.LOG_LEVEL === 'debug',
   strict: true,
-} satisfies Config;
+});

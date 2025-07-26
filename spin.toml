@@ -1,57 +1,76 @@
+
 spin_manifest_version = 2
 
 [application]
-name = "alberguecarrascalejo"
+name = "albergue-app"
 version = "0.1.0"
-authors = ["Guillermo Lam <guillermo@alberguedelcarrascalejo.com>"]
+authors = ["Albergue Del Carrascalejo"]
 
 [variables]
+# Database Configuration
+database_url = { required = true }
+neon_database_url = { required = true }
+
+# Auth0 Configuration
 auth0_domain = { required = true }
 auth0_client_id = { required = true }
 auth0_client_secret = { required = true }
-booking_api_url = { default = "http://localhost:3001" }
-reviews_api_url = { default = "http://localhost:3002" }
 
-[[trigger.http]]
-route = "/login"
-component = "gateway"
+# External Services
+twilio_account_sid = { required = false }
+twilio_auth_token = { required = false }
+telegram_bot_token = { required = false }
+smtp_host = { required = false }
+smtp_port = { required = false }
+smtp_user = { required = false }
+smtp_pass = { required = false }
 
-[[trigger.http]]
-route = "/callback"
-component = "gateway"
+# Security
+encryption_key = { required = true }
+jwt_secret = { required = true }
 
-[[trigger.http]]
-route = "/logout"
-component = "gateway"
-
-[[trigger.http]]
-route = "/booking/..."
-component = "gateway"
-
-[[trigger.http]]
-route = "/reviews/..."
-component = "gateway"
-
-[[trigger.http]]
-route = "/health"
-component = "gateway"
+# Service Configuration
+rate_limit_requests = { default = "100" }
+log_level = { default = "info" }
+gateway_port = { default = "3000" }
 
 [[trigger.http]]
 route = "/..."
 component = "frontend"
 
+[[trigger.http]]
+route = "/api/..."
+component = "gateway"
+
+[component.frontend]
+source = "frontend/dist"
+files = ["**/*"]
+
 [component.gateway]
-source = "target/wasm32-wasi/release/gateway.wasm"
-[component.gateway.build]
-command = "cargo build --target wasm32-wasi --release"
-allowed_outbound_hosts = [ "https://{{ auth0_domain }}", "{{ booking_api_url }}", "{{ reviews_api_url }}" ]
+source = "gateway/bff/target/wasm32-wasi/release/gateway_bff.wasm"
+allowed_outbound_hosts = [
+    "https://*.auth0.com",
+    "https://api.twilio.com", 
+    "https://api.telegram.org",
+    "https://*.neon.tech",
+    "https://*.postgres.com"
+]
+
 [component.gateway.variables]
 auth0_domain = "{{ auth0_domain }}"
 auth0_client_id = "{{ auth0_client_id }}"
 auth0_client_secret = "{{ auth0_client_secret }}"
-booking_api_url = "{{ booking_api_url }}"
-reviews_api_url = "{{ reviews_api_url }}"
+database_url = "{{ database_url }}"
+neon_database_url = "{{ neon_database_url }}"
+twilio_account_sid = "{{ twilio_account_sid }}"
+twilio_auth_token = "{{ twilio_auth_token }}"
+telegram_bot_token = "{{ telegram_bot_token }}"
+smtp_host = "{{ smtp_host }}"
+smtp_port = "{{ smtp_port }}"
+smtp_user = "{{ smtp_user }}"
+smtp_pass = "{{ smtp_pass }}"
+encryption_key = "{{ encryption_key }}"
+jwt_secret = "{{ jwt_secret }}"
+rate_limit_requests = "{{ rate_limit_requests }}"
+log_level = "{{ log_level }}"
 
-[component.frontend]
-source = { url = "https://github.com/fermyon/spin-fileserver/releases/download/v0.0.3/spin_static_fs.wasm", digest = "sha256:5bf5abc1f6b93f4e5b6e4b6b7b9e3e1d6b5b2b2b8a8a8a8a8a8a8a8a8a8a8a8a" }
-files = [ { source = "frontend/dist", destination = "/" } ]
