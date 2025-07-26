@@ -69,3 +69,57 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "task dev"
+
+[[workflows.workflow]]
+name = "Build All"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task build:all"
+
+[[workflows.workflow]]
+name = "Test Suite"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task test:unit"
+
+[[workflows.workflow]]
+name = "Full CI Pipeline"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task ci:full"
+
+[[workflows.workflow]]
+name = "Gateway Only"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task dev:gateway"
+
+[[workflows.workflow]]
+name = "Frontend Only"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task dev:frontend"
+
+[[workflows.workflow]]
+name = "Frontend Only"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task dev:frontend"
