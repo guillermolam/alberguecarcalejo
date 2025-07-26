@@ -1,31 +1,35 @@
 #!/bin/bash
 
-# Build all WASM microservices for the DDD monorepo
-set -e
+# Build script for Rust WASM microservices
+echo "🔨 Building Rust WASM microservices..."
 
-echo "🦀 Building Rust WASM microservices..."
+# Install wasm32-wasi target if not already installed
+echo "📦 Installing wasm32-wasi target..."
+rustup target add wasm32-wasi 2>/dev/null || echo "Target already installed"
 
-# Ensure WASM targets are installed
-rustup target add wasm32-unknown-unknown
-rustup target add wasm32-wasi
+# Build each service
+services=(
+  "services/reviews-service"
+  "gateway/bff/security_service" 
+  "gateway/bff/rate_limiter_service"
+  "gateway/bff/auth_verify"
+  "gateway/bff/booking_service"
+)
 
-# Build all services in workspace from root directory
-echo "📦 Building validation-service..."
-cargo build --release --target wasm32-wasi --package validation-service
+for service in "${services[@]}"; do
+  if [ -d "$service" ]; then
+    echo "🔨 Building $service..."
+    cd "$service"
+    cargo build --release --target wasm32-wasi
+    if [ $? -eq 0 ]; then
+      echo "✅ $service built successfully"
+    else
+      echo "❌ Failed to build $service"
+    fi
+    cd - > /dev/null
+  else
+    echo "⚠️  Directory $service not found"
+  fi
+done
 
-echo "📦 Building booking-service..."
-cargo build --release --target wasm32-wasi --package booking-service
-
-echo "📦 Building gateway..."
-cargo build --release --target wasm32-wasi --package gateway
-
-echo "✅ All WASM services built successfully!"
-echo "🎯 Output location: services/*/target/wasm32-wasi/release/"
-echo "📁 Gateway output: gateway/target/wasm32-wasi/release/"
-
-# Ensure spin.toml can find the WASM files
-echo "🔧 Verifying WASM outputs for Spin deployment..."
-ls -la services/*/target/wasm32-wasi/release/*.wasm 2>/dev/null || echo "⚠️  Some service WASM files may be missing"
-ls -la gateway/target/wasm32-wasi/release/*.wasm 2>/dev/null || echo "⚠️  Gateway WASM file may be missing"
-
-echo "🚀 Ready for Spin deployment: spin up --listen 0.0.0.0:80"
+echo "🎉 WASM build process completed!"

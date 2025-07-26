@@ -1,32 +1,20 @@
-# Caddyfile for Albergue Del Carrascalejo Gateway
-# Serves the frontend dist folder and proxies API requests to Spin components
+alberguedelcarrascalejo.com {
+    tls admin@alberguedelcarrascalejo.com
+    encode gzip zstd
 
-:80 {
+    # API routes to Spin gateway
+    route /api/* {
+        reverse_proxy http://127.0.0.1:3000 {
+            transport http {
+                versions h2 http/1.1 h3
+            }
+        }
+    }
+
     # Serve static files from frontend/dist
-    root * /srv/frontend/dist
+    root * ../frontend/dist
     
-    # Handle API routes by proxying to Spin components
-    handle /api/security/* {
-        reverse_proxy localhost:3001
-    }
-    
-    handle /api/rate-limit/* {
-        reverse_proxy localhost:3002
-    }
-    
-    handle /api/auth/* {
-        reverse_proxy localhost:3003
-    }
-    
-    handle /api/booking/* {
-        reverse_proxy localhost:3004
-    }
-    
-    handle /api/reviews/* {
-        reverse_proxy localhost:3005
-    }
-    
-    # Serve static files for everything else
+    # SPA fallback for client-side routing
     try_files {path} {path}/ /index.html
     file_server
     
@@ -40,6 +28,14 @@
     # Handle preflight requests
     @options method OPTIONS
     respond @options 200
+    
+    # Security headers
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy strict-origin-when-cross-origin
+    }
     
     # Logging
     log {

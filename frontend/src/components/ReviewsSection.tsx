@@ -4,28 +4,27 @@ import { Card, CardContent } from "./ui/card";
 
 interface Review {
   id: string;
-  source: string;
-  author: string;
+  author_name: string;
   rating: number;
   text: string;
   date: string;
+  source: string;
   verified: boolean;
-  country?: string;
+  helpful_count: number;
 }
 
 interface ReviewsData {
-  success: boolean;
-  sources: string[];
-  total: number;
-  average_rating: number;
   reviews: Review[];
+  total_count: number;
+  average_rating: number;
+  source_breakdown: Record<string, number>;
 }
 
 export default function ReviewsSection() {
   const { data: reviewsData, isLoading } = useQuery<ReviewsData>({
-    queryKey: ['/reviews/all'],
+    queryKey: ['/api/reviews/all'],
     queryFn: async () => {
-      const response = await fetch('/reviews/all');
+      const response = await fetch('/api/reviews/all');
       if (!response.ok) {
         throw new Error('Failed to fetch reviews');
       }
@@ -98,7 +97,7 @@ export default function ReviewsSection() {
               {reviewsData.average_rating}
             </span>
             <span className="text-gray-600">
-              ({reviewsData.total} opiniones)
+              ({reviewsData.total_count} opiniones)
             </span>
           </div>
           <p className="text-gray-600">
@@ -114,7 +113,7 @@ export default function ReviewsSection() {
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
                       <h4 className="font-semibold text-gray-900">
-                        {review.author}
+                        {review.author_name}
                       </h4>
                       {review.verified && (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
