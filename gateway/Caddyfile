@@ -43,3 +43,34 @@ alberguedelcarrascalejo.com {
         format json
     }
 }
+
+e8cc356a-247c-4e26-bebe-c81e2720d706-00-c9097ozkhla1.picard.replit.dev {
+    tls internal
+    
+    # API routes to Spin gateway
+    route /api/* {
+        reverse_proxy http://127.0.0.1:3000 {
+            transport http {
+                versions h2 http/1.1 h3
+            }
+        }
+    }
+
+    # Serve static files from frontend/dist
+    root * ../frontend/dist
+    
+    # SPA fallback for client-side routing
+    try_files {path} {path}/ /index.html
+    file_server
+    
+    # Enable CORS for all responses
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    }
+    
+    # Handle preflight requests
+    @options method OPTIONS
+    respond @options 200
+}

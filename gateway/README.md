@@ -45,6 +45,7 @@ bash deploy.sh
 ## Domain Configuration
 
 - Production: `alberguedelcarrascalejo.com` (Caddy with Let's Encrypt TLS)
+- Development: `e8cc356a-247c-4e26-bebe-c81e2720d706-00-c9097ozkhla1.picard.replit.dev` (Replit internal TLS)
 - Deployment: `alberguecarrascalejo.fermyon.app` (Fermyon Spin Cloud)
 
-The Caddyfile handles static file serving from `../frontend/dist` and proxies API requests to the Spin gateway.
+The Caddyfile handles static file serving from `../frontend/dist` and proxies API requests to the Spin gateway for both production and development domains.

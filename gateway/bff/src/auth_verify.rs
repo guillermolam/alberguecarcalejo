@@ -5,7 +5,7 @@ use spin_sdk::http::{Request, Response};
 use serde_json::json;
 
 pub async fn handle(req: &Request) -> Result<Response> {
-    let path = req.uri().path();
+    let path = req.path();
     
     match path {
         "/api/auth/verify" => verify_token(req).await,

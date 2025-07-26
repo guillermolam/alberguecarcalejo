@@ -2,7 +2,6 @@
 // Routes: security → rate → auth → booking → reviews
 
 use anyhow::Result;
-use serde_json::Value;
 use spin_sdk::{
     http::{Request, Response, IntoResponse},
     http_component,
@@ -21,8 +20,7 @@ mod security_service;
 
 #[http_component]
 async fn handle_request(req: Request) -> Result<impl IntoResponse> {
-    let uri = req.uri();
-    let path = uri.path();
+    let path = req.path();
 
     // Enable CORS for all responses
     let cors_headers = vec![
@@ -32,7 +30,7 @@ async fn handle_request(req: Request) -> Result<impl IntoResponse> {
     ];
 
     // Handle preflight requests
-    if req.method().as_str() == "OPTIONS" {
+    if *req.method() == spin_sdk::http::Method::Options {
         let mut response = Response::builder().status(200);
         for (key, value) in cors_headers {
             response = response.header(key, value);
@@ -95,8 +93,9 @@ async fn handle_request(req: Request) -> Result<impl IntoResponse> {
     // Add CORS headers to response
     match result {
         Ok(mut response) => {
+            // Add CORS headers to existing response
             for (key, value) in cors_headers {
-                response.headers_mut().insert(key, value.parse()?);
+                response.headers_mut().insert(key.try_into()?, value.try_into()?);
             }
             Ok(response)
         }
