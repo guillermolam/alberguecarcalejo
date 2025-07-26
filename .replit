@@ -51,15 +51,7 @@ PORT = "8000"
 [workflows]
 runButton = "Development"
 
-[[workflows.workflow]]
-name = "Dev"
-mode = "parallel"
-author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev:replit"
-waitForPort = 5173
 
 [[workflows.workflow]]
 name = "Development"
