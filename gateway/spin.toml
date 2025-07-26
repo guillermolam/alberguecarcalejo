@@ -7,7 +7,7 @@ authors = ["Albergue Del Carrascalejo"]
 
 [[component]]
 id = "gateway-bff"
-source = "bff/target/wasm32-wasi/release/gateway_bff.wasm"
+source = "bff/target/wasm32-wasi/release/gateway_bff.wasm"  
 [component.trigger]
 route = "/api/..."
 [component.build]

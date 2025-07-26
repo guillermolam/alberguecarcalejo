@@ -26,6 +26,14 @@ build = ["bun", "run", "build"]
 run = ["bun", "run", "start"]
 
 [[ports]]
+localPort = 80
+externalPort = 4200
+
+[[ports]]
+localPort = 443
+externalPort = 3003
+
+[[ports]]
 localPort = 3001
 externalPort = 3001
 
