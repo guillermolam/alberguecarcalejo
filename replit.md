@@ -63,6 +63,13 @@ Ready for deployment to alberguecarrascalejo.fermyon.app
 ✓ **Implemented secure token storage and session management**
 ✓ **Admin console now requires authentication - login redirects to /admin on success**
 
+### July 26, 2025 - Mobile Datepicker Optimization
+✓ **Created mobile-optimized registration form with side-by-side datepickers**
+✓ **Implemented responsive layout: mobile (grid-cols-2) vs desktop (stacked)**
+✓ **Enhanced mobile UX with compact stepper and optimized spacing**
+✓ **Preserved all functionality while improving phone screen usability**
+✓ **Fixed arrival/departure date inputs to display in same row on mobile**
+
 ### July 26, 2025 - Complete BFF Architecture Restructure
 ✓ **Restructured gateway to proper BFF architecture with composed Rust services**
 ✓ **Created gateway/bff/ directory with single Cargo.toml for all microservices**

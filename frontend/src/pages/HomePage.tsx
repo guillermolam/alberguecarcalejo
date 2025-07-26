@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import RegistrationForm from "../components/registration-form";
+import RegistrationForm from "../components/registration-form-mobile";
 import AdminDashboard from "../components/AdminDashboard";
 import ReviewsSection from "../components/ReviewsSection";
 import { User } from "lucide-react";
