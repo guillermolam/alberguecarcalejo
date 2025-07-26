@@ -1,9 +1,64 @@
 [workspace]
 members = [
     "gateway/bff",
-    "services/reviews-service"
+    "services/reviews-service",
+    "services/booking-service",
+    "services/validation-service",
+    "services/notification-service",
+    "services/info-on-arrival-service",
+    "services/rate-limiter-service",
+    "services/security-service",
+    "services/location-service",
+    "services/shared"
 ]
 resolver = "2"
+
+[workspace.metadata.scripts]
+# Development
+dev = "node dev-replit.js"
+dev-frontend = "cd frontend && vite --host 0.0.0.0 --port 5173"
+
+# Building
+build = "cargo build --workspace --release && cd frontend && vite build"
+build-frontend = "cd frontend && vite build"
+build-wasm = "cargo build --workspace --target wasm32-unknown-unknown --release"
+
+# Testing
+test = "cargo test --workspace && cd frontend && vitest run && testcafe chrome tests/e2e/"
+test-unit = "cargo test --workspace"
+test-integration = "node tests/api/test-dni-api.js"
+test-e2e = "testcafe chrome tests/e2e/"
+test-ui = "cd frontend && vitest run"
+
+# Linting and formatting
+lint = "cargo clippy --workspace -- -D warnings && cd frontend && eslint . --ext .ts,.tsx"
+lint-fix = "cargo clippy --workspace --fix --allow-dirty -- -D warnings && cd frontend && eslint . --ext .ts,.tsx --fix"
+format = "cargo fmt --all && cd frontend && prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
+format-check = "cargo fmt --all -- --check && cd frontend && prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
+
+# Database (keeping Node.js tools for now)
+db-generate = "cd frontend && drizzle-kit generate"
+db-migrate = "cd frontend && drizzle-kit migrate"  
+db-studio = "cd frontend && drizzle-kit studio"
+
+# Development tools
+storybook = "cd frontend && storybook dev -p 6006 --host 0.0.0.0"
+clean = "cargo clean && rm -rf frontend/dist/ frontend/coverage/ frontend/.next/ frontend/node_modules/.cache/"
+
+# Performance and monitoring
+perf-lighthouse = "lighthouse http://0.0.0.0:5173 --output json --output-path ./tests/performance/lighthouse.json"
+perf-k6 = "k6 run tests/performance/api-load.js"
+health-check = "node tests/infrastructure/monitoring/health-check.js"
+
+# Setup
+setup-dev = "chmod +x tests/infrastructure/scripts/setup-dev.sh && ./tests/infrastructure/scripts/setup-dev.sh"
+
+[workspace.metadata.aliases]
+dev = "dev"
+build = "build"
+test = "test"
+lint = "lint"
+fmt = "format"
 
 [workspace.dependencies]
 tokio = { version = "1.0", features = ["full"] }
