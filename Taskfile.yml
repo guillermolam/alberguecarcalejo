@@ -1,0 +1,121 @@
+version: '3'
+
+vars:
+  FRONTEND_PORT: '5173'
+  BACKEND_PORT: '8000'
+  GATEWAY_PORT: '8080'
+  FRONTEND_URI: 'http://localhost:{{.FRONTEND_PORT}}'
+  BACKEND_URI: 'http://localhost:{{.BACKEND_PORT}}'
+  GATEWAY_URI: 'http://localhost:{{.GATEWAY_PORT}}'
+
+env:
+  # Add any global environment variables here
+
+tasks:
+  default:
+    desc: Run all services in production mode
+    deps: [build, preview]
+    
+  dev:
+    desc: Run all services in dev mode
+    deps: [dev:backend, dev:gateway, dev:frontend]
+
+  dev:backend:
+    desc: Run backend in dev mode
+    dir: backend
+    cmds:
+      - cargo run
+
+  dev:gateway:
+    desc: Run gateway in dev mode
+    dir: gateway
+    cmds:
+      - cargo run
+
+  dev:frontend:
+    desc: Run frontend in dev mode
+    dir: frontend
+    cmds:
+      - bun run dev -- --port {{.FRONTEND_PORT}}
+
+  build:
+    desc: Build all services
+    deps: [build:backend, build:gateway, build:frontend]
+
+  build:backend:
+    desc: Build backend
+    dir: backend
+    cmds:
+      - cargo build --release
+
+  build:gateway:
+    desc: Build gateway
+    dir: gateway
+    cmds:
+      - cargo build --release
+
+  build:frontend:
+    desc: Build frontend
+    dir: frontend
+    cmds:
+      - bun run build
+
+  preview:
+    desc: Preview built server
+    dir: server
+    cmds:
+      - node dist/server.js --port {{.BACKEND_PORT}}
+
+  test:
+    desc: Run all tests
+    deps: [test:unit, test:integration, test:e2e]
+
+  test:unit:
+    desc: Run unit tests
+    dir: frontend
+    cmds:
+      - bun run jest
+
+  test:integration:
+    desc: Run integration tests
+    dir: frontend
+    cmds:
+      - node test-dni-api.js
+
+  test:e2e:
+    desc: Run end-to-end tests
+    dir: frontend
+    cmds:
+      - bunx testcafe chrome tests/e2e/
+
+  lint:
+    desc: Lint all code
+    dir: frontend
+    cmds:
+      - bun run eslint src/ server/ --ext .ts,.tsx,.js,.jsx
+
+  format:
+    desc: Format all code
+    dir: frontend
+    cmds:
+      - bun run prettier --write "src/**/*.{ts,tsx,js,jsx,json,css,md}" "server/**/*.{ts,js,json}"
+
+  deploy:
+    desc: Deploy all services to Fermyon using Spin
+    cmds:
+      - spin deploy
+
+  perf:lighthouse:
+    desc: Run Lighthouse performance test
+    cmds:
+      - lighthouse {{.FRONTEND_URI}} --output json --output-path ./infrastructure/performance/results/lighthouse.json
+
+  perf:k6:
+    desc: Run k6 API load test
+    cmds:
+      - k6 run infrastructure/performance/api-load-test.js
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf dist/ coverage/ .next/ node_modules/.cache/

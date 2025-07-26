@@ -1,4 +1,4 @@
-run = "bun run dev:replit"
+run = "task build"
 modules = ["nodejs-20", "rust-stable", "postgresql-16", "web", "fermyon-spin"]
 
 hidden = [
@@ -55,7 +55,8 @@ runButton = "Dev"
 name = "Dev"
 mode = "parallel"
 author = "agent"
-  [[workflows.workflow.tasks]]
-  task = "shell.exec"
-  args = "bun run dev:replit"
-  waitForPort = 5173
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev:replit"
+waitForPort = 5173

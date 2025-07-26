@@ -9,8 +9,11 @@
     pkgs.wasm-pack
     pkgs.sqlx-cli
     pkgs.fermyon-spin
+    pkgs.go
     pkgs.chromium
     pkgs.go-task
     pkgs.bun
+    pkgs.k6
+    pkgs.act
   ];
 }
