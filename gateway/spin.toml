@@ -22,7 +22,7 @@ route = "/..."
 component = "static-files"
 
 [component.gateway-bff]
-source = "bff/target/wasm32-wasi/release/gateway_bff.wasm"
+source = "bff/target/wasm32-wasi/release/auth_verify.wasm"
 [component.gateway-bff.build]
 workdir = "bff"
 command = "cargo build --release --target wasm32-wasi"

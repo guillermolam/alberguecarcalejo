@@ -39,12 +39,20 @@ async fn verify_token(_req: &Request) -> Result<Response> {
 }
 
 async fn handle_login(_req: &Request) -> Result<Response> {
-    // TODO: Implement Auth0 login redirect
+    // Get Auth0 configuration from environment
+    let auth0_domain = std::env::var("AUTH0_DOMAIN").unwrap_or_else(|_| "guillermolam.auth0.com".to_string());
+    let auth0_client_id = std::env::var("AUTH0_CLIENT_ID").unwrap_or_else(|_| "ohunbmaWBOQyEd2ca1orhnFqN1DDPQBd".to_string());
+    
+    let login_url = format!(
+        "https://{}/authorize?response_type=code&client_id={}",
+        auth0_domain, auth0_client_id
+    );
+
     Ok(Response::builder()
         .status(200)
         .header("Content-Type", "application/json")
         .body(serde_json::to_string(&json!({
-            "login_url": "https://guillermolam.auth0.com/authorize?response_type=code&client_id=ohunbmaWBOQyEd2ca1orhnFqN1DDPQBd"
+            "login_url": login_url
         }))?)
         .build())
 }

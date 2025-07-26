@@ -4,7 +4,7 @@
 use anyhow::Result;
 use serde_json::Value;
 use spin_sdk::{
-    http::{IntoResponse, Request, Response},
+    http::{Request, Response, IntoResponse},
     http_component,
 };
 

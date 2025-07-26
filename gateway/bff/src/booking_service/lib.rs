@@ -17,7 +17,7 @@ pub async fn handle(req: &Request) -> Result<Response> {
                 .header("Content-Type", "application/json")
                 .body(serde_json::to_string(&json!({
                     "error": "Booking endpoint not found",
-                    "path": path
+                    "path": p
                 }))?)
                 .build())
         }

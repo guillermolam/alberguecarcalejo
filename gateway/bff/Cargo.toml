@@ -1,5 +1,5 @@
 [package]
-name = "gateway_bff"
+name = "auth_verify"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,15 +7,9 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-anyhow = "1.0"
+spin-sdk = "3.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-spin-sdk = "2.0"
-base64 = "0.21"
-jsonwebtoken = "8.3"
-chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1.0"
+http = "0.2"
 uuid = { version = "1.0", features = ["v4", "serde"] }
-urlencoding = "2.1"
-
-[package.metadata.component]
-type = "wasm32-wasi"

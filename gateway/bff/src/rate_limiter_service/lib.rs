@@ -37,7 +37,7 @@ async fn check_limit(req: &Request) -> Result<Response> {
         .body(serde_json::to_string(&json!({
             "allowed": allowed,
             "remaining": 100,
-            "reset_time": chrono::Utc::now().timestamp() + 3600
+            "reset_time": 0i64
         }))?)
         .build())
 }
