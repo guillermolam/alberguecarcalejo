@@ -49,69 +49,113 @@ externalPort = 3000
 PORT = "8000"
 
 [workflows]
-runButton = "Development"
-
-
+runButton = "Dev"
 
 [[workflows.workflow]]
-name = "Development"
+name = "Dev"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev:replit"
+waitForPort = 5173
+
+[[workflows.workflow]]
+name = "Security Scan"
 author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "task dev"
+args = "task sast:all"
 
 [[workflows.workflow]]
-name = "Build All"
+name = "Integration Tests"
 author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "task build:all"
+args = "task test:integration"
 
 [[workflows.workflow]]
-name = "Test Suite"
+name = "E2E Tests"
 author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "task test:unit"
+args = "task test:e2e"
 
 [[workflows.workflow]]
-name = "Full CI Pipeline"
+name = "Performance Tests"
 author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "task ci:full"
+args = "task performance:all"
 
 [[workflows.workflow]]
-name = "Gateway Only"
+name = "Browser Compatibility"
 author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "task dev:gateway"
+args = "task compatibility:all"
 
 [[workflows.workflow]]
-name = "Frontend Only"
+name = "DAST Security"
 author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "task dev:frontend"
+args = "task security:dast"
 
 [[workflows.workflow]]
-name = "Frontend Only"
+name = "Clean Build"
 author = 41744552
 mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "task dev:frontend"
+args = "task clean"
+
+[[workflows.workflow]]
+name = "Preview App"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task preview"
+
+[[workflows.workflow]]
+name = "Health Check"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task health:check"
+
+[[workflows.workflow]]
+name = "Database Reset"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task db:reset"
+
+[[workflows.workflow]]
+name = "Deploy"
+author = 41744552
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "task deploy"
